@@ -1,0 +1,39 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuthStore } from './store/authStore'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import LibraryPage from './pages/LibraryPage'
+import GamePage from './pages/GamePage'
+import AchievementPage from './pages/AchievementPage'
+import Layout from './components/layout/Layout'
+import ProfilePage from './pages/ProfilePage'
+import AdminPage from './pages/AdminPage'
+
+function ProtectedRoute({ children }) {
+  const token = useAuthStore((s) => s.token)
+  return token ? children : <Navigate to="/login" replace />
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="/library" replace />} />
+        <Route path="library" element={<LibraryPage />} />
+        <Route path="games/:gameId" element={<GamePage />} />
+        <Route path="achievements/:achievementId" element={<AchievementPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="admin" element={<AdminPage />} />
+      </Route>
+    </Routes>
+  )
+}

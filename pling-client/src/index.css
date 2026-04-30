@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* UI Scale — applied to <html> element */
+html.scale-sm { font-size: 14px; }
+html.scale-default { font-size: 16px; }
+html.scale-lg { font-size: 18px; }
+html.scale-xl { font-size: 20px; }
+
+/* OLED Purple theme variables */
+:root {
+  --bg-base: #000000;
+  --bg-surface: #0d0d0d;
+  --bg-elevated: #141414;
+  --bg-input: #1a1a1a;
+  --border-subtle: #1c1c1c;
+  --border-default: #222222;
+  --text-primary: #f0ecff;
+  --text-secondary: #8b8aaa;
+  --text-muted: #444455;
+  --accent: #a78bfa;
+  --accent-dim: #a78bfa18;
+  --accent-border: #a78bfa33;
+}
+
+/* Global overrides */
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
