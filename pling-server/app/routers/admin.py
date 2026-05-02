@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel
+from datetime import datetime, timezone
 
 from app.database import get_db
 from app.auth.dependencies import get_current_user, require_admin
@@ -61,6 +62,7 @@ async def import_psn_game(
             np_communication_id=data.np_communication_id,
             account_id=current_user.psn_account_id,
             platform=data.platform,
+            db=db,
         )
     except Exception as e:
         raise HTTPException(
@@ -150,7 +152,6 @@ async def search_psn_library(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    """Search the admin's PSN trophy library for games matching the query."""
     if not current_user.psn_account_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -158,6 +159,7 @@ async def search_psn_library(
         )
 
     def _normalize(text: str) -> str:
+        import re
         text = re.sub(r'[™®©℠]', '', text)
         text = re.sub(r'\s+', ' ', text).strip()
         return text.lower()
@@ -189,5 +191,49 @@ async def search_psn_library(
                 })
         return results
 
-    results = await asyncio.get_event_loop().run_in_executor(None, _search)
-    return results
+    try:
+        results = await asyncio.get_event_loop().run_in_executor(None, _search)
+        return results
+    except Exception as e:
+        print(f"PSN search error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"PSN search failed: {str(e)}"
+        )
+
+@router.get("/psn/status")
+async def psn_token_status(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    """Check PSN token health."""
+    from app.models.psn_token import PSNToken
+    now = datetime.now(timezone.utc)
+
+    result = await db.execute(
+        select(PSNToken).order_by(PSNToken.updated_at.desc()).limit(1)
+    )
+    token = result.scalar_one_or_none()
+
+    if not token:
+        return {"status": "no_tokens", "message": "No PSN tokens stored yet"}
+
+    if token.refresh_token_expires_at < now:
+        return {
+            "status": "expired",
+            "message": "Refresh token expired — new NPSSO required",
+            "refresh_token_expires_at": token.refresh_token_expires_at.isoformat(),
+        }
+
+    if token.access_token_expires_at < now:
+        return {
+            "status": "needs_refresh",
+            "message": "Access token expired but refresh token valid — will auto-refresh",
+            "refresh_token_expires_at": token.refresh_token_expires_at.isoformat(),
+        }
+
+    return {
+        "status": "healthy",
+        "access_token_expires_at": token.access_token_expires_at.isoformat(),
+        "refresh_token_expires_at": token.refresh_token_expires_at.isoformat(),
+    }

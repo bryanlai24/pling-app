@@ -1,3 +1,3 @@
-from app.routers import users, games, achievements, objectives
+from app.routers import users, games, achievements, objectives, admin, psn
 
-__all__ = ["users", "games", "achievements", "objectives"]
+__all__ = ["users", "games", "achievements", "objectives", "admin", "psn"]
