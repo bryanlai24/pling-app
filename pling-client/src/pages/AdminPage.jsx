@@ -23,6 +23,12 @@ export default function AdminPage() {
     queryFn: () => listAllGames().then((r) => r.data),
   })
 
+  const { data: psnStatus } = useQuery({
+    queryKey: ['psn-status'],
+    queryFn: () => client.get('/admin/psn/status').then(r => r.data),
+    refetchInterval: 60000, // check every minute
+  })
+
   const [search, setSearch] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
@@ -117,6 +123,26 @@ export default function AdminPage() {
               <p className="text-red-400 text-sm font-medium">Not connected</p>
               <p className="text-gray-500 text-sm mt-0.5">PSN account</p>
             </>
+          )}
+        </div>
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <div className={`w-2 h-2 rounded-full ${
+              psnStatus?.status === 'healthy' ? 'bg-green-400' :
+              psnStatus?.status === 'needs_refresh' ? 'bg-yellow-400' :
+              'bg-red-400'
+            }`} />
+            <p className="text-sm font-medium" style={{color:'var(--text-primary)'}}>
+              {psnStatus?.status === 'healthy' ? 'PSN tokens healthy' :
+              psnStatus?.status === 'needs_refresh' ? 'Token refreshing...' :
+              psnStatus?.status === 'expired' ? 'PSN token expired!' :
+              'Checking PSN status...'}
+            </p>
+          </div>
+          {psnStatus?.refresh_token_expires_at && (
+            <p className="text-xs" style={{color:'var(--text-muted)'}}>
+              Refresh token expires: {new Date(psnStatus.refresh_token_expires_at).toLocaleDateString()}
+            </p>
           )}
         </div>
       </div>
