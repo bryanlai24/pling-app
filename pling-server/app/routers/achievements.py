@@ -139,5 +139,4 @@ async def update_achievement_progress(
     # Recalculate game completion percent
     achievement = await achievement_service.get_achievement(db, achievement_id)
     percent = await game_service.recalculate_completion(db, current_user.id, achievement.game_id)
-    print(f"DEBUG recalculate: game={achievement.game_id} user={current_user.id} percent={percent}")
     return UserAchievementResponse.model_validate(ua)

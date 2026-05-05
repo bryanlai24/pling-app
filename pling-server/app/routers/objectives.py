@@ -14,7 +14,7 @@ from app.services import achievement_service
 router = APIRouter()
 
 
-# ── Objectives ─────────────────────────────────────────────────────────────────
+# ── Objectives (contributor/admin only) ────────────────────────────────────────
 
 @router.post(
     "/achievement/{achievement_id}",
@@ -36,7 +36,7 @@ async def update_objective(
     objective_id: uuid.UUID,
     data: ObjectiveUpdate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_contributor),
 ):
     obj = await achievement_service.update_objective(db, objective_id, data)
     return ObjectiveResponse.model_validate(obj)
@@ -46,7 +46,7 @@ async def update_objective(
 async def delete_objective(
     objective_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_contributor),
 ):
     await achievement_service.delete_objective(db, objective_id)
 
@@ -56,14 +56,13 @@ async def reorder_objectives(
     achievement_id: uuid.UUID,
     ordered_ids: list[uuid.UUID],
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_contributor),
 ):
-    """Pass an ordered list of objective IDs to set their sort_order."""
     objectives = await achievement_service.reorder_objectives(db, achievement_id, ordered_ids)
     return [ObjectiveResponse.model_validate(o) for o in objectives]
 
 
-# ── User objective progress ────────────────────────────────────────────────────
+# ── User objective progress (all authenticated users) ─────────────────────────
 
 @router.patch("/{objective_id}/progress", response_model=UserObjectiveResponse)
 async def update_objective_progress(

@@ -4,8 +4,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAchievement, updateAchievementProgress } from '../api/achievements'
 import { updateObjectiveProgress } from '../api/objectives'
 import { ChevronLeft, Plus, Trophy, CheckCircle2, Circle, Loader2 } from 'lucide-react'
+import { useContributorCheck } from '../hooks/useContributorCheck'
+import { useAuthStore } from '../store/authStore'
 import AddObjectiveModal from '../components/objectives/AddObjectiveModal'
 import ObjectiveItem from '../components/objectives/ObjectiveItem'
+import ContributorPrompt from '../components/ui/ContributorPrompt'
 
 const TROPHY_COLORS = {
   bronze: 'text-amber-600 bg-amber-600/10 border-amber-600/20',
@@ -26,6 +29,7 @@ export default function AchievementPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [showAddObjective, setShowAddObjective] = useState(false)
+  const { isContributor, showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
 
   const { data: achievement, isLoading } = useQuery({
     queryKey: ['achievement', achievementId],
@@ -212,8 +216,9 @@ export default function AchievementPage() {
           )}
         </div>
         <button
-          onClick={() => setShowAddObjective(true)}
-          className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition"
+          onClick={() => requireContributor(() => setShowAddObjective(true))}
+          className="flex items-center gap-1.5 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition"
+          style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', color: 'var(--accent)' }}
         >
           <Plus size={15} />
           Add objective
@@ -229,7 +234,7 @@ export default function AchievementPage() {
             Break this trophy down into steps with methods for each
           </p>
           <button
-            onClick={() => setShowAddObjective(true)}
+            onClick={() => requireContributor(() => setShowAddObjective(true))}
             className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition mx-auto"
           >
             <Plus size={16} />
@@ -283,6 +288,13 @@ export default function AchievementPage() {
             setShowAddObjective(false)
             queryClient.invalidateQueries({ queryKey: ['achievement', achievementId] })
           }}
+        />
+      )}
+
+      {showPrompt && (
+        <ContributorPrompt
+          onClose={() => setShowPrompt(false)}
+          discordUrl="https://discord.gg/VCKmQ7jftR"
         />
       )}
     </div>

@@ -3,6 +3,8 @@ import { useMutation } from '@tanstack/react-query'
 import { updateObjective, deleteObjective, updateObjectiveProgress } from '../../api/objectives'
 import { CheckCircle2, Circle, ChevronDown, ChevronUp, Pencil, Trash2, X, Check, Plus, Minus } from 'lucide-react'
 import { useParams } from 'react-router-dom'
+import { useContributorCheck } from '../../hooks/useContributorCheck'
+import ContributorPrompt from '../ui/ContributorPrompt'
 
 export default function ObjectiveItem({
   objective,
@@ -78,6 +80,8 @@ export default function ObjectiveItem({
     setCounterValue(clamped)
     counterMutation.mutate(clamped)
   }
+
+  const { isContributor, showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
 
   return (
     <div className={`border rounded-xl transition ${
@@ -163,22 +167,26 @@ export default function ObjectiveItem({
               {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
             </button>
           )}
+          {/* Edit */}
           <button
-            onClick={() => {
+            onClick={() => requireContributor(() => {
               setEditing(!editing)
               setExpanded(false)
-            }}
-            className="p-1.5 text-gray-500 hover:text-white transition rounded-lg hover:bg-gray-800"
+            })}
+            className="p-1.5 rounded-lg transition"
+            style={{ color: 'var(--text-muted)' }}
           >
             <Pencil size={14} />
           </button>
+          {/* Delete */}
           <button
-            onClick={() => {
+            onClick={() => requireContributor(() => {
               if (confirm(`Delete "${objective.title}"?`)) {
                 deleteMutation.mutate()
               }
-            }}
-            className="p-1.5 text-gray-500 hover:text-red-400 transition rounded-lg hover:bg-gray-800"
+            })}
+            className="p-1.5 rounded-lg transition"
+            style={{ color: 'var(--text-muted)' }}
           >
             <Trash2 size={14} />
           </button>
@@ -285,6 +293,13 @@ export default function ObjectiveItem({
             </button>
           </div>
         </form>
+      )}
+
+      {showPrompt && (
+        <ContributorPrompt
+          onClose={() => setShowPrompt(false)}
+          discordUrl="https://discord.gg/VCKmQ7jftR"
+        />
       )}
     </div>
   )
