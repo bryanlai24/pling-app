@@ -8,6 +8,10 @@ import client from '../api/client'
 const searchPSN = (query) => client.get(`/admin/psn/search?query=${encodeURIComponent(query)}`)
 const importGame = (data) => client.post('/admin/import/psn', data)
 const listAllGames = () => client.get('/games')
+const getXboxAuthUrl = () => client.get('/admin/xbox/auth-url')
+const submitXboxCode = (code) => client.post('/admin/xbox/auth-callback', { code })
+const searchXbox = (query) => client.get(`/admin/xbox/search?query=${encodeURIComponent(query)}`)
+const importXboxGame = (data) => client.post('/admin/import/xbox', data)
 
 export default function AdminPage() {
   const navigate = useNavigate()
@@ -40,6 +44,19 @@ export default function AdminPage() {
   })
   const [importResult, setImportResult] = useState(null)
   const [importError, setImportError] = useState(null)
+
+  const [xboxAuthUrl, setXboxAuthUrl] = useState(null)
+  const [xboxCode, setXboxCode] = useState('')
+  const [xboxSearch, setXboxSearch] = useState('')
+  const [xboxResults, setXboxResults] = useState([])
+  const [xboxSearching, setXboxSearching] = useState(false)
+  const [selectedXboxGame, setSelectedXboxGame] = useState(null)
+  const [xboxImportForm, setXboxImportForm] = useState({
+    genre: '',
+    trophy_set_name: 'Base Game',
+    existing_game_id: '',
+    cover_image_url: '',
+  })
 
   const handleSearch = async (e) => {
     e.preventDefault()
@@ -89,6 +106,12 @@ export default function AdminPage() {
     importMutation.mutate(payload)
   }
 
+  const { data: xboxStatus, refetch: refetchXboxStatus } = useQuery({
+    queryKey: ['xbox-status'],
+    queryFn: () => client.get('/admin/xbox/status').then(r => r.data),
+    refetchInterval: 60000,
+  })
+
   if (!meLoading && me?.role !== 'admin') {
     return (
       <div className="text-center py-24">
@@ -134,7 +157,7 @@ export default function AdminPage() {
             }`} />
             <p className="text-sm font-medium" style={{color:'var(--text-primary)'}}>
               {psnStatus?.status === 'healthy' ? 'PSN tokens healthy' :
-              psnStatus?.status === 'needs_refresh' ? 'Token refreshing...' :
+              psnStatus?.status === 'needs_refresh' ? 'PSN: refreshing...' :
               psnStatus?.status === 'expired' ? 'PSN token expired!' :
               'Checking PSN status...'}
             </p>
@@ -145,9 +168,37 @@ export default function AdminPage() {
             </p>
           )}
         </div>
+        {/* <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          {me?.psn_id ? (
+            <>
+              <p className="text-green-400 text-base font-medium">{xboxStatus.gamertag}</p>
+              <p className="text-gray-500 text-sm mt-0.5">Xbox connected</p>
+            </>
+          ) : (
+            <>
+              <p className="text-red-400 text-sm font-medium">Not connected</p>
+              <p className="text-gray-500 text-sm mt-0.5">Xbox account</p>
+            </>
+          )}
+        </div> */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <div className={`w-2 h-2 rounded-full ${
+              xboxStatus?.status === 'healthy' ? 'bg-green-400' :
+              xboxStatus?.status === 'needs_refresh' ? 'bg-yellow-400' :
+              'bg-red-400'
+            }`} />
+            <p className="text-sm font-medium" style={{color:'var(--text-primary)'}}>
+              {xboxStatus?.status === 'healthy' ? 'Xbox tokens healthy' :
+              xboxStatus?.status === 'needs_refresh' ? 'Xbox: refreshing...' :
+              xboxStatus?.status === 'no_tokens' ? 'Xbox token not found!' :
+              'Xbox token expired!'}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Import section */}
+      {/* PSN Import section */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
         <div className="flex items-center gap-3 mb-6">
           <Download size={18} className="text-violet-400" />
@@ -344,6 +395,288 @@ export default function AdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+      </div>
+
+      {/* Xbox Import */}
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-4 h-4 rounded-sm bg-green-500 flex-shrink-0" />
+          <h2 className="text-white font-semibold">Import from Xbox</h2>
+        </div>
+
+        {/* Auth flow */}
+        {xboxStatus?.status === 'no_tokens' || xboxStatus?.status === 'expired' ? (
+          <div>
+            <p className="text-sm mb-4" style={{color:'var(--text-secondary)'}}>
+              Connect your Xbox account to enable game imports.
+            </p>
+            {!xboxAuthUrl ? (
+              <button
+                onClick={async () => {
+                  const res = await getXboxAuthUrl()
+                  setXboxAuthUrl(res.data.url)
+                  window.open(res.data.url, '_blank')
+                }}
+                className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg transition"
+                style={{background:'#107c10', color:'#fff'}}
+              >
+                Connect Xbox Account
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm" style={{color:'var(--text-secondary)'}}>
+                  After authorizing in the browser, copy the full redirect URL and paste it below:
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={xboxCode}
+                    onChange={(e) => setXboxCode(e.target.value)}
+                    placeholder="Paste the redirect URL here..."
+                    className="flex-1 rounded-lg px-4 py-2.5 text-sm focus:outline-none"
+                    style={{
+                      background:'var(--bg-input)',
+                      border:'1px solid var(--border-default)',
+                      color:'var(--text-primary)'
+                    }}
+                  />
+                  <button
+                    onClick={async () => {
+                      try {
+                        // Extract code from URL if full URL pasted
+                        let code = xboxCode
+                        if (xboxCode.includes('code=')) {
+                          code = new URL(xboxCode).searchParams.get('code') || xboxCode
+                        }
+                        await submitXboxCode(code)
+                        setXboxAuthUrl(null)
+                        setXboxCode('')
+                        refetchXboxStatus()
+                      } catch (err) {
+                        alert('Auth failed: ' + (err.response?.data?.detail || err.message))
+                      }
+                    }}
+                    className="px-4 py-2.5 rounded-lg text-sm font-medium"
+                    style={{background:'#107c10', color:'#fff'}}
+                  >
+                    Connect
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            {/* Search */}
+            {!selectedXboxGame ? (
+              <div>
+                <p className="text-sm mb-3" style={{color:'var(--text-secondary)'}}>
+                  Search the Xbox catalog to find a game to import:
+                </p>
+                <form onSubmit={async (e) => {
+                  e.preventDefault()
+                  setXboxSearching(true)
+                  setXboxResults([])
+                  try {
+                    const res = await searchXbox(xboxSearch)
+                    setXboxResults(res.data)
+                  } catch (err) {
+                    alert('Search failed: ' + (err.response?.data?.detail || err.message))
+                  } finally {
+                    setXboxSearching(false)
+                  }
+                }} className="flex gap-2 mb-4">
+                  <div className="relative flex-1">
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:'var(--text-muted)'}} />
+                    <input
+                      type="text"
+                      value={xboxSearch}
+                      onChange={(e) => setXboxSearch(e.target.value)}
+                      placeholder="Search Xbox catalog..."
+                      className="w-full rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none"
+                      style={{
+                        background:'var(--bg-input)',
+                        border:'1px solid var(--border-default)',
+                        color:'var(--text-primary)'
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={xboxSearching}
+                    className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg transition"
+                    style={{background:'#107c10', color:'#fff'}}
+                  >
+                    {xboxSearching ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
+                    Search
+                  </button>
+                </form>
+
+                {xboxResults.length > 0 && (
+                  <div className="space-y-2 max-h-72 overflow-y-auto">
+                    {xboxResults.map((game) => (
+                      <button
+                        key={game.store_id}
+                        onClick={() => game.can_import && setSelectedXboxGame(game)}
+                        disabled={!game.can_import}
+                        className="w-full flex items-center gap-3 rounded-xl px-4 py-3 transition text-left border"
+                        style={{
+                          background: 'var(--bg-elevated)',
+                          borderColor: game.can_import ? 'var(--border-subtle)' : 'var(--border-subtle)',
+                          opacity: game.can_import ? 1 : 0.5,
+                          cursor: game.can_import ? 'pointer' : 'not-allowed',
+                        }}
+                      >
+                        {game.cover_url ? (
+                          <img src={game.cover_url} alt={game.title}
+                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg flex-shrink-0"
+                            style={{background:'var(--bg-input)'}} />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate" style={{color:'var(--text-primary)'}}>
+                            {game.title}
+                          </p>
+                          <p className="text-xs" style={{color:'var(--text-muted)'}}>
+                            {game.can_import
+                              ? `${game.platform} · ${game.max_gamerscore}G`
+                              : 'Not in your Xbox library — play it first to import'}
+                          </p>
+                        </div>
+                        {!game.can_import && (
+                          <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
+                            style={{background:'var(--bg-input)', color:'var(--text-muted)'}}>
+                            Not owned
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Configure and import */
+              <div>
+                <div className="flex items-center gap-3 rounded-xl p-4 mb-4 border"
+                  style={{background:'var(--bg-elevated)', borderColor:'var(--accent-border)'}}>
+                  {selectedXboxGame.cover_url ? (
+                    <img src={selectedXboxGame.cover_url} alt={selectedXboxGame.title}
+                      className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg flex-shrink-0"
+                      style={{background:'var(--bg-input)'}} />
+                  )}
+                  <div className="flex-1">
+                    <p className="font-medium" style={{color:'var(--text-primary)'}}>{selectedXboxGame.title}</p>
+                  </div>
+                  <button onClick={() => setSelectedXboxGame(null)}
+                    className="text-xs transition" style={{color:'var(--text-muted)'}}>
+                    Change
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
+                        Genre <span style={{color:'var(--text-muted)'}}>(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={xboxImportForm.genre}
+                        onChange={(e) => setXboxImportForm({...xboxImportForm, genre: e.target.value})}
+                        placeholder="e.g. Action RPG"
+                        className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
+                        style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
+                        Achievement set name
+                      </label>
+                      <input
+                        type="text"
+                        value={xboxImportForm.trophy_set_name}
+                        onChange={(e) => setXboxImportForm({...xboxImportForm, trophy_set_name: e.target.value})}
+                        className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
+                        style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
+                      Cover image URL <span style={{color:'var(--text-muted)'}}>(optional)</span>
+                    </label>
+                    <input
+                      type="url"
+                      value={xboxImportForm.cover_image_url}
+                      onChange={(e) => setXboxImportForm({...xboxImportForm, cover_image_url: e.target.value})}
+                      placeholder="https://..."
+                      className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
+                      style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
+                      Add to existing game <span style={{color:'var(--text-muted)'}}>(for DLC)</span>
+                    </label>
+                    <select
+                      value={xboxImportForm.existing_game_id}
+                      onChange={(e) => setXboxImportForm({...xboxImportForm, existing_game_id: e.target.value})}
+                      className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
+                      style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
+                    >
+                      <option value="">Create new game entry</option>
+                      {gamesData?.map((g) => (
+                        <option key={g.id} value={g.id}>{g.title} ({g.platform})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setSelectedXboxGame(null)}
+                      className="flex-1 py-2.5 rounded-lg text-sm font-medium transition border"
+                      style={{background:'var(--bg-elevated)', borderColor:'var(--border-subtle)', color:'var(--text-secondary)'}}
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const payload = {
+                            title_id: selectedXboxGame.title_id,
+                            game_title: selectedXboxGame.title,
+                            trophy_set_name: xboxImportForm.trophy_set_name,
+                          }
+                          if (xboxImportForm.genre) payload.genre = xboxImportForm.genre
+                          if (xboxImportForm.cover_image_url) payload.cover_image_url = xboxImportForm.cover_image_url
+                          if (xboxImportForm.existing_game_id) payload.existing_game_id = xboxImportForm.existing_game_id
+                          const res = await importXboxGame(payload)
+                          alert(`✅ ${res.data.message} — ${res.data.achievements_imported} achievements imported`)
+                          setSelectedXboxGame(null)
+                          setXboxSearch('')
+                          setXboxResults([])
+                          queryClient.invalidateQueries({ queryKey: ['all-games'] })
+                          queryClient.invalidateQueries({ queryKey: ['games'] })
+                        } catch (err) {
+                          alert('Import failed: ' + (err.response?.data?.detail || err.message))
+                        }
+                      }}
+                      className="flex-1 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
+                      style={{background:'#107c10', color:'#fff'}}
+                    >
+                      <Download size={16} /> Import
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

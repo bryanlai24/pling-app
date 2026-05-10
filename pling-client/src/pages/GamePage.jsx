@@ -137,24 +137,34 @@ export default function GamePage() {
               </div>
 
               {/* Progress bar */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-gray-500">{completed} / {total} trophies</span>
-                  <span className="text-xs font-medium text-white">{percent}%</span>
+              {game.platform === 'psn' && (
+                <div className="mt-4">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs text-gray-500">{completed} / {total} trophies</span>
+                    <span className="text-xs font-medium text-white">{percent}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-800 rounded-full">
+                    <div
+                      className="h-2 bg-violet-500 rounded-full transition-all"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-2 bg-gray-800 rounded-full">
-                  <div
-                    className="h-2 bg-violet-500 rounded-full transition-all"
-                    style={{ width: `${percent}%` }}
-                  />
-                </div>
-              </div>
+              )}
 
-              {/* Xbox gamerscore */}
-              {game.platform === 'xbox' && userGame?.gamerscore_total > 0 && (
-                <p className="text-xs text-gray-500 mt-2">
-                  {userGame.gamerscore_earned ?? 0}G / {userGame.gamerscore_total}G
-                </p>
+              {game.platform === 'xbox' && (
+                <div className="mt-4">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs text-gray-500">{userGame.gamerscore_earned ?? 0}G / {userGame.gamerscore_total}G</span>
+                    <span className="text-xs font-medium text-white">{percent}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-800 rounded-full">
+                    <div
+                      className="h-2 bg-violet-500 rounded-full transition-all"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </div>
