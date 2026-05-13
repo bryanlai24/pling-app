@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, Integer
+from sqlalchemy import select, func, Integer, case
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
 
@@ -88,7 +88,12 @@ async def list_achievements_for_game(
         .where(Achievement.game_id == game_id)
         .options(selectinload(Achievement.trophy_set))
         .order_by(
-            Achievement.platform_achievement_id.cast(Integer).asc().nulls_last(),
+            Achievement.sort_order.asc(),
+            case(
+                (Achievement.platform_achievement_id.regexp_match(r'^\d+$'),
+                Achievement.platform_achievement_id.cast(Integer)),
+                else_=None
+            ).asc().nulls_last(),
             Achievement.title.asc()
         )
     )

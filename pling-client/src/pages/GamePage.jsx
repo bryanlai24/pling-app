@@ -80,6 +80,12 @@ export default function GamePage() {
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0
   const hasMultipleSets = Object.keys(groupedAchievements).length > 1
 
+  const trophyLabel = game?.platform === 'steam' 
+  ? 'Achievements' 
+  : game?.platform === 'xbox' 
+  ? 'Achievements' 
+  : 'Trophies'
+
   if (!game && !isLoading) {
     return (
       <div className="text-center py-24 text-gray-500">
@@ -140,22 +146,7 @@ export default function GamePage() {
               {game.platform === 'psn' && (
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-gray-500">{completed} / {total} trophies</span>
-                    <span className="text-xs font-medium text-white">{percent}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-gray-800 rounded-full">
-                    <div
-                      className="h-2 bg-violet-500 rounded-full transition-all"
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {game.platform === 'xbox' && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-gray-500">{userGame.gamerscore_earned ?? 0}G / {userGame.gamerscore_total}G</span>
+                    <span className="text-xs text-gray-500">{completed} / {total} {trophyLabel}</span>
                     <span className="text-xs font-medium text-white">{percent}%</span>
                   </div>
                   <div className="w-full h-2 bg-gray-800 rounded-full">
@@ -174,7 +165,7 @@ export default function GamePage() {
       {/* Achievements header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold text-white">Trophies</h2>
+          <h2 className="text-lg font-semibold text-white">{trophyLabel}</h2>
           <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
             {total}
           </span>
@@ -209,7 +200,7 @@ export default function GamePage() {
       {/* Loading */}
       {isLoading && (
         <div className="text-center py-16 text-gray-500 text-sm">
-          Loading trophies...
+          Loading {trophyLabel}...
         </div>
       )}
 
@@ -217,16 +208,16 @@ export default function GamePage() {
       {!isLoading && achievements.length === 0 && (
         <div className="text-center py-24 border border-dashed border-gray-800 rounded-2xl">
           <Trophy size={40} className="text-gray-700 mx-auto mb-4" />
-          <h3 className="text-white font-medium mb-1">No trophies yet</h3>
+          <h3 className="text-white font-medium mb-1">No {trophyLabel.toLowerCase()} yet</h3>
           <p className="text-gray-500 text-sm mb-6">
-            Add the trophies you want to track for this game
+            Add the {trophyLabel.toLowerCase()} you want to track for this game
           </p>
           <button
             onClick={() => setShowAddAchievement(true)}
             className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition mx-auto"
           >
             <Plus size={16} />
-            Add trophy
+            Add {trophyLabel.slice(0, -1)}
           </button>
         </div>
       )}
@@ -330,7 +321,7 @@ export default function GamePage() {
       {/* No results from filter */}
       {!isLoading && achievements.length > 0 && filtered.length === 0 && (
         <div className="text-center py-16 text-gray-500 text-sm">
-          No {filter} trophies
+          No {filter} {trophyLabel}
         </div>
       )}
 

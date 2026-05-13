@@ -23,6 +23,8 @@ class TrophySet(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
+    gamerscore_total: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
     # Relationships
     game: Mapped["Game"] = relationship(back_populates="trophy_sets")
     achievements: Mapped[list["Achievement"]] = relationship(

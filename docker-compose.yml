@@ -29,6 +29,9 @@ services:
       APP_ENV: development
       CORS_ORIGINS: http://localhost:5173
       PSN_NPSSO_TOKEN: ${PSN_NPSSO_TOKEN}
+      XBOX_CLIENT_ID: ${XBOX_CLIENT_ID}
+      XBOX_CLIENT_SECRET: ${XBOX_CLIENT_SECRET}
+      STEAM_API_KEY: ${STEAM_API_KEY}
     ports:
       - "8000:8000"
     volumes:

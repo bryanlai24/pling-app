@@ -12,6 +12,8 @@ const getXboxAuthUrl = () => client.get('/admin/xbox/auth-url')
 const submitXboxCode = (code) => client.post('/admin/xbox/auth-callback', { code })
 const searchXbox = (query) => client.get(`/admin/xbox/search?query=${encodeURIComponent(query)}`)
 const importXboxGame = (data) => client.post('/admin/import/xbox', data)
+const searchSteam = (query) => client.get(`/admin/steam/search?query=${encodeURIComponent(query)}`)
+const importSteamGame = (data) => client.post('/admin/import/steam', data)
 
 export default function AdminPage() {
   const navigate = useNavigate()
@@ -57,6 +59,18 @@ export default function AdminPage() {
     existing_game_id: '',
     cover_image_url: '',
   })
+
+  const [steamSearch, setSteamSearch] = useState('')
+  const [steamResults, setSteamResults] = useState([])
+  const [steamSearching, setSteamSearching] = useState(false)
+  const [selectedSteamGame, setSelectedSteamGame] = useState(null)
+  const [steamImportForm, setSteamImportForm] = useState({
+    genre: '',
+    trophy_set_name: 'Base Game',
+    existing_game_id: '',
+  })
+  const [steamImportResult, setSteamImportResult] = useState(null)
+  const [steamImportError, setSteamImportError] = useState(null)
 
   const handleSearch = async (e) => {
     e.preventDefault()
@@ -248,7 +262,12 @@ export default function AdminPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search your PSN library..."
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-9 pr-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-violet-500 transition"
+                  className="w-full rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none"
+                  style={{
+                    background:'var(--bg-input)',
+                    border:'1px solid var(--border-default)',
+                    color:'var(--text-primary)'
+                  }}
                 />
               </div>
               <button
@@ -670,6 +689,240 @@ export default function AdminPage() {
                       }}
                       className="flex-1 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
                       style={{background:'#107c10', color:'#fff'}}
+                    >
+                      <Download size={16} /> Import
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Steam Import */}
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-4 h-4 rounded-sm flex-shrink-0" style={{background:'#1b2838'}} />
+          <h2 className="text-white font-semibold">Import from Steam</h2>
+        </div>
+
+        {!me?.steam_id ? (
+          <div className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm rounded-lg px-4 py-3">
+            Add your Steam ID in your{' '}
+            <button onClick={() => navigate('/profile')} className="underline hover:text-amber-300">
+              profile
+            </button>{' '}
+            to enable Steam imports.
+          </div>
+        ) : (
+          <div>
+            {steamImportResult && (
+              <div className="bg-green-500/10 border border-green-500/30 text-green-400 text-sm rounded-lg px-4 py-3 mb-4 flex items-start gap-2">
+                <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">{steamImportResult.message}</p>
+                  <p className="text-green-500/70 text-xs mt-0.5">
+                    {steamImportResult.achievements_imported} achievements imported
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {steamImportError && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-4 flex items-start gap-2">
+                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                <p>{steamImportError}</p>
+              </div>
+            )}
+
+            {!selectedSteamGame ? (
+              <div>
+                <p className="text-sm mb-3" style={{color:'var(--text-secondary)'}}>
+                  Search your Steam library to find a game to import:
+                </p>
+                <form onSubmit={async (e) => {
+                  e.preventDefault()
+                  setSteamSearching(true)
+                  setSteamResults([])
+                  setSteamImportResult(null)
+                  setSteamImportError(null)
+                  try {
+                    const res = await searchSteam(steamSearch)
+                    setSteamResults(res.data)
+                  } catch (err) {
+                    setSteamImportError('Search failed: ' + (err.response?.data?.detail || err.message))
+                  } finally {
+                    setSteamSearching(false)
+                  }
+                }} className="flex gap-2 mb-4">
+                  <div className="relative flex-1">
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:'var(--text-muted)'}} />
+                    <input
+                      type="text"
+                      value={steamSearch}
+                      onChange={(e) => setSteamSearch(e.target.value)}
+                      placeholder="Search your Steam library..."
+                      className="w-full rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none"
+                      style={{
+                        background:'var(--bg-input)',
+                        border:'1px solid var(--border-default)',
+                        color:'var(--text-primary)'
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={steamSearching}
+                    className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg transition"
+                    style={{background:'#1b2838', color:'#fff'}}
+                  >
+                    {steamSearching ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
+                    Search
+                  </button>
+                </form>
+
+                {steamResults.length > 0 && (
+                  <div className="space-y-2 max-h-72 overflow-y-auto">
+                    {steamResults.map((game) => (
+                      <button
+                        key={game.app_id}
+                        onClick={() => setSelectedSteamGame(game)}
+                        className="w-full flex items-center gap-3 rounded-xl px-4 py-3 transition text-left border"
+                        style={{
+                          background:'var(--bg-elevated)',
+                          borderColor:'var(--border-subtle)',
+                        }}
+                      >
+                        {game.cover_url ? (
+                          <img src={game.cover_url} alt={game.title}
+                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg flex-shrink-0"
+                            style={{background:'var(--bg-input)'}} />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate" style={{color:'var(--text-primary)'}}>
+                            {game.title}
+                          </p>
+                          <p className="text-xs" style={{color:'var(--text-muted)'}}>
+                            {game.playtime_hours}h played
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {steamResults.length === 0 && steamSearch && !steamSearching && (
+                  <p className="text-center py-4 text-sm" style={{color:'var(--text-muted)'}}>
+                    No games found matching "{steamSearch}"
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div>
+                {/* Selected game */}
+                <div className="flex items-center gap-3 rounded-xl p-4 mb-4 border"
+                  style={{background:'var(--bg-elevated)', borderColor:'var(--accent-border)'}}>
+                  {selectedSteamGame.cover_url ? (
+                    <img src={selectedSteamGame.cover_url} alt={selectedSteamGame.title}
+                      className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg flex-shrink-0"
+                      style={{background:'var(--bg-input)'}} />
+                  )}
+                  <div className="flex-1">
+                    <p className="font-medium" style={{color:'var(--text-primary)'}}>{selectedSteamGame.title}</p>
+                    <p className="text-xs" style={{color:'var(--text-muted)'}}>
+                      App ID: {selectedSteamGame.app_id}
+                    </p>
+                  </div>
+                  <button onClick={() => setSelectedSteamGame(null)}
+                    className="text-xs" style={{color:'var(--text-muted)'}}>
+                    Change
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
+                        Genre <span style={{color:'var(--text-muted)'}}>(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={steamImportForm.genre}
+                        onChange={(e) => setSteamImportForm({...steamImportForm, genre: e.target.value})}
+                        placeholder="e.g. Action RPG"
+                        className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
+                        style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
+                        Achievement set name
+                      </label>
+                      <input
+                        type="text"
+                        value={steamImportForm.trophy_set_name}
+                        onChange={(e) => setSteamImportForm({...steamImportForm, trophy_set_name: e.target.value})}
+                        className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
+                        style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
+                      Add to existing game <span style={{color:'var(--text-muted)'}}>(for DLC)</span>
+                    </label>
+                    <select
+                      value={steamImportForm.existing_game_id}
+                      onChange={(e) => setSteamImportForm({...steamImportForm, existing_game_id: e.target.value})}
+                      className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
+                      style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
+                    >
+                      <option value="">Create new game entry</option>
+                      {gamesData?.map((g) => (
+                        <option key={g.id} value={g.id}>{g.title} ({g.platform})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setSelectedSteamGame(null)}
+                      className="flex-1 py-2.5 rounded-lg text-sm font-medium transition border"
+                      style={{background:'var(--bg-elevated)', borderColor:'var(--border-subtle)', color:'var(--text-secondary)'}}
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setSteamImportError(null)
+                        setSteamImportResult(null)
+                        try {
+                          const payload = {
+                            app_id: selectedSteamGame.app_id,
+                            game_title: selectedSteamGame.title,
+                            trophy_set_name: steamImportForm.trophy_set_name,
+                          }
+                          if (steamImportForm.genre) payload.genre = steamImportForm.genre
+                          if (steamImportForm.existing_game_id) payload.existing_game_id = steamImportForm.existing_game_id
+                          const res = await importSteamGame(payload)
+                          setSteamImportResult(res.data)
+                          setSelectedSteamGame(null)
+                          setSteamSearch('')
+                          setSteamResults([])
+                          queryClient.invalidateQueries({ queryKey: ['all-games'] })
+                          queryClient.invalidateQueries({ queryKey: ['games'] })
+                        } catch (err) {
+                          setSteamImportError('Import failed: ' + (err.response?.data?.detail || err.message))
+                        }
+                      }}
+                      className="flex-1 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
+                      style={{background:'#1b2838', color:'#fff'}}
                     >
                       <Download size={16} /> Import
                     </button>

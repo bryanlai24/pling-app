@@ -43,6 +43,8 @@ class Achievement(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
+    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
     # Relationships
     game: Mapped["Game"] = relationship(back_populates="achievements")
     trophy_set: Mapped["TrophySet | None"] = relationship(back_populates="achievements")

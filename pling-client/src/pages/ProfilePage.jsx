@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getMe } from '../api/auth'
+import { getMe, updateMe } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
 import { User, Trophy, Shield, Link, Unlink, Eye, EyeOff, Type } from 'lucide-react'
 import axios from 'axios'
 import client from '../api/client'
 import { useUIStore } from '../store/uiStore'
+import XboxConnect from '../components/profile/XboxConnect'
 
 const connectPSN = (data) => client.post('/users/me/psn/connect', data)
 const disconnectPSN = () => client.delete('/users/me/psn/disconnect')
@@ -43,6 +44,11 @@ export default function ProfilePage() {
 
   const disconnectMutation = useMutation({
     mutationFn: disconnectPSN,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
+  })
+
+  const updateMeMutation = useMutation({
+    mutationFn: (data) => updateMe(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
   })
 
@@ -171,26 +177,90 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Xbox (coming soon) */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-4 opacity-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Shield size={18} className="text-green-400" />
-            <h3 className="text-white font-medium">Xbox</h3>
-          </div>
-          <span className="text-xs text-gray-600 bg-gray-800 px-2 py-1 rounded-full">Coming soon</span>
+      {/* Xbox */}
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mt-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-4 h-4 rounded-sm bg-green-500 flex-shrink-0" />
+          <h3 className="text-white font-medium">Xbox</h3>
         </div>
+
+        {me?.role === 'admin' || me?.role === 'contributor' ? (
+          <XboxConnect />
+        ) : (
+          <p className="text-sm" style={{color:'var(--text-secondary)'}}>
+            Xbox connection is managed by admins for game imports.
+          </p>
+        )}
       </div>
 
-      {/* Steam (coming soon) */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 opacity-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Shield size={18} className="text-gray-400" />
-            <h3 className="text-white font-medium">Steam</h3>
-          </div>
-          <span className="text-xs text-gray-600 bg-gray-800 px-2 py-1 rounded-full">Coming soon</span>
+      {/* Steam */}
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mt-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-4 h-4 rounded-sm" style={{background:'#1b2838'}} />
+          <h3 className="text-white font-medium">Steam</h3>
         </div>
+
+        {me?.steam_id ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-green-400" />
+              <div>
+                <p className="text-white text-sm font-medium">{me.steam_id}</p>
+                <p className="text-gray-500 text-xs">Steam ID connected</p>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                await updateMe({ steam_id: null })
+                queryClient.invalidateQueries({ queryKey: ['me'] })
+              }}
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-400 transition px-3 py-1.5 rounded-lg hover:bg-gray-800"
+            >
+              <Unlink size={14} />
+              Remove
+            </button>
+          </div>
+        ) : (
+          <div>
+            <p className="text-gray-500 text-sm mb-4">
+              Add your Steam ID to enable game imports from your Steam library.
+            </p>
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 mb-4">
+              <p className="text-xs font-medium text-gray-400 mb-2">How to find your Steam ID:</p>
+              <ol className="text-xs text-gray-500 space-y-1.5 list-decimal list-inside">
+                <li>Go to <span className="text-violet-400">steamidfinder.com</span></li>
+                <li>Enter your Steam profile URL or username</li>
+                <li>Copy the <span className="font-mono bg-gray-800 px-1 rounded">steamID64</span> value</li>
+                <li>Paste it below</li>
+              </ol>
+            </div>
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              const steamId = e.target.steam_id.value.trim()
+              await updateMe({ steam_id: steamId })
+              queryClient.invalidateQueries({ queryKey: ['me'] })
+            }} className="flex gap-2">
+              <input
+                type="text"
+                name="steam_id"
+                placeholder="76561198084471335"
+                className="flex-1 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none"
+                style={{
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-default)',
+                }}
+              />
+              <button
+                type="submit"
+                className="flex items-center gap-1.5 text-sm font-medium px-4 py-2.5 rounded-lg flex-shrink-0"
+                style={{background:'#1b2838', color:'#fff'}}
+              >
+                <Link size={14} />
+                Save
+              </button>
+            </form>
+          </div>
+        )}
       </div>
 
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mt-4">

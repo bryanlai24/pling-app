@@ -4,6 +4,7 @@ from app.models.trophy_set import TrophySet
 from app.models.achievement import Achievement, Objective, TrophyType, UserAchievement, UserObjective
 from app.models.progress import UserGame, GameStatus
 from app.models.psn_token import PSNToken
+from app.models.xbox_token import XboxToken
 
 __all__ = [
     "User",
@@ -17,4 +18,5 @@ __all__ = [
     "UserGame",
     "GameStatus",
     "PSNToken",
+    "XboxToken",
 ]

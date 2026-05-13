@@ -56,10 +56,8 @@ async def delete_game(db: AsyncSession, game_id: uuid.UUID) -> None:
 async def add_game_to_library(
     db: AsyncSession, user_id: uuid.UUID, data: UserGameCreate
 ) -> UserGame:
-    # Ensure game exists
     await get_game(db, data.game_id)
 
-    # Check not already in library
     existing = await db.execute(
         select(UserGame).where(
             UserGame.user_id == user_id,
@@ -72,10 +70,20 @@ async def add_game_to_library(
             detail="This game is already in your library",
         )
 
+    # Get gamerscore total from trophy sets if Xbox game
+    from app.models.trophy_set import TrophySet
+    from sqlalchemy import func as sqlfunc
+    ts_result = await db.execute(
+        select(sqlfunc.sum(TrophySet.gamerscore_total))
+        .where(TrophySet.game_id == data.game_id)
+    )
+    gamerscore_total = ts_result.scalar() or None
+
     user_game = UserGame(
         user_id=user_id,
         game_id=data.game_id,
         status=GameStatus.not_started,
+        gamerscore_total=gamerscore_total,
     )
     db.add(user_game)
     await db.flush()
