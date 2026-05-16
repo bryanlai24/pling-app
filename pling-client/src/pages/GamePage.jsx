@@ -5,6 +5,9 @@ import { getLibrary, updateLibraryEntry, removeFromLibrary } from '../api/games'
 import { listAchievements } from '../api/achievements'
 import { Trophy, Plus, ChevronRight, ChevronLeft, CheckCircle2, Circle, Loader2, Trash2 } from 'lucide-react'
 import AddAchievementModal from '../components/achievements/AddAchievementModal'
+import { useAuthStore } from '../store/authStore'
+import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
+import client from '../api/client'
 
 const TROPHY_COLORS = {
   bronze: 'text-amber-600',
@@ -34,14 +37,23 @@ export default function GamePage() {
   const queryClient = useQueryClient()
   const [showAddAchievement, setShowAddAchievement] = useState(false)
   const [filter, setFilter] = useState('all') // all | incomplete | complete
+  const { isGuest } = useAuthStore()
+  const [showGuestPrompt, setShowGuestPrompt] = useState(false)
 
   const { data: library = [] } = useQuery({
     queryKey: ['library'],
     queryFn: () => getLibrary().then((r) => r.data),
+    enabled: !isGuest,
   })
 
-  const userGame = library.find((ug) => ug.game.id === gameId)
-  const game = userGame?.game
+  const { data: catalogueGame } = useQuery({
+    queryKey: ['game', gameId],
+    queryFn: () => client.get(`/games/${gameId}`).then((r) => r.data),
+    enabled: isGuest && !!gameId,
+  })
+
+  const userGame = isGuest ? null : library.find((ug) => ug.game.id === gameId)
+  const game = isGuest ? catalogueGame : userGame?.game
 
   const { data: achievements = [], isLoading } = useQuery({
     queryKey: ['achievements', gameId],
@@ -89,7 +101,7 @@ export default function GamePage() {
   if (!game && !isLoading) {
     return (
       <div className="text-center py-24 text-gray-500">
-        Game not found in your library.
+        {isGuest ? 'Game not found.' : 'Game not found in your library.'}
       </div>
     )
   }
@@ -187,13 +199,15 @@ export default function GamePage() {
               </button>
             ))}
           </div>
-          <button
-            onClick={() => setShowAddAchievement(true)}
-            className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition"
-          >
-            <Plus size={15} />
-            Add
-          </button>
+          {!isGuest && (
+            <button
+              onClick={() => setShowAddAchievement(true)}
+              className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition"
+            >
+              <Plus size={15} />
+              Add
+            </button>
+          )}
         </div>
       </div>
 
@@ -337,30 +351,51 @@ export default function GamePage() {
           }}
         />
       )}
-      {/* Status + remove */}
+
+      {/* Status + remove — logged in only */}
+      {!isGuest && (
         <div className="flex items-center gap-2 flex-shrink-0">
-        <select
+          <select
             value={userGame?.status || 'not_started'}
             onChange={(e) => statusMutation.mutate(e.target.value)}
             className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-violet-500 transition"
-        >
+          >
             {STATUS_OPTIONS.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
+              <option key={s.value} value={s.value}>{s.label}</option>
             ))}
-        </select>
-        <button
+          </select>
+          <button
             onClick={() => {
-            if (confirm(`Remove ${game?.title} from your library? Your progress will be lost.`)) {
+              if (confirm(`Remove ${game?.title} from your library?`)) {
                 removeMutation.mutate()
-            }
+              }
             }}
             disabled={removeMutation.isPending}
             className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-gray-800 rounded-lg transition"
-            title="Remove from library"
-        >
+          >
             <Trash2 size={16} />
-        </button>
+          </button>
         </div>
+      )}
+
+      {/* Guest CTA */}
+      {isGuest && (
+        <button
+          onClick={() => setShowGuestPrompt(true)}
+          className="text-sm px-4 py-2 rounded-lg border transition flex-shrink-0"
+          style={{
+            background:'var(--accent-dim)',
+            borderColor:'var(--accent-border)',
+            color:'var(--accent)'
+          }}
+        >
+          Track this game →
+        </button>
+      )}
+
+      {showGuestPrompt && (
+        <GuestTrackingPrompt onClose={() => setShowGuestPrompt(false)} />
+      )}
     </div>
   )
 }

@@ -1,9 +1,10 @@
 import uuid
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 from app.database import get_db
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, get_optional_user
 from app.models.user import User
 from app.schemas.game import (
     GameCreate, GameUpdate, GameResponse,
@@ -30,7 +31,7 @@ async def create_game(
 async def list_games(
     platform: str | None = Query(None, description="Filter by platform: psn, xbox, steam, manual"),
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User | None = Depends(get_optional_user),
 ):
     games = await game_service.list_games(db, platform=platform)
     return [GameResponse.model_validate(g) for g in games]
@@ -40,7 +41,7 @@ async def list_games(
 async def get_game(
     game_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User | None = Depends(get_optional_user),
 ):
     game = await game_service.get_game(db, game_id)
     return GameResponse.model_validate(game)

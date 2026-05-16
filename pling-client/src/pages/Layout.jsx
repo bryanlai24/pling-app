@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import GuestBanner from '../ui/GuestBanner'
 
 export default function Layout() {
   return (
@@ -6,6 +7,7 @@ export default function Layout() {
       <main className="max-w-5xl mx-auto px-4 py-8">
         <Outlet />
       </main>
+      <GuestBanner />
     </div>
   )
 }

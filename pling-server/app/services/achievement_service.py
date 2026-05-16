@@ -49,27 +49,33 @@ async def get_achievement(db: AsyncSession, achievement_id: uuid.UUID) -> Achiev
 
 
 async def get_achievement_with_user_progress(
-    db: AsyncSession, achievement_id: uuid.UUID, user_id: uuid.UUID
+    db: AsyncSession,
+    achievement_id: uuid.UUID,
+    user_id: uuid.UUID | None = None,
 ) -> dict:
     achievement = await get_achievement(db, achievement_id)
 
-    ua_result = await db.execute(
-        select(UserAchievement).where(
-            UserAchievement.achievement_id == achievement_id,
-            UserAchievement.user_id == user_id,
-        )
-    )
-    user_achievement = ua_result.scalar_one_or_none()
+    user_achievement = None
+    user_objectives = {}
 
-    objective_ids = [o.id for o in achievement.objectives]
-    uo_result = await db.execute(
-        select(UserObjective).where(
-            UserObjective.objective_id.in_(objective_ids),
-            UserObjective.user_id == user_id,
+    if user_id:
+        ua_result = await db.execute(
+            select(UserAchievement).where(
+                UserAchievement.achievement_id == achievement_id,
+                UserAchievement.user_id == user_id,
+            )
         )
-    )
-    user_objectives = {uo.objective_id: uo for uo in uo_result.scalars().all()}
+        user_achievement = ua_result.scalar_one_or_none()
 
+        objective_ids = [o.id for o in achievement.objectives]
+        if objective_ids:
+            uo_result = await db.execute(
+                select(UserObjective).where(
+                    UserObjective.objective_id.in_(objective_ids),
+                    UserObjective.user_id == user_id,
+                )
+            )
+            user_objectives = {uo.objective_id: uo for uo in uo_result.scalars().all()}
     return {
         "achievement": achievement,
         "user_achievement": user_achievement,

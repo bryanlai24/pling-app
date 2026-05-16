@@ -4,7 +4,9 @@ import { updateObjective, deleteObjective, updateObjectiveProgress } from '../..
 import { CheckCircle2, Circle, ChevronDown, ChevronUp, Pencil, Trash2, X, Check, Plus, Minus } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { useContributorCheck } from '../../hooks/useContributorCheck'
+import { useAuthStore } from '../../store/authStore'
 import ContributorPrompt from '../ui/ContributorPrompt'
+import GuestTrackingPrompt from '../ui/GuestTrackingPrompt'
 
 export default function ObjectiveItem({
   objective,
@@ -81,7 +83,17 @@ export default function ObjectiveItem({
     counterMutation.mutate(clamped)
   }
 
+  const handleTick = () => {
+    if (isGuest) {
+      setShowGuestPrompt(true)
+      return
+    }
+    onTick()
+  }
+
   const { isContributor, showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
+  const { isGuest } = useAuthStore()
+  const [showGuestPrompt, setShowGuestPrompt] = useState(false)
 
   return (
     <div className={`border rounded-xl transition ${
@@ -94,7 +106,7 @@ export default function ObjectiveItem({
         {/* Checkbox — only for non-counter objectives */}
         {!isCounter && (
           <button
-            onClick={onTick}
+            onClick={handleTick}
             disabled={isPending}
             className="flex-shrink-0 transition hover:scale-110"
           >
@@ -300,6 +312,10 @@ export default function ObjectiveItem({
           onClose={() => setShowPrompt(false)}
           discordUrl="https://discord.gg/VCKmQ7jftR"
         />
+      )}
+
+      {showGuestPrompt && (
+        <GuestTrackingPrompt onClose={() => setShowGuestPrompt(false)} />
       )}
     </div>
   )

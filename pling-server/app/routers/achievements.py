@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.auth.dependencies import get_current_user, require_contributor
+from app.auth.dependencies import get_current_user, require_contributor, get_optional_user
 from app.models.user import User
 from app.schemas.achievement import (
     AchievementCreate, AchievementUpdate, AchievementResponse,
@@ -33,10 +33,10 @@ async def list_achievements(
     game_id: uuid.UUID,
     with_progress: bool = Query(True),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_optional_user),
 ):
     rows = await achievement_service.list_achievements_for_game(
-        db, game_id, user_id=current_user.id if with_progress else None
+        db, game_id, user_id=current_user.id if with_progress and current_user is not None else None
     )
     results = []
     for row in rows:
@@ -61,11 +61,11 @@ async def list_achievements(
 async def get_achievement(
     achievement_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_optional_user),
 ):
     """Full hunt screen data — achievement + all objectives + user progress."""
     data = await achievement_service.get_achievement_with_user_progress(
-        db, achievement_id, current_user.id
+        db, achievement_id, user_id=current_user.id if current_user else None
     )
     a = data["achievement"]
     ua = data["user_achievement"]

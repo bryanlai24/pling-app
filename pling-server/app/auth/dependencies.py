@@ -11,6 +11,10 @@ from app.auth.jwt import decode_access_token
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(
+    tokenUrl="/api/users/login",
+    auto_error=False
+)
 
 
 def _truncate(password: str) -> str:
@@ -66,3 +70,15 @@ async def require_admin(
             detail="Admin access required",
         )
     return current_user
+
+async def get_optional_user(
+    token: str | None = Depends(OAuth2PasswordBearer(tokenUrl="/api/users/login", auto_error=False)),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    if not token:
+        return None
+    user_id = decode_access_token(token)
+    if not user_id:
+        return None
+    result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
+    return result.scalar_one_or_none()

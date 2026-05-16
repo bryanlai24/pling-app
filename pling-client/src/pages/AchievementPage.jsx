@@ -3,12 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAchievement, updateAchievementProgress } from '../api/achievements'
 import { updateObjectiveProgress } from '../api/objectives'
-import { ChevronLeft, Plus, Trophy, CheckCircle2, Circle, Loader2 } from 'lucide-react'
+import { ChevronLeft, Plus, Trophy, CheckCircle2, Circle, Loader2, UserPlus } from 'lucide-react'
 import { useContributorCheck } from '../hooks/useContributorCheck'
 import { useAuthStore } from '../store/authStore'
 import AddObjectiveModal from '../components/objectives/AddObjectiveModal'
 import ObjectiveItem from '../components/objectives/ObjectiveItem'
 import ContributorPrompt from '../components/ui/ContributorPrompt'
+import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
 
 const TROPHY_COLORS = {
   bronze: 'text-amber-600 bg-amber-600/10 border-amber-600/20',
@@ -30,6 +31,8 @@ export default function AchievementPage() {
   const queryClient = useQueryClient()
   const [showAddObjective, setShowAddObjective] = useState(false)
   const { isContributor, showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
+  const { isGuest } = useAuthStore()
+  const [showGuestPrompt, setShowGuestPrompt] = useState(false)
 
   const { data: achievement, isLoading } = useQuery({
     queryKey: ['achievement', achievementId],
@@ -62,6 +65,11 @@ export default function AchievementPage() {
   })
 
   const handleTickObjective = (objective, userProgress) => {
+    if (isGuest) {
+      setShowGuestPrompt(true)
+      return
+    }
+
     const isCurrentlyCompleted = userProgress?.is_completed ?? false
     const newCompleted = !isCurrentlyCompleted
 
@@ -79,6 +87,10 @@ export default function AchievementPage() {
   }
 
   const handleToggleAchievement = () => {
+    if (isGuest) {
+      setShowGuestPrompt(true)
+      return
+    }
     const isCompleted = achievement?.user_progress?.is_completed ?? false
     progressMutation.mutate({ is_completed: !isCompleted })
   }
@@ -165,21 +177,36 @@ export default function AchievementPage() {
               </div>
 
               {/* Complete toggle */}
-              <button
-                onClick={handleToggleAchievement}
-                disabled={progressMutation.isPending}
-                className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition flex-shrink-0 ${
-                  isCompleted
-                    ? 'bg-violet-500/10 border-violet-500/30 text-violet-400 hover:bg-violet-500/20'
-                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
-                }`}
-              >
-                {isCompleted ? (
-                  <><CheckCircle2 size={15} /> Earned</>
-                ) : (
-                  <><Circle size={15} /> Mark earned</>
-                )}
-              </button>
+              {isGuest ? (
+                <button
+                  onClick={() => setShowGuestPrompt(true)}
+                  className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition flex-shrink-0"
+                  style={{
+                    background:'var(--bg-elevated)',
+                    borderColor:'var(--border-subtle)',
+                    color:'var(--text-muted)'
+                  }}
+                >
+                  <UserPlus size={15} />
+                  Sign up to track
+                </button>
+              ) : (
+                <button
+                  onClick={handleToggleAchievement}
+                  disabled={progressMutation.isPending}
+                  className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition flex-shrink-0 ${
+                    isCompleted
+                      ? 'bg-violet-500/10 border-violet-500/30 text-violet-400 hover:bg-violet-500/20'
+                      : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
+                  }`}
+                >
+                  {isCompleted ? (
+                    <><CheckCircle2 size={15} /> Earned</>
+                  ) : (
+                    <><Circle size={15} /> Mark earned</>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Objectives progress bar */}
@@ -296,6 +323,10 @@ export default function AchievementPage() {
           onClose={() => setShowPrompt(false)}
           discordUrl="https://discord.gg/VCKmQ7jftR"
         />
+      )}
+
+      {showGuestPrompt && (
+        <GuestTrackingPrompt onClose={() => setShowGuestPrompt(false)} />
       )}
     </div>
   )

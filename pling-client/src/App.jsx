@@ -10,8 +10,8 @@ import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
 
 function ProtectedRoute({ children }) {
-  const token = useAuthStore((s) => s.token)
-  return token ? children : <Navigate to="/login" replace />
+  const { token, isGuest } = useAuthStore()
+  return (token || isGuest) ? children : <Navigate to="/login" replace />
 }
 
 export default function App() {

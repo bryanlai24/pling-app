@@ -5,12 +5,13 @@ import { getMe } from '../../api/auth'
 import { Trophy, Library, LogOut, User, Shield } from 'lucide-react'
 
 export default function Layout() {
-  const { clearAuth } = useAuthStore()
+  const { clearAuth, isGuest } = useAuthStore()
   const navigate = useNavigate()
 
   const { data: me } = useQuery({
     queryKey: ['me'],
     queryFn: () => getMe().then((r) => r.data),
+    enabled: !isGuest,
   })
 
   const handleLogout = () => {
@@ -63,18 +64,31 @@ export default function Layout() {
               ))}
           </nav>
 
+          {/* User menu */}
           <div className="flex items-center gap-3">
-            <span className="text-sm hidden sm:block" style={{color:'var(--text-muted)'}}>
-              {me?.username}
-            </span>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 text-sm transition px-2 py-1.5 rounded-lg"
-              style={{color:'var(--text-secondary)'}}
-            >
-              <LogOut size={15} />
-              <span className="hidden sm:block">Sign out</span>
-            </button>
+            {isGuest ? (
+              <button
+                onClick={() => navigate('/register')}
+                className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition"
+                style={{background:'var(--accent)', color:'#fff'}}
+              >
+                Sign up free
+              </button>
+            ) : (
+              <>
+                <span className="text-sm hidden sm:block" style={{color:'var(--text-muted)'}}>
+                  {me?.username}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 text-sm transition px-2 py-1.5 rounded-lg"
+                  style={{color:'var(--text-secondary)'}}
+                >
+                  <LogOut size={15} />
+                  <span className="hidden sm:block">Sign out</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
