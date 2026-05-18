@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getLibrary, updateLibraryEntry, removeFromLibrary } from '../api/games'
+import { getLibrary, updateLibraryEntry, removeFromLibrary, syncPsnGame } from '../api/games'
 import { listAchievements } from '../api/achievements'
-import { Trophy, Plus, ChevronRight, ChevronLeft, CheckCircle2, Circle, Loader2, Trash2 } from 'lucide-react'
+import { listGenres, updateGameGenres } from '../api/genres'
+import { Trophy, Plus, ChevronRight, ChevronLeft, CheckCircle2, Circle, Loader2, Trash2, Pencil, X, Check, RefreshCw, Pin, PinOff } from 'lucide-react'
 import AddAchievementModal from '../components/achievements/AddAchievementModal'
 import { useAuthStore } from '../store/authStore'
 import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
@@ -36,9 +37,13 @@ export default function GamePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [showAddAchievement, setShowAddAchievement] = useState(false)
-  const [filter, setFilter] = useState('all') // all | incomplete | complete
+  const [filter, setFilter] = useState('incomplete') // incomplete | complete | all
   const { isGuest } = useAuthStore()
   const [showGuestPrompt, setShowGuestPrompt] = useState(false)
+  const [editingGenres, setEditingGenres] = useState(false)
+  const [pendingGenreIds, setPendingGenreIds] = useState([])
+  const { user } = useAuthStore()
+  const isContributor = user?.role === 'contributor' || user?.role === 'admin'
 
   const { data: library = [] } = useQuery({
     queryKey: ['library'],
@@ -61,6 +66,43 @@ export default function GamePage() {
     enabled: !!gameId,
   })
 
+  const { data: allGenres = [] } = useQuery({
+    queryKey: ['genres'],
+    queryFn: () => listGenres().then((r) => r.data),
+    enabled: isContributor,
+  })
+
+  const genresMutation = useMutation({
+    mutationFn: (genreIds) => updateGameGenres(gameId, genreIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game', gameId] })
+      queryClient.invalidateQueries({ queryKey: ['library'] })
+      setEditingGenres(false)
+    },
+  })
+
+  const startEditingGenres = () => {
+    setPendingGenreIds((game?.genres || []).map((g) => g.id))
+    setEditingGenres(true)
+  }
+
+  const toggleGenre = (id) => {
+    setPendingGenreIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
+  }
+
+  const [syncResult, setSyncResult] = useState(null)
+
+  const syncMutation = useMutation({
+    mutationFn: () => syncPsnGame(gameId),
+    onSuccess: (res) => {
+      setSyncResult(res.data)
+      queryClient.invalidateQueries({ queryKey: ['library'] })
+      queryClient.invalidateQueries({ queryKey: ['achievements', gameId] })
+    },
+  })
+
   const statusMutation = useMutation({
     mutationFn: (status) => updateLibraryEntry(gameId, { status }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['library'] }),
@@ -74,7 +116,21 @@ export default function GamePage() {
     },
   })
 
+  const pinMutation = useMutation({
+    mutationFn: ({ achievementId, is_pinned }) =>
+      client.patch(`/achievements/${achievementId}/progress`, { is_pinned }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['achievements', gameId] }),
+  })
+
+  const handlePin = (e, achievementId, currentlyPinned) => {
+    e.stopPropagation()
+    if (isGuest) { setShowGuestPrompt(true); return }
+    pinMutation.mutate({ achievementId, is_pinned: !currentlyPinned })
+  }
+
+  const pinned = achievements.filter((a) => a.is_pinned)
   const filtered = achievements.filter((a) => {
+    if (a.is_pinned) return false // pinned float above, excluded from main list
     if (filter === 'complete') return a.is_completed
     if (filter === 'incomplete') return !a.is_completed
     return true
@@ -139,7 +195,81 @@ export default function GamePage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h1 className="text-xl font-bold text-white">{game.title}</h1>
-                  <p className="text-gray-500 text-sm mt-0.5">{game.genre || 'No genre set'}</p>
+
+                  {/* Genre chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                    {!editingGenres && (game?.genres || []).map((g) => (
+                      <span
+                        key={g.id}
+                        className="text-xs px-2 py-0.5 rounded-full border capitalize"
+                        style={{
+                          background: 'var(--accent-dim)',
+                          borderColor: 'var(--accent-border)',
+                          color: 'var(--accent)',
+                        }}
+                      >
+                        {g.genre}
+                      </span>
+                    ))}
+                    {!editingGenres && (game?.genres || []).length === 0 && (
+                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>No genres set</span>
+                    )}
+                    {isContributor && !editingGenres && (
+                      <button
+                        onClick={startEditingGenres}
+                        className="text-xs flex items-center gap-1 px-2 py-0.5 rounded-full border transition"
+                        style={{
+                          borderColor: 'var(--border-subtle)',
+                          color: 'var(--text-muted)',
+                        }}
+                      >
+                        <Pencil size={10} /> Edit
+                      </button>
+                    )}
+
+                    {/* Genre editor */}
+                    {editingGenres && (
+                      <div className="w-full mt-1">
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {allGenres.map((g) => {
+                            const selected = pendingGenreIds.includes(g.id)
+                            return (
+                              <button
+                                key={g.id}
+                                onClick={() => toggleGenre(g.id)}
+                                className="text-xs px-2.5 py-1 rounded-full border capitalize transition"
+                                style={{
+                                  background: selected ? 'var(--accent-dim)' : 'transparent',
+                                  borderColor: selected ? 'var(--accent-border)' : 'var(--border-subtle)',
+                                  color: selected ? 'var(--accent)' : 'var(--text-muted)',
+                                }}
+                              >
+                                {g.genre}
+                              </button>
+                            )
+                          })}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => genresMutation.mutate(pendingGenreIds)}
+                            disabled={genresMutation.isPending}
+                            className="flex items-center gap-1 text-xs px-3 py-1 rounded-lg text-white transition"
+                            style={{ background: 'var(--accent)' }}
+                          >
+                            <Check size={12} />
+                            {genresMutation.isPending ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            onClick={() => setEditingGenres(false)}
+                            className="flex items-center gap-1 text-xs px-3 py-1 rounded-lg border transition"
+                            style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                          >
+                            <X size={12} /> Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Status selector */}
@@ -154,12 +284,26 @@ export default function GamePage() {
                 </select>
               </div>
 
-              {/* Progress bar */}
+              {/* Progress bar + sync */}
               {game.platform === 'psn' && (
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs text-gray-500">{completed} / {total} {trophyLabel}</span>
-                    <span className="text-xs font-medium text-white">{percent}%</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-white">{percent}%</span>
+                      {!isGuest && (
+                        <button
+                          onClick={() => { setSyncResult(null); syncMutation.mutate() }}
+                          disabled={syncMutation.isPending}
+                          title="Sync trophies from PSN"
+                          className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition"
+                          style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                        >
+                          <RefreshCw size={10} className={syncMutation.isPending ? 'animate-spin' : ''} />
+                          {syncMutation.isPending ? 'Syncing...' : 'Sync PSN'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="w-full h-2 bg-gray-800 rounded-full">
                     <div
@@ -167,6 +311,14 @@ export default function GamePage() {
                       style={{ width: `${percent}%` }}
                     />
                   </div>
+                  {/* Sync result toast */}
+                  {syncResult && (
+                    <div className="mt-2 text-xs rounded-lg px-3 py-2"
+                      style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
+                      Synced {syncResult.synced} new, {syncResult.created} created, {syncResult.already_completed} already done
+                      {' '}— {syncResult.completion_percent}% complete
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -185,17 +337,17 @@ export default function GamePage() {
         <div className="flex items-center gap-2">
           {/* Filter tabs */}
           <div className="flex bg-gray-900 border border-gray-800 rounded-lg p-0.5 text-xs">
-            {['all', 'incomplete', 'complete'].map((f) => (
+            {[['incomplete', 'Incomplete'], ['complete', 'Complete'], ['all', 'Game Order']].map(([f, label]) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 rounded-md transition capitalize ${
+                className={`px-3 py-1.5 rounded-md transition ${
                   filter === f
                     ? 'bg-gray-700 text-white'
                     : 'text-gray-500 hover:text-gray-300'
                 }`}
               >
-                {f}
+                {label}
               </button>
             ))}
           </div>
@@ -233,6 +385,75 @@ export default function GamePage() {
             <Plus size={16} />
             Add {trophyLabel.slice(0, -1)}
           </button>
+        </div>
+      )}
+
+      {/* Pinned achievements */}
+      {pinned.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Pin size={12} style={{color:'var(--accent)'}} />
+            <h3 className="text-xs font-medium uppercase tracking-wider" style={{color:'var(--accent)'}}>
+              Pinned
+            </h3>
+            <div className="flex-1 h-px" style={{background:'var(--border-subtle)'}} />
+          </div>
+          <div className="space-y-2">
+            {pinned.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => navigate(`/achievements/${a.id}`)}
+                className="w-full border rounded-xl p-4 flex items-center gap-4 transition text-left"
+                style={{
+                  background: 'var(--bg-surface)',
+                  borderColor: 'var(--accent-border)',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--accent-border)'}
+              >
+                <div className="flex-shrink-0">
+                  {a.icon_url ? (
+                    <div className="relative">
+                      <img
+                        src={a.icon_url}
+                        alt={a.title}
+                        className={`w-10 h-10 rounded-lg object-cover transition ${a.is_completed ? 'opacity-100' : 'opacity-40 grayscale'}`}
+                      />
+                      {a.is_completed && (
+                        <CheckCircle2 size={14} className="absolute -bottom-1 -right-1 bg-black rounded-full" style={{color:'var(--accent)'}} />
+                      )}
+                    </div>
+                  ) : (
+                    a.is_completed
+                      ? <CheckCircle2 size={20} style={{color:'var(--accent)'}} />
+                      : <Circle size={20} style={{color:'var(--text-muted)'}} />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className={`font-medium text-sm ${a.is_completed ? 'line-through' : ''}`}
+                      style={{color: a.is_completed ? 'var(--text-muted)' : 'var(--text-primary)'}}>
+                      {a.title}
+                    </span>
+                    {a.trophy_type && <span className={`text-xs ${TROPHY_COLORS[a.trophy_type]}`}>{TROPHY_LABELS[a.trophy_type]}</span>}
+                    {a.gamerscore && <span className="text-xs text-green-400">{a.gamerscore}G</span>}
+                  </div>
+                  {a.description && (
+                    <p className="text-xs truncate" style={{color:'var(--text-muted)'}}>{a.description}</p>
+                  )}
+                </div>
+                {a.rarity && <span className="text-xs flex-shrink-0" style={{color:'var(--text-muted)'}}>{a.rarity}</span>}
+                <button
+                  onClick={(e) => handlePin(e, a.id, true)}
+                  className="flex-shrink-0 p-1 rounded transition hover:bg-gray-700/50"
+                  title="Unpin"
+                >
+                  <PinOff size={14} style={{color:'var(--accent)'}} />
+                </button>
+                <ChevronRight size={16} className="flex-shrink-0" style={{color:'var(--text-muted)'}} />
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -323,6 +544,16 @@ export default function GamePage() {
                         {a.rarity}
                       </span>
                     )}
+                    <button
+                      onClick={(e) => handlePin(e, a.id, a.is_pinned)}
+                      className="flex-shrink-0 p-1 rounded transition hover:bg-gray-700/50"
+                      title={a.is_pinned ? 'Unpin' : 'Pin to top'}
+                    >
+                      {a.is_pinned
+                        ? <PinOff size={14} style={{color:'var(--accent)'}} />
+                        : <Pin size={14} style={{color:'var(--text-muted)'}} />
+                      }
+                    </button>
                     <ChevronRight size={16} className="flex-shrink-0" style={{color:'var(--text-muted)'}} />
                   </button>
                 ))}
@@ -335,7 +566,7 @@ export default function GamePage() {
       {/* No results from filter */}
       {!isLoading && achievements.length > 0 && filtered.length === 0 && (
         <div className="text-center py-16 text-gray-500 text-sm">
-          No {filter} {trophyLabel}
+          No {filter === 'all' ? '' : filter} {trophyLabel}
         </div>
       )}
 

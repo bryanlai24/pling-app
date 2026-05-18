@@ -23,7 +23,6 @@ export default function AddGameModal({ onClose, onSuccess }) {
   const [form, setForm] = useState({
     title: '',
     platform: 'psn',
-    genre: '',
     cover_image_url: '',
   })
   const [error, setError] = useState(null)
@@ -60,7 +59,6 @@ export default function AddGameModal({ onClose, onSuccess }) {
     e.preventDefault()
     setError(null)
     const payload = { ...form }
-    if (!payload.genre) delete payload.genre
     if (!payload.cover_image_url) delete payload.cover_image_url
     createMutation.mutate(payload)
   }
@@ -149,8 +147,10 @@ export default function AddGameModal({ onClose, onSuccess }) {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-white truncate">{game.title}</div>
-                      {game.genre && (
-                        <div className="text-xs text-gray-500 mt-0.5">{game.genre}</div>
+                      {(game.genres || []).length > 0 && (
+                        <div className="text-xs text-gray-500 mt-0.5 capitalize">
+                          {game.genres.map((g) => g.genre).join(', ')}
+                        </div>
                       )}
                     </div>
                     <span className={`text-xs px-2 py-0.5 rounded-full border flex-shrink-0 ${badge.color}`}>
@@ -201,19 +201,6 @@ export default function AddGameModal({ onClose, onSuccess }) {
                   <option key={p.value} value={p.value}>{p.label}</option>
                 ))}
               </select>
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-400 mb-1.5">
-                Genre <span className="text-gray-600">(optional)</span>
-              </label>
-              <input
-                type="text"
-                value={form.genre}
-                onChange={(e) => setForm({ ...form, genre: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-violet-500 transition"
-                placeholder="e.g. Action RPG"
-              />
             </div>
 
             <div>

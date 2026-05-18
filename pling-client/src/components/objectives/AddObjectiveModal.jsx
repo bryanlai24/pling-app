@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 export default function AddObjectiveModal({
   achievementId,
   nextSortOrder,
+  groups = [], // parent objectives with children — for the parent selector
   onClose,
   onSuccess,
 }) {
@@ -14,6 +15,7 @@ export default function AddObjectiveModal({
     method: '',
     is_counter: false,
     counter_target: '',
+    parent_objective_id: '',
   })
   const [error, setError] = useState(null)
 
@@ -32,6 +34,7 @@ export default function AddObjectiveModal({
       is_counter: form.is_counter,
     }
     if (form.method) payload.method = form.method
+    if (form.parent_objective_id) payload.parent_objective_id = form.parent_objective_id
     if (form.is_counter && form.counter_target) {
       payload.counter_target = parseInt(form.counter_target)
     }
@@ -59,6 +62,24 @@ export default function AddObjectiveModal({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {groups.length > 0 && (
+            <div>
+              <label className="block text-sm text-gray-400 mb-1.5">
+                Group <span className="text-gray-600">(optional)</span>
+              </label>
+              <select
+                value={form.parent_objective_id}
+                onChange={(e) => setForm({ ...form, parent_objective_id: e.target.value })}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+              >
+                <option value="">— No group (top level) —</option>
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>{g.title}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm text-gray-400 mb-1.5">Objective</label>
             <input

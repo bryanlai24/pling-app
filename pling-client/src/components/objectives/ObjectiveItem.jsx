@@ -8,6 +8,24 @@ import { useAuthStore } from '../../store/authStore'
 import ContributorPrompt from '../ui/ContributorPrompt'
 import GuestTrackingPrompt from '../ui/GuestTrackingPrompt'
 
+function getYouTubeEmbedUrl(url) {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    let videoId = null
+    if (u.hostname.includes('youtu.be')) {
+      videoId = u.pathname.slice(1)
+    } else if (u.hostname.includes('youtube.com')) {
+      videoId = u.searchParams.get('v')
+    }
+    if (!videoId) return null
+    const start = u.searchParams.get('t') || u.searchParams.get('start')
+    return `https://www.youtube.com/embed/${videoId}${start ? `?start=${start}` : ''}`
+  } catch {
+    return null
+  }
+}
+
 export default function ObjectiveItem({
   objective,
   index,
@@ -21,6 +39,8 @@ export default function ObjectiveItem({
   const [editForm, setEditForm] = useState({
     title: objective.title,
     method: objective.method || '',
+    image_url: objective.image_url || '',
+    video_url: objective.video_url || '',
   })
   const [counterValue, setCounterValue] = useState(
     userProgress?.counter_current ?? 0
@@ -61,6 +81,8 @@ export default function ObjectiveItem({
     updateMutation.mutate({
       title: editForm.title,
       method: editForm.method || null,
+      image_url: editForm.image_url || null,
+      video_url: editForm.video_url || null,
     })
   }
 
@@ -136,7 +158,7 @@ export default function ObjectiveItem({
           <span className={`text-sm font-medium ${
             isCompleted ? 'text-gray-500 line-through' : 'text-white'
           }`}>
-            <span className="text-gray-600 mr-2">{index + 1}.</span>
+            {index !== undefined && <span className="text-gray-600 mr-2">{index + 1}.</span>}
             {objective.title}
           </span>
 
@@ -248,18 +270,37 @@ export default function ObjectiveItem({
         </div>
       )}
 
-      {/* Method expanded */}
-      {expanded && objective.method && !editing && (
-        <div className="px-4 pb-4 pt-0">
-          <div className="bg-gray-800/50 rounded-lg px-4 py-3 border border-gray-700/50">
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1.5 font-medium">Method</p>
-            <p className="text-sm text-gray-300 leading-relaxed">{objective.method}</p>
-          </div>
+      {/* Method + media expanded */}
+      {expanded && !editing && (
+        <div className="px-4 pb-4 pt-0 space-y-3">
+          {objective.method && (
+            <div className="bg-gray-800/50 rounded-lg px-4 py-3 border border-gray-700/50">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1.5 font-medium">Method</p>
+              <p className="text-sm text-gray-300 leading-relaxed">{objective.method}</p>
+            </div>
+          )}
+          {objective.image_url && (
+            <img
+              src={objective.image_url}
+              alt="Guide"
+              className="w-full rounded-lg border border-gray-700/50 object-cover max-h-64"
+            />
+          )}
+          {objective.video_url && getYouTubeEmbedUrl(objective.video_url) && (
+            <div className="rounded-lg overflow-hidden border border-gray-700/50 aspect-video">
+              <iframe
+                src={getYouTubeEmbedUrl(objective.video_url)}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          )}
         </div>
       )}
 
       {/* No method hint */}
-      {!objective.method && !editing && !isCounter && (
+      {!objective.method && !objective.image_url && !objective.video_url && !editing && !isCounter && (
         <div className="px-4 pb-3 pt-0">
           <p className="text-xs text-gray-600 italic">No method added yet</p>
         </div>
@@ -286,6 +327,26 @@ export default function ObjectiveItem({
               rows={3}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 transition resize-none"
               placeholder="How to accomplish this objective..."
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Image URL</label>
+            <input
+              type="url"
+              value={editForm.image_url}
+              onChange={(e) => setEditForm({ ...editForm, image_url: e.target.value })}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">YouTube URL</label>
+            <input
+              type="url"
+              value={editForm.video_url}
+              onChange={(e) => setEditForm({ ...editForm, video_url: e.target.value })}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+              placeholder="https://youtube.com/watch?v=..."
             />
           </div>
           <div className="flex gap-2">

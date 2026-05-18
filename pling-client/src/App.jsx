@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
+import { getMe } from './api/auth'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import LibraryPage from './pages/LibraryPage'
@@ -15,6 +17,14 @@ function ProtectedRoute({ children }) {
 }
 
 export default function App() {
+  const { token, setUser } = useAuthStore()
+
+  useEffect(() => {
+    if (token) {
+      getMe().then(r => setUser(r.data)).catch(() => {})
+    }
+  }, [token])
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

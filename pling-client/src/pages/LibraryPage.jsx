@@ -208,9 +208,32 @@ export default function LibraryPage() {
                       {STATUS_LABELS[status]}
                     </span>
                   )}
-                  {isGuest && (
+                  {/* Genre chips */}
+                  {(game.genres || []).length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {game.genres.slice(0, 3).map((g) => (
+                        <span
+                          key={g.id}
+                          className="text-xs px-1.5 py-0.5 rounded-full border capitalize"
+                          style={{
+                            background: 'var(--accent-dim)',
+                            borderColor: 'var(--accent-border)',
+                            color: 'var(--accent)',
+                          }}
+                        >
+                          {g.genre}
+                        </span>
+                      ))}
+                      {game.genres.length > 3 && (
+                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                          +{game.genres.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {isGuest && (game.genres || []).length === 0 && (
                     <span className="text-xs" style={{color:'var(--text-muted)'}}>
-                      {game.genre || 'Browse achievements →'}
+                      Browse achievements →
                     </span>
                   )}
                   {!isGuest && item.game?.platform === 'xbox' && item.gamerscore_total > 0 && (

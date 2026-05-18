@@ -3,10 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAchievement, updateAchievementProgress } from '../api/achievements'
 import { updateObjectiveProgress } from '../api/objectives'
-import { ChevronLeft, Plus, Trophy, CheckCircle2, Circle, Loader2, UserPlus } from 'lucide-react'
+import { ChevronLeft, Plus, Trophy, CheckCircle2, Circle, Loader2, UserPlus, Layers } from 'lucide-react'
 import { useContributorCheck } from '../hooks/useContributorCheck'
 import { useAuthStore } from '../store/authStore'
 import AddObjectiveModal from '../components/objectives/AddObjectiveModal'
+import SeedObjectivesModal from '../components/objectives/SeedObjectivesModal'
 import ObjectiveItem from '../components/objectives/ObjectiveItem'
 import ContributorPrompt from '../components/ui/ContributorPrompt'
 import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
@@ -30,6 +31,7 @@ export default function AchievementPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [showAddObjective, setShowAddObjective] = useState(false)
+  const [showSeedObjectives, setShowSeedObjectives] = useState(false)
   const { isContributor, showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
   const { isGuest } = useAuthStore()
   const [showGuestPrompt, setShowGuestPrompt] = useState(false)
@@ -73,8 +75,11 @@ export default function AchievementPage() {
     const isCurrentlyCompleted = userProgress?.is_completed ?? false
     const newCompleted = !isCurrentlyCompleted
 
-    // Calculate if all objectives will be complete after this tick
-    const allCompleted = newCompleted && achievement.objectives.every((o) => {
+    // Calculate if all leaf objectives will be complete after this tick
+    const leafObjectives = achievement.objectives.flatMap(o =>
+      o.children?.length > 0 ? o.children : [o]
+    )
+    const allCompleted = newCompleted && leafObjectives.every((o) => {
       if (o.id === objective.id) return newCompleted
       return o.user_progress?.is_completed ?? false
     })
@@ -110,10 +115,11 @@ export default function AchievementPage() {
   }
 
   const isCompleted = achievement.user_progress?.is_completed ?? false
-  const completedCount = achievement.objectives.filter(
-    (o) => o.user_progress?.is_completed
-  ).length
-  const totalCount = achievement.objectives.length
+  const allObjectives = achievement.objectives.flatMap(o =>
+    o.children?.length > 0 ? o.children : [o]
+  )
+  const completedCount = allObjectives.filter(o => o.user_progress?.is_completed).length
+  const totalCount = allObjectives.length
   const allObjectivesDone = totalCount > 0 && completedCount === totalCount
 
   return (
@@ -242,14 +248,24 @@ export default function AchievementPage() {
             </span>
           )}
         </div>
-        <button
-          onClick={() => requireContributor(() => setShowAddObjective(true))}
-          className="flex items-center gap-1.5 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition"
-          style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', color: 'var(--accent)' }}
-        >
-          <Plus size={15} />
-          Add objective
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => requireContributor(() => setShowSeedObjectives(true))}
+            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition"
+            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-secondary)' }}
+          >
+            <Layers size={15} />
+            Seed
+          </button>
+          <button
+            onClick={() => requireContributor(() => setShowAddObjective(true))}
+            className="flex items-center gap-1.5 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition"
+            style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', color: 'var(--accent)' }}
+          >
+            <Plus size={15} />
+            Add
+          </button>
+        </div>
       </div>
 
       {/* Empty state */}
@@ -273,18 +289,41 @@ export default function AchievementPage() {
       {/* Objectives list */}
       {totalCount > 0 && (
         <div className="space-y-2">
-          {achievement.objectives.map((objective, index) => (
-            <ObjectiveItem
-              key={objective.id}
-              objective={objective}
-              index={index}
-              userProgress={objective.user_progress}
-              onTick={() => handleTickObjective(objective, objective.user_progress)}
-              onUpdated={() => queryClient.invalidateQueries({
-                queryKey: ['achievement', achievementId]
-              })}
-              isPending={objectiveProgressMutation.isPending}
-            />
+          {achievement.objectives.map((objective) => (
+            objective.children?.length > 0 ? (
+              <div key={objective.id}>
+                {/* Group header */}
+                <div className="flex items-center gap-3 mb-2 mt-4">
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-gray-500">
+                    {objective.title}
+                  </h3>
+                  <div className="flex-1 h-px bg-gray-800" />
+                  <span className="text-xs text-gray-500">
+                    {objective.children.filter(c => c.user_progress?.is_completed).length}/{objective.children.length}
+                  </span>
+                </div>
+                {/* Child steps */}
+                {objective.children.map((child) => (
+                  <ObjectiveItem
+                    key={child.id}
+                    objective={child}
+                    userProgress={child.user_progress}
+                    onTick={() => handleTickObjective(child, child.user_progress)}
+                    onUpdated={() => queryClient.invalidateQueries({ queryKey: ['achievement', achievementId] })}
+                    isPending={objectiveProgressMutation.isPending}
+                  />
+                ))}
+              </div>
+            ) : (
+              <ObjectiveItem
+                key={objective.id}
+                objective={objective}
+                userProgress={objective.user_progress}
+                onTick={() => handleTickObjective(objective, objective.user_progress)}
+                onUpdated={() => queryClient.invalidateQueries({ queryKey: ['achievement', achievementId] })}
+                isPending={objectiveProgressMutation.isPending}
+              />
+            )
           ))}
         </div>
       )}
@@ -305,11 +344,23 @@ export default function AchievementPage() {
         </div>
       )}
 
+      {/* Seed objectives modal */}
+      {showSeedObjectives && (
+        <SeedObjectivesModal
+          achievementId={achievementId}
+          onClose={() => setShowSeedObjectives(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['achievement', achievementId] })
+          }}
+        />
+      )}
+
       {/* Add objective modal */}
       {showAddObjective && (
         <AddObjectiveModal
           achievementId={achievementId}
           nextSortOrder={totalCount}
+          groups={achievement.objectives.filter(o => o.children?.length > 0)}
           onClose={() => setShowAddObjective(false)}
           onSuccess={() => {
             setShowAddObjective(false)

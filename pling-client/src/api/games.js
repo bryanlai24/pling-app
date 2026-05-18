@@ -15,3 +15,6 @@ export const updateLibraryEntry = (gameId, data) =>
   client.patch(`/games/library/${gameId}`, data)
 export const removeFromLibrary = (gameId) =>
   client.delete(`/games/library/${gameId}`)
+
+export const syncPsnGame = (gameId) =>
+  client.post(`/users/me/psn/sync/${gameId}`)
