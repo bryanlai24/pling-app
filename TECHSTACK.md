@@ -231,16 +231,31 @@ Firebase Hosting          ← Frontend (CDN, free tier, instant deploys)
 **Cost profile for solo/small use:** Near zero when idle. Cloud Run scales to zero, Firebase Hosting is free tier, Cloud SQL is the main cost (~$10-15/month for db-g1-small).
 
 ### CI/CD flow
-```bash
-# Backend deploy
-docker build --platform linux/amd64 -t gcr.io/pling-app-alpha/pling-server .
-docker push gcr.io/pling-app-alpha/pling-server
-gcloud run deploy pling-server ...
 
-# Frontend deploy
+GCP project: `pling-app-alpha` | Cloud Run service: `pling-server` | Region: `us-central1`
+Prod backend URL: `https://pling-server-997771527995.us-central1.run.app`
+
+```bash
+# Backend deploy (from pling-server/)
+# Increment version tag each deploy — :latest causes Cloud Run to silently run stale code
+docker build --no-cache --platform linux/amd64 -t gcr.io/pling-app-alpha/pling-server:v<N> .
+docker push gcr.io/pling-app-alpha/pling-server:v<N>
+gcloud run deploy pling-server \
+  --image gcr.io/pling-app-alpha/pling-server:v<N> \
+  --platform managed \
+  --region us-central1
+# Verify new revision is active and receiving traffic
+gcloud run revisions list --service pling-server --region us-central1
+gcloud run services update-traffic pling-server --to-revisions <revision-name>=100 --region us-central1
+
+# Frontend deploy (from pling-client/)
 npm run build
 firebase deploy --only hosting
 ```
+
+**Migrations:** `alembic upgrade head` runs automatically on container startup (baked into Dockerfile CMD). No separate step needed — do NOT use `gcloud run jobs execute migrate`.
+
+**Firebase → Cloud Run routing:** `firebase.json` routes `/api/**` to the `pling-server` service by service ID, so the frontend automatically picks up new backend URLs without config changes.
 
 ### Secrets management
 All secrets stored in GCP Secret Manager, injected into Cloud Run at runtime:
@@ -268,17 +283,43 @@ This means curators populate the catalogue once and all users track progress aga
 Game
  └── TrophySet (Base Game, DLC, Expansion)
       └── Achievement (trophy)
-           └── Objective (checklist item)
-                └── Method (how to do it)
+           └── Objective (group header or leaf step)
+                └── Objective (leaf step, child of group)
 ```
+
+Objectives support two levels of nesting via a self-referential `parent_objective_id` FK. Group headers have `method: null` and `children: [...]`. Leaf steps have `method` text and `children: []`. The frontend renders group headers as dividers with a completion count, and leaf steps as checkable items. User progress is only tracked on leaf nodes.
 
 **User progress hierarchy:**
 ```
 User
  └── UserGame (library entry, completion %)
       └── UserAchievement (earned/not earned)
-           └── UserObjective (ticked/counter progress)
+           └── UserObjective (ticked/counter progress — leaf objectives only)
 ```
+
+---
+
+## Genre System
+
+Games have a many-to-many relationship with genres via a `game_genres` join table. The `Genre` model uses a `BaseGenre` PostgreSQL enum with 14 values. The `Game` model exposes genres via a SQLAlchemy `association_proxy` for clean access.
+
+Genres are contributor/admin only to set. The frontend renders genre chips on `GamePage` and `LibraryPage`, with an inline editor for contributors.
+
+---
+
+## PSN Integration
+
+**Trophy catalogue import** (`GET /api/admin/import/psn`) — uses a server-level NPSSO token stored in GCP Secret Manager. Fetches the full trophy list for a game using the `psnawp` library and populates `achievements` + `trophy_sets`.
+
+**Trophy sync** (`POST /api/users/me/psn/sync/{game_id}`) — syncs a specific user's earned trophies from PSN into their `user_achievements`. Uses the same server-level token. Tries PS5 first, falls back to PS4.
+
+**Important NPSSO limitations:**
+- NPSSO is a session cookie, not a proper OAuth token — Sony only allows one active session per account
+- Dev and prod share the same server-level token, so using PSN locally will invalidate prod's session
+- Rule of thumb: **do all PSN imports and syncs on prod only**
+- The user-level connect/disconnect endpoints (`POST /api/psn/connect`) exist for future per-user OAuth, but sync currently still uses the server token
+
+**Token storage:** Access + refresh tokens are persisted in the `psn_tokens` table and auto-refreshed when expired. Full re-auth from NPSSO only happens if the refresh token is also expired.
 
 ---
 
