@@ -33,6 +33,7 @@ class User(Base):
     # Platform sync identifiers (all optional)
     psn_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     psn_account_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    psn_npsso: Mapped[str | None] = mapped_column(String(500), nullable=True)
     xbox_gamertag: Mapped[str | None] = mapped_column(String(100), nullable=True)
     steam_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
 

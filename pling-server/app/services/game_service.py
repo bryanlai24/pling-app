@@ -17,12 +17,21 @@ async def create_game(db: AsyncSession, data: GameCreate) -> Game:
     game = Game(**data.model_dump())
     db.add(game)
     await db.flush()
-    await db.refresh(game)
-    return game
+    # Reload with relationships
+    result = await db.execute(
+        select(Game)
+        .where(Game.id == game.id)
+        .options(selectinload(Game.game_genres))
+    )
+    return result.scalar_one()
 
 
 async def get_game(db: AsyncSession, game_id: uuid.UUID) -> Game:
-    result = await db.execute(select(Game).where(Game.id == game_id))
+    result = await db.execute(
+        select(Game)
+        .where(Game.id == game_id)
+        .options(selectinload(Game.game_genres))
+    )
     game = result.scalar_one_or_none()
     if not game:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
@@ -30,7 +39,7 @@ async def get_game(db: AsyncSession, game_id: uuid.UUID) -> Game:
 
 
 async def list_games(db: AsyncSession, platform: str | None = None) -> list[Game]:
-    q = select(Game)
+    q = select(Game).options(selectinload(Game.game_genres))
     if platform:
         q = q.where(Game.platform == platform)
     result = await db.execute(q.order_by(Game.title))
@@ -87,8 +96,12 @@ async def add_game_to_library(
     )
     db.add(user_game)
     await db.flush()
-    await db.refresh(user_game, ["game"])
-    return user_game
+    result = await db.execute(
+        select(UserGame)
+        .where(UserGame.id == user_game.id)
+        .options(selectinload(UserGame.game).selectinload(Game.game_genres))
+    )
+    return result.scalar_one()
 
 
 async def get_user_library(
@@ -97,7 +110,7 @@ async def get_user_library(
     q = (
         select(UserGame)
         .where(UserGame.user_id == user_id)
-        .options(selectinload(UserGame.game))
+        .options(selectinload(UserGame.game).selectinload(Game.game_genres))
         .order_by(UserGame.updated_at.desc())
     )
     if status:
@@ -112,7 +125,7 @@ async def get_user_game(
     result = await db.execute(
         select(UserGame)
         .where(UserGame.user_id == user_id, UserGame.game_id == game_id)
-        .options(selectinload(UserGame.game))
+        .options(selectinload(UserGame.game).selectinload(Game.game_genres))
     )
     ug = result.scalar_one_or_none()
     if not ug:

@@ -50,6 +50,7 @@ async def list_achievements(
             gamerscore=a.gamerscore,
             rarity=a.rarity,
             is_completed=ua.is_completed if ua else False,
+            is_pinned=ua.is_pinned if ua else False,
             icon_url=a.icon_url,
             trophy_set_id=a.trophy_set_id,
             trophy_set_name=a.trophy_set.name if a.trophy_set else None,
@@ -73,16 +74,36 @@ async def get_achievement(
 
     objectives_with_progress = []
     for obj in a.objectives:
+        if obj.parent_objective_id is not None:
+            continue  # children are nested under their parent; skip at top level
         uo = user_objectives.get(obj.id)
+        children_with_progress = [
+            ObjectiveWithProgress(
+                id=child.id,
+                achievement_id=child.achievement_id,
+                parent_objective_id=child.parent_objective_id,
+                title=child.title,
+                method=child.method,
+                sort_order=child.sort_order,
+                is_counter=child.is_counter,
+                counter_target=child.counter_target,
+                created_at=child.created_at,
+                children=[],
+                user_progress=user_objectives.get(child.id),
+            )
+            for child in obj.children
+        ]
         obj_response = ObjectiveWithProgress(
             id=obj.id,
             achievement_id=obj.achievement_id,
+            parent_objective_id=obj.parent_objective_id,
             title=obj.title,
             method=obj.method,
             sort_order=obj.sort_order,
             is_counter=obj.is_counter,
             counter_target=obj.counter_target,
             created_at=obj.created_at,
+            children=children_with_progress,
             user_progress=uo,
         )
         objectives_with_progress.append(obj_response)

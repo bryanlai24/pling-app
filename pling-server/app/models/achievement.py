@@ -69,8 +69,13 @@ class Objective(Base):
     achievement_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("achievements.id", ondelete="CASCADE"), nullable=False
     )
+    parent_objective_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("objectives.id", ondelete="CASCADE"), nullable=True
+    )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     method: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    video_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     is_counter: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
@@ -82,6 +87,14 @@ class Objective(Base):
 
     # Relationships
     achievement: Mapped["Achievement"] = relationship(back_populates="objectives")
+    children: Mapped[list["Objective"]] = relationship(
+        back_populates="parent",
+        cascade="all, delete-orphan",
+        order_by="Objective.sort_order",
+    )
+    parent: Mapped["Objective | None"] = relationship(
+        back_populates="children", remote_side="Objective.id"
+    )
     user_objectives: Mapped[list["UserObjective"]] = relationship(
         back_populates="objective", cascade="all, delete-orphan"
     )
@@ -99,6 +112,7 @@ class UserAchievement(Base):
         UUID(as_uuid=True), ForeignKey("achievements.id", ondelete="CASCADE"), nullable=False
     )
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_pinned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
     progress_current: Mapped[int | None] = mapped_column(Integer, nullable=True)
     progress_target: Mapped[int | None] = mapped_column(Integer, nullable=True)
 

@@ -95,7 +95,6 @@ async def import_psn_game(
             platform="psn",
             platform_game_id=data.np_communication_id,
             cover_image_url=data.cover_image_url or psn_data.get("cover_image_url"),
-            genre=data.genre,
         )
         db.add(game)
         await db.flush()
@@ -153,6 +152,34 @@ async def update_user_role(
     await db.flush()
     await db.refresh(user)
     return UserPublic.model_validate(user)
+
+@router.get("/psn/trophies")
+async def get_psn_trophies(
+    np_communication_id: str,
+    platform: str = "PS5",
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """Fetch raw trophy list from PSN for a given np_communication_id."""
+    if not current_user.psn_account_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You must connect your PSN account first",
+        )
+    try:
+        psn_data = await fetch_trophies(
+            np_communication_id=np_communication_id,
+            account_id=current_user.psn_account_id,
+            platform=platform,
+            db=db,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"PSN API error: {str(e)}",
+        )
+    return psn_data
+
 
 @router.get("/psn/search")
 async def search_psn_library(
@@ -392,7 +419,6 @@ async def import_xbox_game(
             platform="xbox",
             platform_game_id=data.title_id,
             cover_image_url=data.cover_image_url,
-            genre=data.genre,
         )
         db.add(game)
         await db.flush()
@@ -513,11 +539,9 @@ async def import_steam_game(
 
     # Get cover art from Steam store if not provided
     cover_image_url = data.cover_image_url
-    genre = data.genre
-    if not cover_image_url or not genre:
+    if not cover_image_url:
         details = await get_game_details(data.app_id)
-        cover_image_url = cover_image_url or details["cover_url"]
-        genre = genre or details["genre"]
+        cover_image_url = details["cover_url"]
 
     # Get or create game
     if data.existing_game_id:
@@ -531,7 +555,6 @@ async def import_steam_game(
             platform="steam",
             platform_game_id=data.app_id,
             cover_image_url=cover_image_url,
-            genre=genre,
         )
         db.add(game)
         await db.flush()

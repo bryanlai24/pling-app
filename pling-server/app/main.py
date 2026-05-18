@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.config import get_settings
 from app.database import init_db
-from app.routers import users, games, achievements, objectives, admin, psn
+from app.routers import users, games, achievements, objectives, admin, psn, genres
 
 settings = get_settings()
 
@@ -37,6 +37,7 @@ app.include_router(achievements.router, prefix="/api/achievements", tags=["achie
 app.include_router(objectives.router, prefix="/api/objectives", tags=["objectives"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(psn.router, prefix="/api/users/me/psn", tags=["psn"])
+app.include_router(genres.router, prefix="/api/genres", tags=["genres"])
 
 
 @app.get("/", tags=["health"])

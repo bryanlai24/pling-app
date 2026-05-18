@@ -4,13 +4,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
 from app.database import get_db
-from app.auth.dependencies import get_current_user, get_optional_user
+from app.auth.dependencies import get_current_user, get_optional_user, require_contributor
 from app.models.user import User
 from app.schemas.game import (
     GameCreate, GameUpdate, GameResponse,
     UserGameCreate, UserGameUpdate, UserGameResponse,
 )
-from app.services import game_service
+from app.schemas.genre import GameGenresUpdate
+from app.services import game_service, genre_service
 
 router = APIRouter()
 
@@ -117,3 +118,15 @@ async def remove_from_library(
     current_user: User = Depends(get_current_user),
 ):
     await game_service.remove_game_from_library(db, current_user.id, game_id)
+
+
+# ── Genres ──────────────────────────────────────────────────────────────────────
+@router.put("/{game_id}/genres", response_model=GameResponse)
+async def update_game_genres(
+    game_id: uuid.UUID,
+    data: GameGenresUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_contributor),
+):
+    game = await genre_service.update_game_genres(db, game_id, data.genre_ids)
+    return GameResponse.model_validate(game)

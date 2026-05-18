@@ -41,6 +41,7 @@ class AchievementUpdate(PlingBase):
 
 class UserAchievementUpdate(PlingBase):
     is_completed: bool | None = None
+    is_pinned: bool | None = None
     progress_current: int | None = Field(None, ge=0)
     progress_target: int | None = Field(None, ge=0)
     completed_at: datetime | None = None
@@ -66,6 +67,7 @@ class UserAchievementResponse(PlingBase):
     id: uuid.UUID
     achievement: AchievementResponse
     is_completed: bool
+    is_pinned: bool = False
     progress_current: int | None
     progress_target: int | None
     completed_at: datetime | None
@@ -95,6 +97,7 @@ class AchievementSummary(PlingBase):
     gamerscore: int | None
     rarity: str | None
     is_completed: bool = False
+    is_pinned: bool = False
     icon_url: str | None = None
     trophy_set_id: uuid.UUID | None = None
     trophy_set_name: str | None = None

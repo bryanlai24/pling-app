@@ -130,6 +130,62 @@ async def get_valid_access_token(db: AsyncSession) -> str:
     raise Exception("Failed to obtain PSN access token")
 
 
+def _get_access_token_from_npsso(npsso_token: str) -> str:
+    """Exchange a user's NPSSO token for a PSN access token."""
+    psnawp = PSNAWP(npsso_token)
+    me = psnawp.me()
+    _ = me.online_id  # force auth
+    return me.authenticator.token_response.get("access_token", "")
+
+
+async def fetch_earned_trophies(
+    np_communication_id: str,
+    platform: str = "PS5",
+    db: AsyncSession | None = None,
+    user_npsso: str | None = None,
+) -> list[dict]:
+    """Fetch earned trophy progress for a user for a specific game.
+
+    Uses the user's own NPSSO token (stored at PSN connect time) to get a
+    per-user access token, so we fetch *their* earned trophies, not the server account's.
+
+    Returns a list of dicts with:
+        platform_achievement_id, earned, earned_date_time, progress, progress_rate
+    """
+    np_service = NP_SERVICE_MAP.get(platform.upper(), "trophy2")
+
+    if not user_npsso:
+        raise Exception("No NPSSO token available for this user — cannot fetch earned trophies")
+
+    access_token = await asyncio.get_event_loop().run_in_executor(
+        None, _get_access_token_from_npsso, user_npsso
+    )
+
+    def _fetch(token: str):
+        headers = {"Authorization": f"Bearer {token}"}
+        response = httpx.get(
+            f"https://m.np.playstation.com/api/trophy/v1/users/me/npCommunicationIds/{np_communication_id}/trophyGroups/all/trophies",
+            headers=headers,
+            params={"npServiceName": np_service},
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        results = []
+        for t in data.get("trophies", []):
+            earned_dt = t.get("earnedDateTime")
+            results.append({
+                "platform_achievement_id": str(t["trophyId"]),
+                "earned": t.get("earned", False),
+                "earned_date_time": datetime.fromisoformat(earned_dt.replace("Z", "+00:00")) if earned_dt else None,
+                "progress": t.get("progress"),
+                "progress_rate": t.get("progressRate"),
+            })
+        return results
+
+    return await asyncio.get_event_loop().run_in_executor(None, _fetch, access_token)
+
+
 async def fetch_trophies(
     np_communication_id: str,
     account_id: str,

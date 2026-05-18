@@ -28,7 +28,18 @@ async def create_objective(
     _: User = Depends(require_contributor),
 ):
     obj = await achievement_service.create_objective(db, achievement_id, data)
-    return ObjectiveResponse.model_validate(obj)
+    return ObjectiveResponse(
+        id=obj.id,
+        achievement_id=obj.achievement_id,
+        parent_objective_id=obj.parent_objective_id,
+        title=obj.title,
+        method=obj.method,
+        sort_order=obj.sort_order,
+        is_counter=obj.is_counter,
+        counter_target=obj.counter_target,
+        created_at=obj.created_at,
+        children=[],
+    )
 
 
 @router.patch("/{objective_id}", response_model=ObjectiveResponse)
@@ -39,7 +50,18 @@ async def update_objective(
     _: User = Depends(require_contributor),
 ):
     obj = await achievement_service.update_objective(db, objective_id, data)
-    return ObjectiveResponse.model_validate(obj)
+    return ObjectiveResponse(
+        id=obj.id,
+        achievement_id=obj.achievement_id,
+        parent_objective_id=obj.parent_objective_id,
+        title=obj.title,
+        method=obj.method,
+        sort_order=obj.sort_order,
+        is_counter=obj.is_counter,
+        counter_target=obj.counter_target,
+        created_at=obj.created_at,
+        children=[],
+    )
 
 
 @router.delete("/{objective_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -59,7 +81,21 @@ async def reorder_objectives(
     _: User = Depends(require_contributor),
 ):
     objectives = await achievement_service.reorder_objectives(db, achievement_id, ordered_ids)
-    return [ObjectiveResponse.model_validate(o) for o in objectives]
+    return [
+        ObjectiveResponse(
+            id=o.id,
+            achievement_id=o.achievement_id,
+            parent_objective_id=o.parent_objective_id,
+            title=o.title,
+            method=o.method,
+            sort_order=o.sort_order,
+            is_counter=o.is_counter,
+            counter_target=o.counter_target,
+            created_at=o.created_at,
+            children=[],
+        )
+        for o in objectives
+    ]
 
 
 # ── User objective progress (all authenticated users) ─────────────────────────
@@ -75,4 +111,23 @@ async def update_objective_progress(
     uo = await achievement_service.upsert_user_objective(
         db, current_user.id, objective_id, data
     )
-    return UserObjectiveResponse.model_validate(uo)
+    obj = uo.objective
+    return UserObjectiveResponse(
+        id=uo.id,
+        objective=ObjectiveResponse(
+            id=obj.id,
+            achievement_id=obj.achievement_id,
+            parent_objective_id=obj.parent_objective_id,
+            title=obj.title,
+            method=obj.method,
+            sort_order=obj.sort_order,
+            is_counter=obj.is_counter,
+            counter_target=obj.counter_target,
+            created_at=obj.created_at,
+            children=[],
+        ),
+        is_completed=uo.is_completed,
+        counter_current=uo.counter_current,
+        completed_at=uo.completed_at,
+        updated_at=uo.updated_at,
+    )

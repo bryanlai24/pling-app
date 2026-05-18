@@ -8,6 +8,7 @@ from app.auth.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.user import UserPublic
 from app.services.psn_connect_service import connect_psn_account
+from app.services.sync_service import sync_psn_game
 
 router = APIRouter()
 
@@ -39,3 +40,19 @@ async def disconnect_psn(
     await db.flush()
     await db.refresh(current_user)
     return UserPublic.model_validate(current_user)
+
+
+@router.post("/sync/{game_id}")
+async def sync_psn_game_trophies(
+    game_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Sync earned PSN trophies for a specific game into the user's achievement progress."""
+    if not current_user.psn_account_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No PSN account connected. Connect your PSN account in your profile first.",
+        )
+    result = await sync_psn_game(db, current_user.id, game_id)
+    return result

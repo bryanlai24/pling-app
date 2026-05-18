@@ -37,6 +37,7 @@ async def connect_psn_account(
 
     user.psn_id = result["online_id"]
     user.psn_account_id = result["account_id"]
+    user.psn_npsso = npsso_token
     await db.flush()
     await db.refresh(user)
     return user

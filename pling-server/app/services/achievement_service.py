@@ -38,7 +38,9 @@ async def get_achievement(db: AsyncSession, achievement_id: uuid.UUID) -> Achiev
     result = await db.execute(
         select(Achievement)
         .where(Achievement.id == achievement_id)
-        .options(selectinload(Achievement.objectives))
+        .options(
+            selectinload(Achievement.objectives).selectinload(Objective.children)
+        )
     )
     achievement = result.scalar_one_or_none()
     if not achievement:
@@ -67,7 +69,12 @@ async def get_achievement_with_user_progress(
         )
         user_achievement = ua_result.scalar_one_or_none()
 
-        objective_ids = [o.id for o in achievement.objectives]
+        # Collect IDs from both top-level objectives and their children
+        objective_ids = []
+        for o in achievement.objectives:
+            objective_ids.append(o.id)
+            for child in o.children:
+                objective_ids.append(child.id)
         if objective_ids:
             uo_result = await db.execute(
                 select(UserObjective).where(
@@ -187,13 +194,20 @@ async def create_objective(
     obj = Objective(achievement_id=achievement_id, **data.model_dump())
     db.add(obj)
     await db.flush()
-    await db.refresh(obj)
-    return obj
+    # Re-fetch with children eager-loaded so ObjectiveResponse can serialize it
+    result = await db.execute(
+        select(Objective)
+        .where(Objective.id == obj.id)
+        .options(selectinload(Objective.children))
+    )
+    return result.scalar_one()
 
 
 async def get_objective(db: AsyncSession, objective_id: uuid.UUID) -> Objective:
     result = await db.execute(
-        select(Objective).where(Objective.id == objective_id)
+        select(Objective)
+        .where(Objective.id == objective_id)
+        .options(selectinload(Objective.children))
     )
     obj = result.scalar_one_or_none()
     if not obj:
@@ -210,8 +224,13 @@ async def update_objective(
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(obj, field, value)
     await db.flush()
-    await db.refresh(obj)
-    return obj
+    # Re-fetch with children eager-loaded
+    result = await db.execute(
+        select(Objective)
+        .where(Objective.id == obj.id)
+        .options(selectinload(Objective.children))
+    )
+    return result.scalar_one()
 
 
 async def delete_objective(db: AsyncSession, objective_id: uuid.UUID) -> None:

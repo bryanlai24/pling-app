@@ -1,8 +1,9 @@
 import uuid
 from datetime import datetime
-from pydantic import Field, HttpUrl, field_validator
+from pydantic import Field
 from app.schemas import PlingBase
 from app.models.game import Platform
+from app.schemas.genre import GenreResponse
 
 
 # ── Request schemas ────────────────────────────────────────────────────────────
@@ -12,13 +13,11 @@ class GameCreate(PlingBase):
     platform: Platform
     platform_game_id: str | None = Field(None, max_length=255)
     cover_image_url: str | None = Field(None, max_length=500)
-    genre: str | None = Field(None, max_length=100)
 
 
 class GameUpdate(PlingBase):
     title: str | None = Field(None, min_length=1, max_length=255)
     cover_image_url: str | None = Field(None, max_length=500)
-    genre: str | None = Field(None, max_length=100)
 
 
 # ── User-game link schemas ─────────────────────────────────────────────────────
@@ -43,7 +42,7 @@ class GameResponse(PlingBase):
     platform: Platform
     platform_game_id: str | None
     cover_image_url: str | None
-    genre: str | None
+    genres: list[GenreResponse] = []
     created_at: datetime
 
 

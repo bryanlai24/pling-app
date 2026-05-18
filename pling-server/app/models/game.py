@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import String, DateTime, func, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 from sqlalchemy.dialects.postgresql import UUID
 from app.database import Base
 import enum
@@ -26,7 +27,6 @@ class Game(Base):
     )
     platform_game_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    genre: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
@@ -42,3 +42,7 @@ class Game(Base):
         order_by="TrophySet.sort_order"
     )
     user_games: Mapped[list["UserGame"]] = relationship(back_populates="game")
+    game_genres: Mapped[list["GameGenres"]] = relationship(
+        back_populates="game", cascade="all, delete-orphan"
+    )
+    genres: AssociationProxy[list["Genre"]] = association_proxy("game_genres", "genre")
