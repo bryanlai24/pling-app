@@ -20,12 +20,14 @@
 - [x] Profile & Admin page redesign (full design system alignment)
 - [x] Design system polish pass (0.5px hairlines, CSS vars throughout, modal consistency)
 - [x] Backend deployed to Cloud Run (Alembic migrations, Cloud SQL)
+- [x] Objective text formatting — inline markdown renderer (bold, italic, lists, paragraphs)
+- [x] Collapsible objective groups
 
 ---
 
 ## Upcoming
 
-### Catalogue Population
+### Catalogue Population 🔥
 The highest-leverage thing right now — the app experience is solid, but there's nothing to browse as a new user.
 
 **Strategy:** Community seeding sprints. Contributors pick a game and fill objectives using the seeding tool (one sitting per game). Prioritise by request votes.
@@ -37,13 +39,21 @@ The highest-leverage thing right now — the app experience is solid, but there'
 
 ---
 
-### Objective Text Formatting (QOL)
-Rich text in objective method fields — newlines, bold, italics. Lightweight markdown renderer (no editor needed — contributors paste content). Meaningful for readability on longer guides.
+### Shareable Profile / Social
+Public profile URL (`pling.app/u/username`) showing completion stats, pinned achievements, recently played. Foundation for social graph — follow friends, see their activity.
 
 ---
 
-### Shareable Profile / Social
-Public profile URL (`pling.app/u/username`) showing completion stats, pinned achievements, recently played. Foundation for social graph — follow friends, see their activity.
+### Discovery / Home Page
+Landing experience for guests and new users. Show featured games, top-voted requests, recently seeded content. Right now first screen is an empty library with nothing to explore.
+
+---
+
+### QOL — Objective Interactions
+- Drag-to-reorder objectives within a group
+- Auto-tick group when all children are completed
+- Auto-collapse completed groups
+- Search/filter within an achievement's objective list
 
 ---
 
