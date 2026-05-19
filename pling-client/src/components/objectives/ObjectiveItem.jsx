@@ -6,6 +6,22 @@ import { useContributorCheck } from '../../hooks/useContributorCheck'
 import { useAuthStore } from '../../store/authStore'
 import ContributorPrompt from '../ui/ContributorPrompt'
 import GuestTrackingPrompt from '../ui/GuestTrackingPrompt'
+import ReactMarkdown from 'react-markdown'
+
+// Parse YouTube timestamp strings like "1m30s", "90", "1h2m3s" → seconds
+function parseYouTubeTimestamp(t) {
+  if (!t) return null
+  // Already a plain number
+  if (/^\d+$/.test(t)) return t
+  // e.g. 1h2m3s, 1m30s, 45s
+  const match = t.match(/(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/)
+  if (!match) return null
+  const h = parseInt(match[1] || 0)
+  const m = parseInt(match[2] || 0)
+  const s = parseInt(match[3] || 0)
+  const total = h * 3600 + m * 60 + s
+  return total > 0 ? String(total) : null
+}
 
 function getYouTubeEmbedUrl(url) {
   if (!url) return null
@@ -15,9 +31,22 @@ function getYouTubeEmbedUrl(url) {
     if (u.hostname.includes('youtu.be')) videoId = u.pathname.slice(1)
     else if (u.hostname.includes('youtube.com')) videoId = u.searchParams.get('v')
     if (!videoId) return null
-    const start = u.searchParams.get('t') || u.searchParams.get('start')
+    const rawStart = u.searchParams.get('t') || u.searchParams.get('start')
+    const start = parseYouTubeTimestamp(rawStart)
     return `https://www.youtube.com/embed/${videoId}${start ? `?start=${start}` : ''}`
   } catch { return null }
+}
+
+// Strip markdown syntax for plain-text snippet preview
+function stripMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')   // bold
+    .replace(/\*(.+?)\*/g, '$1')        // italic
+    .replace(/`(.+?)`/g, '$1')          // inline code
+    .replace(/#{1,6}\s+/g, '')          // headings
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1') // links/images
+    .replace(/\n+/g, ' ')              // newlines → space
+    .trim()
 }
 
 export default function ObjectiveItem({ objective, index, userProgress, onTick, onUpdated, isPending }) {
@@ -193,13 +222,13 @@ export default function ObjectiveItem({ objective, index, userProgress, onTick, 
               {objective.title}
             </p>
 
-            {/* Method snippet — shown inline when not expanded */}
+            {/* Method snippet — shown inline when not expanded (plain text preview) */}
             {hasMethod && !expanded && !isCompleted && (
               <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '4px 0 0', lineHeight: 1.55 }}>
-                {objective.method.length > 120
-                  ? objective.method.slice(0, 120) + '…'
-                  : objective.method
-                }
+                {(() => {
+                  const plain = stripMarkdown(objective.method)
+                  return plain.length > 120 ? plain.slice(0, 120) + '…' : plain
+                })()}
               </p>
             )}
 
@@ -228,9 +257,9 @@ export default function ObjectiveItem({ objective, index, userProgress, onTick, 
                     borderRadius: 6, padding: '10px 12px',
                     borderLeft: '2px solid var(--accent-border)',
                   }}>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
-                      {objective.method}
-                    </p>
+                    <div className="objective-method">
+                      <ReactMarkdown>{objective.method}</ReactMarkdown>
+                    </div>
                   </div>
                 )}
                 {objective.image_url && (

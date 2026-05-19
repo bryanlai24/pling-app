@@ -44,3 +44,49 @@ body {
 ::-webkit-scrollbar-track { background: var(--bg-base); }
 ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+
+/* Markdown method renderer */
+.objective-method {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+.objective-method p {
+  margin: 0 0 0.6em;
+}
+.objective-method p:last-child {
+  margin-bottom: 0;
+}
+.objective-method strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.objective-method em {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+.objective-method ul,
+.objective-method ol {
+  margin: 0.4em 0 0.6em 1.2em;
+  padding: 0;
+}
+.objective-method li {
+  margin-bottom: 0.25em;
+}
+.objective-method code {
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border-default);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-size: 0.8em;
+  color: var(--accent-soft);
+  font-family: ui-monospace, monospace;
+}
+.objective-method a {
+  color: var(--accent-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.objective-method a:hover {
+  color: var(--accent);
+}
