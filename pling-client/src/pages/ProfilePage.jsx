@@ -2,19 +2,36 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMe, updateMe, getMyStats } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
-import { User, Trophy, Shield, Link, Unlink, Eye, EyeOff, Type } from 'lucide-react'
-import axios from 'axios'
+import { User, Link, Unlink, Eye, EyeOff, Type, ExternalLink } from 'lucide-react'
 import client from '../api/client'
 import { useUIStore } from '../store/uiStore'
-import XboxConnect from '../components/profile/XboxConnect'
 
 const connectPSN = (data) => client.post('/users/me/psn/connect', data)
 const disconnectPSN = () => client.delete('/users/me/psn/disconnect')
 
 const ROLE_BADGES = {
-  user: { label: 'User', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
-  contributor: { label: 'Contributor', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  admin: { label: 'Admin', color: 'bg-violet-500/10 text-violet-400 border-violet-500/20' },
+  user:        { label: 'User',        style: { background: 'rgba(107,114,128,0.1)', color: '#9ca3af', border: '0.5px solid rgba(107,114,128,0.25)' } },
+  contributor: { label: 'Contributor', style: { background: 'rgba(96,165,250,0.1)',  color: '#60a5fa', border: '0.5px solid rgba(96,165,250,0.25)'  } },
+  admin:       { label: 'Admin',       style: { background: 'rgba(167,139,250,0.1)', color: '#a78bfa', border: '0.5px solid rgba(167,139,250,0.25)' } },
+}
+
+const sectionStyle = {
+  background: 'var(--bg-surface)',
+  border: '0.5px solid var(--border-default)',
+  borderRadius: 16,
+  padding: 24,
+  marginBottom: 12,
+}
+
+const inputStyle = {
+  width: '100%',
+  background: 'var(--bg-elevated)',
+  border: '0.5px solid var(--border-default)',
+  borderRadius: 8,
+  padding: '10px 14px',
+  color: 'var(--text-primary)',
+  fontSize: '0.85rem',
+  outline: 'none',
 }
 
 export default function ProfilePage() {
@@ -22,7 +39,8 @@ export default function ProfilePage() {
   const { user: authUser } = useAuthStore()
   const [npsso, setNpsso] = useState('')
   const [showNpsso, setShowNpsso] = useState(false)
-  const [error, setError] = useState(null)
+  const [psnError, setPsnError] = useState(null)
+  const [steamInput, setSteamInput] = useState('')
   const { scale, scales, scaleLabels, setScale } = useUIStore()
 
   const { data: me } = useQuery({
@@ -35,152 +53,214 @@ export default function ProfilePage() {
     queryFn: () => getMyStats().then((r) => r.data),
   })
 
-  const connectMutation = useMutation({
+  const connectPsnMutation = useMutation({
     mutationFn: (token) => connectPSN({ npsso_token: token }),
     onSuccess: () => {
       setNpsso('')
-      setError(null)
+      setPsnError(null)
       queryClient.invalidateQueries({ queryKey: ['me'] })
     },
     onError: (err) => {
-      setError(err.response?.data?.detail || 'Failed to connect PSN account')
+      setPsnError(err.response?.data?.detail || 'Failed to connect PSN account')
     },
   })
 
-  const disconnectMutation = useMutation({
+  const disconnectPsnMutation = useMutation({
     mutationFn: disconnectPSN,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
   })
 
-  const updateMeMutation = useMutation({
-    mutationFn: (data) => updateMe(data),
+  const [steamError, setSteamError] = useState(null)
+  const [xboxCode, setXboxCode] = useState('')
+  const [xboxError, setXboxError] = useState(null)
+  const [xboxAuthUrl, setXboxAuthUrl] = useState(null)
+
+  const connectSteamMutation = useMutation({
+    mutationFn: (input) => client.post('/users/me/steam/connect', { steam_input: input }),
+    onSuccess: () => {
+      setSteamInput('')
+      setSteamError(null)
+      queryClient.invalidateQueries({ queryKey: ['me'] })
+    },
+    onError: (err) => {
+      setSteamError(err.response?.data?.detail || 'Could not resolve Steam ID — please try again.')
+    },
+  })
+
+  const disconnectSteamMutation = useMutation({
+    mutationFn: () => client.delete('/users/me/steam/disconnect'),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
   })
 
-  const handleConnect = (e) => {
-    e.preventDefault()
-    setError(null)
-    connectMutation.mutate(npsso)
+  const connectXboxMutation = useMutation({
+    mutationFn: (code) => client.post('/users/me/xbox/connect', { code }),
+    onSuccess: () => {
+      setXboxCode('')
+      setXboxError(null)
+      setXboxAuthUrl(null)
+      queryClient.invalidateQueries({ queryKey: ['me'] })
+    },
+    onError: (err) => {
+      setXboxError(err.response?.data?.detail || 'Failed to connect Xbox account — check the code and try again.')
+    },
+  })
+
+  const disconnectXboxMutation = useMutation({
+    mutationFn: () => client.delete('/users/me/xbox/disconnect'),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
+  })
+
+  const fetchXboxAuthUrl = async () => {
+    try {
+      const res = await client.get('/users/me/xbox/auth-url')
+      setXboxAuthUrl(res.data.auth_url)
+      window.open(res.data.auth_url, '_blank', 'noopener,noreferrer')
+    } catch {
+      setXboxError('Could not generate Xbox auth URL.')
+    }
   }
 
   const badge = ROLE_BADGES[me?.role || 'user']
 
+  const sectionHeader = (icon, title) => (
+    <div className="flex items-center gap-2.5 mb-5">
+      {icon}
+      <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>{title}</h3>
+    </div>
+  )
+
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-white mb-6">Profile</h1>
+    <div style={{ maxWidth: 560 }}>
+      <h1 className="font-bold mb-6" style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>Profile</h1>
 
       {/* Account info */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-4">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center">
-            <User size={24} className="text-gray-500" />
+      <div style={sectionStyle}>
+        <div className="flex items-center gap-4 mb-5">
+          <div
+            className="flex items-center justify-center flex-shrink-0"
+            style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)' }}
+          >
+            <User size={20} style={{ color: 'var(--text-muted)' }} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-white">{me?.username}</h2>
-              <span className={`text-xs px-2 py-0.5 rounded-full border ${badge.color}`}>
-                {badge.label}
-              </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{me?.username}</span>
+              {badge && (
+                <span className="px-2 py-0.5 rounded-full" style={{ ...badge.style, fontSize: '0.7rem' }}>
+                  {badge.label}
+                </span>
+              )}
             </div>
-            <p className="text-gray-500 text-sm">{me?.email}</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>{me?.email}</p>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800/50 rounded-xl">
-          <div className="text-center">
-            <p className="text-xl font-bold text-white">{stats?.games_tracked ?? '—'}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Games tracked</p>
-          </div>
-          <div className="text-center border-x border-gray-700">
-            <p className="text-xl font-bold text-white">{stats?.trophies_earned ?? '—'}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Achievements earned</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xl font-bold text-white">{stats?.platinums ?? '—'}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Completed games</p>
-          </div>
+        {/* Stats row */}
+        <div
+          className="grid grid-cols-3 gap-px rounded-xl overflow-hidden"
+          style={{ background: 'var(--border-default)' }}
+        >
+          {[
+            { value: stats?.games_tracked ?? '—', label: 'Games tracked' },
+            { value: stats?.trophies_earned ?? '—', label: 'Achievements' },
+            { value: stats?.platinums ?? '—', label: 'Completed' },
+          ].map(({ value, label }) => (
+            <div key={label} className="text-center py-4" style={{ background: 'var(--bg-elevated)' }}>
+              <p style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{value}</p>
+              <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 2 }}>{label}</p>
+            </div>
+          ))}
         </div>
+
+        {/* Per-platform breakdown */}
+        {stats && (stats.psn || stats.xbox || stats.steam) && (
+          <div className="mt-4 space-y-2">
+            {stats.psn && (
+              <div className="flex items-center justify-between" style={{ fontSize: '0.8rem' }}>
+                <span style={{ color: '#60a5fa' }}>PSN</span>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {stats.psn.platinums} platinums · {stats.psn.trophies_earned} trophies
+                </span>
+              </div>
+            )}
+            {stats.xbox && (
+              <div className="flex items-center justify-between" style={{ fontSize: '0.8rem' }}>
+                <span style={{ color: '#34d399' }}>Xbox</span>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {stats.xbox.gamerscore_earned.toLocaleString()} / {stats.xbox.gamerscore_total.toLocaleString()} G
+                </span>
+              </div>
+            )}
+            {stats.steam && (
+              <div className="flex items-center justify-between" style={{ fontSize: '0.8rem' }}>
+                <span style={{ color: '#9ca3af' }}>Steam</span>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {stats.steam.games_completed} games 100%
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {stats && (stats.psn || stats.xbox || stats.steam) && (
-        <div className="mt-3 space-y-2 px-1">
-          {stats.psn && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">PSN</span>
-              <span className="text-gray-300">
-                {stats.psn.platinums} platinums · {stats.psn.trophies_earned} trophies
-              </span>
-            </div>
-          )}
-          {stats.xbox && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Xbox</span>
-              <span className="text-gray-300">
-                {stats.xbox.gamerscore_earned.toLocaleString()} / {stats.xbox.gamerscore_total.toLocaleString()} G
-              </span>
-            </div>
-          )}
-          {stats.steam && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Steam</span>
-              <span className="text-gray-300">
-                {stats.steam.games_completed} games 100%
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* PSN Connection */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-4">
-        <div className="flex items-center gap-3 mb-4">
-          <Trophy size={18} className="text-blue-400" />
-          <h3 className="text-white font-medium">PlayStation Network</h3>
-        </div>
+      {/* PlayStation Network */}
+      <div style={sectionStyle}>
+        {sectionHeader(
+          <div style={{ width: 16, height: 16, borderRadius: 4, background: '#003087', flexShrink: 0 }} />,
+          'PlayStation Network'
+        )}
 
         {me?.psn_id ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', flexShrink: 0 }} />
               <div>
-                <p className="text-white text-sm font-medium">{me.psn_id}</p>
-                <p className="text-gray-500 text-xs">Connected</p>
+                <p style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)' }}>{me.psn_id}</p>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Connected</p>
               </div>
             </div>
             <button
-              onClick={() => disconnectMutation.mutate()}
-              disabled={disconnectMutation.isPending}
-              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-400 transition px-3 py-1.5 rounded-lg hover:bg-gray-800"
+              onClick={() => disconnectPsnMutation.mutate()}
+              disabled={disconnectPsnMutation.isPending}
+              className="flex items-center gap-1.5 transition px-3 py-1.5 rounded-lg"
+              style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
             >
-              <Unlink size={14} />
+              <Unlink size={13} />
               Disconnect
             </button>
           </div>
         ) : (
           <div>
-            <p className="text-gray-500 text-sm mb-4">
-              Connect your PSN account to enable game imports and trophy sync.
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 16 }}>
+              Connect your PSN account to enable trophy sync.
             </p>
-
-            {/* How to get NPSSO */}
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 mb-4">
-              <p className="text-xs font-medium text-gray-400 mb-2">How to get your NPSSO token:</p>
-              <ol className="text-xs text-gray-500 space-y-1.5 list-decimal list-inside">
-                <li>Log into <span className="text-violet-400">playstation.com</span> in your browser</li>
-                <li>Visit <span className="text-violet-400 break-all">ca.account.sony.com/api/v1/ssocookie</span></li>
-                <li>Copy the value next to <span className="font-mono bg-gray-800 px-1 rounded">npsso</span></li>
+            <div
+              className="rounded-xl p-4 mb-4"
+              style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)' }}
+            >
+              <p style={{ fontSize: '0.7rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                How to get your NPSSO token:
+              </p>
+              <ol style={{ fontSize: '0.7rem', color: 'var(--text-muted)', paddingLeft: 16, lineHeight: 2 }}>
+                <li>Log into <span style={{ color: 'var(--accent)' }}>playstation.com</span> in your browser</li>
+                <li>Visit <span style={{ color: 'var(--accent)', wordBreak: 'break-all' }}>ca.account.sony.com/api/v1/ssocookie</span></li>
+                <li>Copy the value next to <code style={{ background: 'var(--bg-hero)', padding: '1px 4px', borderRadius: 3 }}>npsso</code></li>
                 <li>Paste it below</li>
               </ol>
             </div>
 
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-4">
-                {error}
+            {psnError && (
+              <div
+                className="rounded-lg px-4 py-3 mb-4"
+                style={{ background: 'rgba(248,113,113,0.08)', border: '0.5px solid rgba(248,113,113,0.25)', fontSize: '0.8rem', color: '#f87171' }}
+              >
+                {psnError}
               </div>
             )}
 
-            <form onSubmit={handleConnect} className="flex gap-2">
+            <form onSubmit={(e) => { e.preventDefault(); connectPsnMutation.mutate(npsso) }} className="flex gap-2">
               <div className="relative flex-1">
                 <input
                   type={showNpsso ? 'text' : 'password'}
@@ -188,23 +268,105 @@ export default function ProfilePage() {
                   onChange={(e) => setNpsso(e.target.value)}
                   placeholder="Paste your NPSSO token"
                   required
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-violet-500 transition pr-10"
+                  style={{ ...inputStyle, paddingRight: 36 }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowNpsso(!showNpsso)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transition"
+                  style={{ color: 'var(--text-muted)' }}
                 >
-                  {showNpsso ? <EyeOff size={15} /> : <Eye size={15} />}
+                  {showNpsso ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
               <button
                 type="submit"
-                disabled={connectMutation.isPending || !npsso}
-                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition flex-shrink-0"
+                disabled={connectPsnMutation.isPending || !npsso}
+                className="flex items-center gap-1.5 font-medium px-4 rounded-lg flex-shrink-0 transition disabled:opacity-50"
+                style={{ fontSize: '0.85rem', background: '#003087', color: '#fff' }}
               >
-                <Link size={14} />
-                {connectMutation.isPending ? 'Connecting...' : 'Connect'}
+                <Link size={13} />
+                {connectPsnMutation.isPending ? 'Connecting...' : 'Connect'}
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+
+      {/* Steam */}
+      <div style={sectionStyle}>
+        {sectionHeader(
+          <div style={{ width: 16, height: 16, borderRadius: 4, background: '#1b2838', flexShrink: 0, border: '0.5px solid #2a475e' }} />,
+          'Steam'
+        )}
+
+        {me?.steam_id ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', flexShrink: 0 }} />
+              <div>
+                <p style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)' }}>{me.steam_id}</p>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Steam ID connected</p>
+              </div>
+            </div>
+            <button
+              onClick={() => disconnectSteamMutation.mutate()}
+              disabled={disconnectSteamMutation.isPending}
+              className="flex items-center gap-1.5 transition px-3 py-1.5 rounded-lg"
+              style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+            >
+              <Unlink size={13} />
+              Disconnect
+            </button>
+          </div>
+        ) : (
+          <div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 16 }}>
+              Connect your Steam account to enable achievement sync.
+            </p>
+            <div
+              className="rounded-xl p-4 mb-4"
+              style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)' }}
+            >
+              <p style={{ fontSize: '0.7rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                How to connect:
+              </p>
+              <ol style={{ fontSize: '0.7rem', color: 'var(--text-muted)', paddingLeft: 16, lineHeight: 2 }}>
+                <li>Paste your Steam profile URL, vanity name, or steamID64 below</li>
+                <li>In Steam → <span style={{ color: 'var(--accent)' }}>Edit Profile → Privacy Settings</span></li>
+                <li>Set <strong style={{ color: 'var(--text-secondary)' }}>Profile</strong>, <strong style={{ color: 'var(--text-secondary)' }}>Game details</strong>, and <strong style={{ color: 'var(--text-secondary)' }}>Playtime</strong> to <strong style={{ color: 'var(--text-secondary)' }}>Public</strong></li>
+                <li>All three must be public for achievement sync to work</li>
+              </ol>
+            </div>
+
+            {steamError && (
+              <div
+                className="rounded-lg px-4 py-3 mb-4"
+                style={{ background: 'rgba(248,113,113,0.08)', border: '0.5px solid rgba(248,113,113,0.25)', fontSize: '0.8rem', color: '#f87171' }}
+              >
+                {steamError}
+              </div>
+            )}
+
+            <form onSubmit={(e) => { e.preventDefault(); connectSteamMutation.mutate(steamInput.trim()) }} className="flex gap-2">
+              <input
+                type="text"
+                value={steamInput}
+                onChange={(e) => setSteamInput(e.target.value)}
+                placeholder="steamcommunity.com/id/yourname"
+                required
+                style={{ ...inputStyle, flex: 1 }}
+              />
+              <button
+                type="submit"
+                disabled={connectSteamMutation.isPending || !steamInput.trim()}
+                className="flex items-center gap-1.5 font-medium px-4 rounded-lg flex-shrink-0 transition disabled:opacity-50"
+                style={{ fontSize: '0.85rem', background: '#1b2838', color: '#c7d5e0', border: '0.5px solid #2a475e' }}
+              >
+                <Link size={13} />
+                {connectSteamMutation.isPending ? 'Resolving...' : 'Connect'}
               </button>
             </form>
           </div>
@@ -212,118 +374,139 @@ export default function ProfilePage() {
       </div>
 
       {/* Xbox */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mt-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-4 h-4 rounded-sm bg-green-500 flex-shrink-0" />
-          <h3 className="text-white font-medium">Xbox</h3>
-        </div>
-
-        {me?.role === 'admin' || me?.role === 'contributor' ? (
-          <XboxConnect />
-        ) : (
-          <p className="text-sm" style={{color:'var(--text-secondary)'}}>
-            Xbox connection is managed by admins for game imports.
-          </p>
+      <div style={sectionStyle}>
+        {sectionHeader(
+          <div style={{ width: 16, height: 16, borderRadius: 4, background: '#107c10', flexShrink: 0 }} />,
+          'Xbox'
         )}
-      </div>
 
-      {/* Steam */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mt-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-4 h-4 rounded-sm" style={{background:'#1b2838'}} />
-          <h3 className="text-white font-medium">Steam</h3>
-        </div>
-
-        {me?.steam_id ? (
+        {me?.xbox_gamertag ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', flexShrink: 0 }} />
               <div>
-                <p className="text-white text-sm font-medium">{me.steam_id}</p>
-                <p className="text-gray-500 text-xs">Steam ID connected</p>
+                <p style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)' }}>{me.xbox_gamertag}</p>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Xbox account connected</p>
               </div>
             </div>
             <button
-              onClick={async () => {
-                await updateMe({ steam_id: null })
-                queryClient.invalidateQueries({ queryKey: ['me'] })
-              }}
-              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-400 transition px-3 py-1.5 rounded-lg hover:bg-gray-800"
+              onClick={() => disconnectXboxMutation.mutate()}
+              disabled={disconnectXboxMutation.isPending}
+              className="flex items-center gap-1.5 transition px-3 py-1.5 rounded-lg"
+              style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
             >
-              <Unlink size={14} />
-              Remove
+              <Unlink size={13} />
+              Disconnect
             </button>
           </div>
         ) : (
           <div>
-            <p className="text-gray-500 text-sm mb-4">
-              Add your Steam ID to enable game imports from your Steam library.
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 16 }}>
+              Connect your Microsoft account to enable Xbox achievement sync.
             </p>
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 mb-4">
-              <p className="text-xs font-medium text-gray-400 mb-2">How to find your Steam ID:</p>
-              <ol className="text-xs text-gray-500 space-y-1.5 list-decimal list-inside">
-                <li>Go to <span className="text-violet-400">steamidfinder.com</span></li>
-                <li>Enter your Steam profile URL or username</li>
-                <li>Copy the <span className="font-mono bg-gray-800 px-1 rounded">steamID64</span> value</li>
-                <li>Paste it below</li>
-              </ol>
-            </div>
-            <form onSubmit={async (e) => {
-              e.preventDefault()
-              const steamId = e.target.steam_id.value.trim()
-              await updateMe({ steam_id: steamId })
-              queryClient.invalidateQueries({ queryKey: ['me'] })
-            }} className="flex gap-2">
-              <input
-                type="text"
-                name="steam_id"
-                placeholder="76561198084471335"
-                className="flex-1 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none"
-                style={{
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--border-default)',
-                }}
-              />
+
+            {!xboxAuthUrl ? (
               <button
-                type="submit"
-                className="flex items-center gap-1.5 text-sm font-medium px-4 py-2.5 rounded-lg flex-shrink-0"
-                style={{background:'#1b2838', color:'#fff'}}
+                onClick={fetchXboxAuthUrl}
+                className="flex items-center gap-2 font-medium px-4 py-2.5 rounded-lg transition"
+                style={{ fontSize: '0.85rem', background: '#107c10', color: '#fff' }}
               >
-                <Link size={14} />
-                Save
+                <ExternalLink size={13} />
+                Sign in with Microsoft
               </button>
-            </form>
+            ) : (
+              <div>
+                <div
+                  className="rounded-xl p-4 mb-4"
+                  style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)' }}
+                >
+                  <p style={{ fontSize: '0.7rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                    Almost there:
+                  </p>
+                  <ol style={{ fontSize: '0.7rem', color: 'var(--text-muted)', paddingLeft: 16, lineHeight: 2 }}>
+                    <li>Sign in with your Microsoft account in the window that opened</li>
+                    <li>After signing in, you'll be redirected to a blank-looking page</li>
+                    <li>Copy the <code style={{ background: 'var(--bg-hero)', padding: '1px 4px', borderRadius: 3 }}>code=</code> value from the URL</li>
+                    <li>Paste it below and click Connect</li>
+                  </ol>
+                </div>
+
+                {xboxError && (
+                  <div
+                    className="rounded-lg px-4 py-3 mb-4"
+                    style={{ background: 'rgba(248,113,113,0.08)', border: '0.5px solid rgba(248,113,113,0.25)', fontSize: '0.8rem', color: '#f87171' }}
+                  >
+                    {xboxError}
+                  </div>
+                )}
+
+                <form onSubmit={(e) => { e.preventDefault(); connectXboxMutation.mutate(xboxCode.trim()) }} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={xboxCode}
+                    onChange={(e) => setXboxCode(e.target.value)}
+                    placeholder="Paste auth code here"
+                    required
+                    autoFocus
+                    style={{ ...inputStyle, flex: 1 }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={connectXboxMutation.isPending || !xboxCode.trim()}
+                    className="flex items-center gap-1.5 font-medium px-4 rounded-lg flex-shrink-0 transition disabled:opacity-50"
+                    style={{ fontSize: '0.85rem', background: '#107c10', color: '#fff' }}
+                  >
+                    <Link size={13} />
+                    {connectXboxMutation.isPending ? 'Connecting...' : 'Connect'}
+                  </button>
+                </form>
+
+                <button
+                  onClick={() => { setXboxAuthUrl(null); setXboxError(null) }}
+                  style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 12 }}
+                >
+                  ← Start over
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mt-4">
-        <div className="flex items-center gap-3 mb-4">
-          <Type size={18} className="text-violet-400" />
-          <h3 className="text-white font-medium">Display size</h3>
-        </div>
-        <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-          Adjust the size of text and UI elements across the app. Default is a comfortable reading size.
+      {/* Display size */}
+      <div style={sectionStyle}>
+        {sectionHeader(
+          <Type size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />,
+          'Display size'
+        )}
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 16 }}>
+          Adjust text and UI element size across the app.
         </p>
         <div className="grid grid-cols-4 gap-2">
           {scales.map((s) => (
             <button
               key={s}
               onClick={() => setScale(s)}
-              className={`py-2.5 rounded-lg border text-sm font-medium transition ${
-                scale === s
-                  ? 'bg-violet-600/20 border-violet-500/50 text-violet-300'
-                  : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
-              }`}
+              className="py-2.5 rounded-lg font-medium transition"
+              style={{
+                fontSize: '0.8rem',
+                border: scale === s ? '0.5px solid var(--accent-border)' : '0.5px solid var(--border-default)',
+                background: scale === s ? 'rgba(167,139,250,0.1)' : 'var(--bg-elevated)',
+                color: scale === s ? 'var(--accent)' : 'var(--text-muted)',
+              }}
             >
               {scaleLabels[s]}
             </button>
           ))}
         </div>
-        {/* Preview text */}
-        <div className="mt-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
-          <p className="text-white text-sm font-medium mb-0.5">Preview</p>
-          <p className="text-gray-500 text-xs">This is how text will appear across the app.</p>
+        <div
+          className="mt-4 rounded-lg p-3"
+          style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)' }}
+        >
+          <p style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)', marginBottom: 2 }}>Preview</p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>This is how text will appear across the app.</p>
         </div>
       </div>
     </div>

@@ -18,3 +18,18 @@ export const removeFromLibrary = (gameId) =>
 
 export const syncPsnGame = (gameId) =>
   client.post(`/users/me/psn/sync/${gameId}`)
+
+export const syncSteamGame = (gameId) =>
+  client.post(`/users/me/steam/sync/${gameId}`)
+
+export const syncXboxGame = (gameId) =>
+  client.post(`/users/me/xbox/sync/${gameId}`)
+
+export const getXboxAuthUrl = () =>
+  client.get('/users/me/xbox/auth-url')
+
+export const connectXbox = (code) =>
+  client.post('/users/me/xbox/connect', { code })
+
+export const disconnectXbox = () =>
+  client.delete('/users/me/xbox/disconnect')

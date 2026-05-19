@@ -2,7 +2,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { useQuery } from '@tanstack/react-query'
 import { getMe } from '../../api/auth'
-import { Trophy, Library, LogOut, User, Shield } from 'lucide-react'
+import { Library, LogOut, User, Shield, MessageSquarePlus } from 'lucide-react'
 
 export default function Layout() {
   const { clearAuth, isGuest } = useAuthStore()
@@ -29,39 +29,59 @@ export default function Layout() {
           </NavLink>
 
           <nav className="flex items-center gap-1">
-            {['library', 'profile', me?.role === 'admin' ? 'admin' : null]
-              .filter(Boolean)
-              .map((path) => (
-                path === 'admin' ? (
-                  <NavLink key="admin" to="/admin"
-                    className={({ isActive }) =>
-                      `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
-                        isActive
-                          ? 'text-[#f0ecff]'
-                          : 'text-[#6b6b8a] hover:text-[#f0ecff]'
-                      }`
-                    }
-                    style={({ isActive }) => isActive ? {background:'var(--bg-elevated)'} : {}}
-                  >
-                    <Shield size={15} />
-                    Admin
-                  </NavLink>
-                ) : (
-                  <NavLink key={path} to={`/${path}`}
-                    className={({ isActive }) =>
-                      `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition capitalize ${
-                        isActive
-                          ? 'text-[#f0ecff]'
-                          : 'text-[#6b6b8a] hover:text-[#f0ecff]'
-                      }`
-                    }
-                    style={({ isActive }) => isActive ? {background:'var(--bg-elevated)'} : {}}
-                  >
-                    {path === 'library' ? <Library size={15} /> : <User size={15} />}
-                    {path.charAt(0).toUpperCase() + path.slice(1)}
-                  </NavLink>
-                )
-              ))}
+            <NavLink to="/library"
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
+                  isActive ? 'text-[#f0ecff]' : 'text-[#6b6b8a] hover:text-[#f0ecff]'
+                }`
+              }
+              style={({ isActive }) => isActive ? {background:'var(--bg-elevated)'} : {}}
+            >
+              <Library size={15} />
+              Library
+            </NavLink>
+
+            {!isGuest && (
+              <NavLink to="/requests"
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
+                    isActive ? 'text-[#f0ecff]' : 'text-[#6b6b8a] hover:text-[#f0ecff]'
+                  }`
+                }
+                style={({ isActive }) => isActive ? {background:'var(--bg-elevated)'} : {}}
+              >
+                <MessageSquarePlus size={15} />
+                Requests
+              </NavLink>
+            )}
+
+            {!isGuest && (
+              <NavLink to="/profile"
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
+                    isActive ? 'text-[#f0ecff]' : 'text-[#6b6b8a] hover:text-[#f0ecff]'
+                  }`
+                }
+                style={({ isActive }) => isActive ? {background:'var(--bg-elevated)'} : {}}
+              >
+                <User size={15} />
+                Profile
+              </NavLink>
+            )}
+
+            {me?.role === 'admin' && (
+              <NavLink to="/admin"
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
+                    isActive ? 'text-[#f0ecff]' : 'text-[#6b6b8a] hover:text-[#f0ecff]'
+                  }`
+                }
+                style={({ isActive }) => isActive ? {background:'var(--bg-elevated)'} : {}}
+              >
+                <Shield size={15} />
+                Admin
+              </NavLink>
+            )}
           </nav>
 
           {/* User menu */}

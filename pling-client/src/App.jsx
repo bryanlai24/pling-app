@@ -10,6 +10,7 @@ import AchievementPage from './pages/AchievementPage'
 import Layout from './components/layout/Layout'
 import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
+import RequestsPage from './pages/RequestsPage'
 
 function ProtectedRoute({ children }) {
   const { token, isGuest } = useAuthStore()
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="achievements/:achievementId" element={<AchievementPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="admin" element={<AdminPage />} />
+        <Route path="requests" element={<RequestsPage />} />
       </Route>
     </Routes>
   )

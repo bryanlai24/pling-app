@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { getLibrary, listGames } from '../api/games'
-import { Plus, Gamepad2, Trophy, ChevronRight, Search } from 'lucide-react'
+import { Plus, Gamepad2, Trophy, ChevronRight, Search, MessageSquarePlus } from 'lucide-react'
 import AddGameModal from '../components/games/AddGameModal.jsx'
 import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
+import RequestGameModal from '../components/requests/RequestGameModal.jsx'
 import { useAuthStore } from '../store/authStore'
 
 const STATUS_COLORS = {
@@ -34,6 +35,7 @@ export default function LibraryPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [showAddGame, setShowAddGame] = useState(false)
+  const [showRequestModal, setShowRequestModal] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const { isGuest } = useAuthStore()
@@ -86,14 +88,30 @@ export default function LibraryPage() {
               : `${library.length} ${library.length === 1 ? 'game' : 'games'} tracked`}
           </p>
         </div>
-        <button
-          onClick={() => isGuest ? setShowGuestPrompt(true) : setShowAddGame(true)}
-          className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition"
-          style={{ background: 'var(--accent)', color: '#fff' }}
-        >
-          <Plus size={16} />
-          {isGuest ? 'Sign up to add games' : 'Add game'}
-        </button>
+        <div className="flex items-center gap-2">
+          {!isGuest && (
+            <button
+              onClick={() => setShowRequestModal(true)}
+              className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition"
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '0.5px solid var(--border-default)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <MessageSquarePlus size={15} />
+              Request
+            </button>
+          )}
+          <button
+            onClick={() => isGuest ? setShowGuestPrompt(true) : setShowAddGame(true)}
+            className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition"
+            style={{ background: 'var(--accent)', color: '#fff' }}
+          >
+            <Plus size={16} />
+            {isGuest ? 'Sign up to add games' : 'Add game'}
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -149,14 +167,28 @@ export default function LibraryPage() {
               : 'Add your first game to start tracking achievements'}
           </p>
           {!isGuest && (
-            <button
-              onClick={() => setShowAddGame(true)}
-              className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition mx-auto"
-              style={{ background: 'var(--accent)', color: '#fff' }}
-            >
-              <Plus size={16} />
-              Add game
-            </button>
+            <div className="flex items-center gap-2 justify-center">
+              <button
+                onClick={() => setShowAddGame(true)}
+                className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition"
+                style={{ background: 'var(--accent)', color: '#fff' }}
+              >
+                <Plus size={16} />
+                Add game
+              </button>
+              <button
+                onClick={() => setShowRequestModal(true)}
+                className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition"
+                style={{
+                  background: 'var(--bg-elevated)',
+                  border: '0.5px solid var(--border-default)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                <MessageSquarePlus size={15} />
+                Request a game
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -266,6 +298,10 @@ export default function LibraryPage() {
 
       {showGuestPrompt && (
         <GuestTrackingPrompt onClose={() => setShowGuestPrompt(false)} />
+      )}
+
+      {showRequestModal && (
+        <RequestGameModal onClose={() => setShowRequestModal(false)} />
       )}
     </div>
   )

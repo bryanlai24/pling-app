@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getLibrary, updateLibraryEntry, removeFromLibrary, syncPsnGame } from '../api/games'
+import { getLibrary, updateLibraryEntry, removeFromLibrary, syncPsnGame, syncSteamGame, syncXboxGame } from '../api/games'
 import { listAchievements, updateAchievementProgress } from '../api/achievements'
 import { listGenres, updateGameGenres } from '../api/genres'
 import { Trophy, Plus, ChevronRight, ChevronLeft, CheckCircle2, Circle, Loader2, Trash2, Pencil, X, Check, RefreshCw, Pin, PinOff } from 'lucide-react'
@@ -197,7 +197,25 @@ export default function GamePage() {
   const syncMutation = useMutation({
     mutationFn: () => syncPsnGame(gameId),
     onSuccess: (res) => {
-      setSyncResult(res.data)
+      setSyncResult({ ...res.data, platform: 'psn' })
+      queryClient.invalidateQueries({ queryKey: ['library'] })
+      queryClient.invalidateQueries({ queryKey: ['achievements', gameId] })
+    },
+  })
+
+  const steamSyncMutation = useMutation({
+    mutationFn: () => syncSteamGame(gameId),
+    onSuccess: (res) => {
+      setSyncResult({ ...res.data, platform: 'steam' })
+      queryClient.invalidateQueries({ queryKey: ['library'] })
+      queryClient.invalidateQueries({ queryKey: ['achievements', gameId] })
+    },
+  })
+
+  const xboxSyncMutation = useMutation({
+    mutationFn: () => syncXboxGame(gameId),
+    onSuccess: (res) => {
+      setSyncResult({ ...res.data, platform: 'xbox' })
       queryClient.invalidateQueries({ queryKey: ['library'] })
       queryClient.invalidateQueries({ queryKey: ['achievements', gameId] })
     },
@@ -447,13 +465,13 @@ export default function GamePage() {
               </div>
 
               {/* Progress bar + sync */}
-              {game.platform === 'psn' && (
+              {(game.platform === 'psn' || game.platform === 'steam' || game.platform === 'xbox') && (
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-1.5">
                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{completed} / {total} {trophyLabel}</span>
                     <div className="flex items-center gap-2">
                       <span style={{ fontSize: '0.65rem', fontWeight: 500, color: 'var(--text-primary)' }}>{percent}%</span>
-                      {!isGuest && (
+                      {!isGuest && game.platform === 'psn' && (
                         <button
                           onClick={() => { setSyncResult(null); syncMutation.mutate() }}
                           disabled={syncMutation.isPending}
@@ -463,6 +481,30 @@ export default function GamePage() {
                         >
                           <RefreshCw size={10} className={syncMutation.isPending ? 'animate-spin' : ''} />
                           {syncMutation.isPending ? 'Syncing...' : 'Sync PSN'}
+                        </button>
+                      )}
+                      {!isGuest && game.platform === 'steam' && (
+                        <button
+                          onClick={() => { setSyncResult(null); steamSyncMutation.mutate() }}
+                          disabled={steamSyncMutation.isPending}
+                          title="Sync achievements from Steam"
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-full border transition"
+                          style={{ fontSize: '0.65rem', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                        >
+                          <RefreshCw size={10} className={steamSyncMutation.isPending ? 'animate-spin' : ''} />
+                          {steamSyncMutation.isPending ? 'Syncing...' : 'Sync Steam'}
+                        </button>
+                      )}
+                      {!isGuest && game.platform === 'xbox' && (
+                        <button
+                          onClick={() => { setSyncResult(null); xboxSyncMutation.mutate() }}
+                          disabled={xboxSyncMutation.isPending}
+                          title="Sync achievements from Xbox"
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-full border transition"
+                          style={{ fontSize: '0.65rem', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                        >
+                          <RefreshCw size={10} className={xboxSyncMutation.isPending ? 'animate-spin' : ''} />
+                          {xboxSyncMutation.isPending ? 'Syncing...' : 'Sync Xbox'}
                         </button>
                       )}
                     </div>
@@ -479,6 +521,13 @@ export default function GamePage() {
                       style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
                       Synced {syncResult.synced} new, {syncResult.created} created, {syncResult.already_completed} already done
                       {' '}— {syncResult.completion_percent}% complete
+                    </div>
+                  )}
+                  {/* Sync errors */}
+                  {(syncMutation.isError || steamSyncMutation.isError || xboxSyncMutation.isError) && (
+                    <div className="mt-2 text-xs rounded-lg px-3 py-2"
+                      style={{ background: 'rgba(248,113,113,0.08)', color: '#f87171' }}>
+                      {(syncMutation.error || steamSyncMutation.error || xboxSyncMutation.error)?.response?.data?.detail || 'Sync failed — please try again.'}
                     </div>
                   )}
                 </div>
