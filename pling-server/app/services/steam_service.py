@@ -8,6 +8,51 @@ STEAM_API_BASE = "https://api.steampowered.com"
 STEAM_STORE_BASE = "https://store.steampowered.com/api"
 
 
+async def resolve_steam_id(input_str: str) -> str:
+    """Resolve a Steam input to a steamID64.
+
+    Accepts:
+    - steamID64 directly (17-digit number) → returned as-is
+    - Vanity URL name (e.g. "gabelogannewell")
+    - Full profile URL (e.g. "https://steamcommunity.com/id/gabelogannewell")
+    - /profiles/ URL with steamID64 already in it
+
+    Raises ValueError if resolution fails.
+    """
+    import re
+
+    raw = input_str.strip().rstrip("/")
+
+    # Extract from full /profiles/ URL — already a steamID64
+    profiles_match = re.search(r"/profiles/(\d{17})", raw)
+    if profiles_match:
+        return profiles_match.group(1)
+
+    # Extract vanity name from /id/ URL
+    id_match = re.search(r"/id/([^/]+)", raw)
+    if id_match:
+        raw = id_match.group(1)
+
+    # If it's already a 17-digit number, return directly
+    if re.fullmatch(r"\d{17}", raw):
+        return raw
+
+    # Otherwise treat as vanity URL and resolve via Steam API
+    async with httpx.AsyncClient(timeout=10) as client:
+        response = await client.get(
+            f"{STEAM_API_BASE}/ISteamUser/ResolveVanityURL/v1/",
+            params={"key": settings.steam_api_key, "vanityurl": raw},
+        )
+        response.raise_for_status()
+        data = response.json()
+
+    result = data.get("response", {})
+    if result.get("success") == 1:
+        return result["steamid"]
+
+    raise ValueError(f"Could not resolve Steam ID from '{input_str}' — check the URL or username and try again.")
+
+
 async def get_owned_games(steam_id: str) -> list[dict]:
     """Get all games owned by a Steam user."""
     async with httpx.AsyncClient() as client:

@@ -1,4 +1,4 @@
-import asyncio, inspect
+import asyncio, inspect, uuid
 from datetime import datetime, timezone, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -178,6 +178,128 @@ async def _get_authenticated_client(db: AsyncSession):
     await db.flush()
 
     return XboxLiveClient(auth_mgr), token_record, session
+
+async def exchange_code_for_user_tokens(db: AsyncSession, user_id: uuid.UUID, code: str) -> dict:
+    """Exchange an OAuth code for tokens and store them against a specific user."""
+    import uuid as _uuid
+    settings = get_settings()
+    async with SignedSession() as session:
+        auth_mgr = _make_auth_manager(session, settings)
+
+        oauth_response = await auth_mgr.request_oauth_token(code)
+        auth_mgr.oauth = oauth_response
+        auth_mgr.oauth = await auth_mgr.refresh_oauth_token()
+        await auth_mgr.refresh_tokens()
+
+        oauth = auth_mgr.oauth
+        xuid = str(auth_mgr.xsts_token.xuid)
+        now = datetime.now(timezone.utc)
+        expires_in = getattr(oauth, 'expires_in', None) or 3600
+        refresh_expires_in = 1209600
+
+        gamertag = None
+        try:
+            xbl_client = XboxLiveClient(auth_mgr)
+            profile = await xbl_client.profile.get_profile_by_xuid(xuid)
+            if profile.profile_users:
+                for setting in profile.profile_users[0].settings:
+                    if setting.id == "Gamertag":
+                        gamertag = setting.value
+                        break
+        except Exception as e:
+            print(f"Could not fetch gamertag: {e}")
+
+        # Upsert per-user token row
+        result = await db.execute(
+            select(XboxToken).where(XboxToken.user_id == user_id).limit(1)
+        )
+        token_record = result.scalar_one_or_none()
+
+        if token_record:
+            token_record.access_token = oauth.access_token
+            token_record.refresh_token = oauth.refresh_token
+            token_record.access_token_expires_at = now + timedelta(seconds=expires_in)
+            token_record.refresh_token_expires_at = now + timedelta(seconds=refresh_expires_in)
+            token_record.gamertag = gamertag
+            token_record.xuid = xuid
+        else:
+            token_record = XboxToken(
+                user_id=user_id,
+                access_token=oauth.access_token,
+                refresh_token=oauth.refresh_token,
+                access_token_expires_at=now + timedelta(seconds=expires_in),
+                refresh_token_expires_at=now + timedelta(seconds=refresh_expires_in),
+                gamertag=gamertag,
+                xuid=xuid,
+            )
+            db.add(token_record)
+
+        await db.flush()
+        return {"gamertag": gamertag, "xuid": xuid}
+
+
+async def _get_user_xbox_client(db: AsyncSession, user_id: uuid.UUID):
+    """Get an authenticated XboxLiveClient for a specific user."""
+    result = await db.execute(
+        select(XboxToken).where(XboxToken.user_id == user_id).limit(1)
+    )
+    token_record = result.scalar_one_or_none()
+
+    if not token_record:
+        raise Exception("No Xbox account connected. Connect your Xbox account in your profile first.")
+
+    now = datetime.now(timezone.utc)
+    if token_record.refresh_token_expires_at < now:
+        raise Exception("Xbox session expired — please reconnect your Xbox account in your profile.")
+
+    settings = get_settings()
+    session = SignedSession()
+    await session.__aenter__()
+
+    auth_mgr = _make_auth_manager(session, settings)
+    auth_mgr.oauth = OAuth2TokenResponse(
+        token_type="bearer",
+        expires_in=3600,
+        scope="XboxLive.signin XboxLive.offline_access",
+        access_token=token_record.access_token,
+        refresh_token=token_record.refresh_token,
+        user_id="",
+    )
+
+    auth_mgr.oauth = await auth_mgr.refresh_oauth_token()
+    await auth_mgr.refresh_tokens()
+
+    now = datetime.now(timezone.utc)
+    token_record.access_token = auth_mgr.oauth.access_token
+    token_record.refresh_token = auth_mgr.oauth.refresh_token
+    token_record.access_token_expires_at = now + timedelta(seconds=auth_mgr.oauth.expires_in or 3600)
+    if not token_record.xuid:
+        token_record.xuid = str(auth_mgr.xsts_token.xuid)
+    await db.flush()
+
+    return XboxLiveClient(auth_mgr), token_record, session
+
+
+async def fetch_user_xbox_achievements(db: AsyncSession, user_id: uuid.UUID, title_id: str) -> list[dict]:
+    """Fetch earned achievements for a specific user + title."""
+    client, token_record, session = await _get_user_xbox_client(db, user_id)
+    try:
+        response = await client.achievements.get_achievements_xboxone_gameprogress(
+            xuid=token_record.xuid,
+            title_id=title_id,
+        )
+        earned = []
+        for a in (response.achievements or []):
+            if getattr(a, 'progression', None) and getattr(a.progression, 'time_unlocked', None):
+                unlock_time = a.progression.time_unlocked
+                earned.append({
+                    "platform_achievement_id": str(a.id),
+                    "time_unlocked": unlock_time,
+                })
+        return earned
+    finally:
+        await session.__aexit__(None, None, None)
+
 
 async def search_xbox_titles(db: AsyncSession, query: str) -> list[dict]:
     client, token_record, session = await _get_authenticated_client(db)
