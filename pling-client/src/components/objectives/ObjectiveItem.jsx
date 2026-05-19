@@ -6,7 +6,74 @@ import { useContributorCheck } from '../../hooks/useContributorCheck'
 import { useAuthStore } from '../../store/authStore'
 import ContributorPrompt from '../ui/ContributorPrompt'
 import GuestTrackingPrompt from '../ui/GuestTrackingPrompt'
-import ReactMarkdown from 'react-markdown'
+// Lightweight markdown renderer — supports **bold**, *italic*, `code`,
+// - bullet lists, 1. numbered lists, and blank-line paragraph breaks.
+function MethodMarkdown({ text }) {
+  if (!text) return null
+
+  const inlineStyles = (str) => {
+    // Split on bold, italic, inline code markers and render spans
+    const parts = []
+    const re = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g
+    let last = 0, m
+    while ((m = re.exec(str)) !== null) {
+      if (m.index > last) parts.push(str.slice(last, m.index))
+      if (m[0].startsWith('**'))
+        parts.push(<strong key={m.index} style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{m[2]}</strong>)
+      else if (m[0].startsWith('*'))
+        parts.push(<em key={m.index} style={{ fontStyle: 'italic' }}>{m[3]}</em>)
+      else
+        parts.push(<code key={m.index} style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border-default)', borderRadius: 4, padding: '0.1em 0.35em', fontSize: '0.8em', color: 'var(--accent-soft)', fontFamily: 'ui-monospace, monospace' }}>{m[4]}</code>)
+      last = m.index + m[0].length
+    }
+    if (last < str.length) parts.push(str.slice(last))
+    return parts
+  }
+
+  // Split into blocks by blank lines
+  const blocks = text.split(/\n\n+/)
+  const elements = []
+
+  blocks.forEach((block, bi) => {
+    const lines = block.split('\n')
+    const isBullet = lines.every(l => /^[-*]\s/.test(l.trim()) || l.trim() === '')
+    const isNumbered = lines.every(l => /^\d+\.\s/.test(l.trim()) || l.trim() === '')
+
+    if (isBullet && lines.some(l => /^[-*]\s/.test(l.trim()))) {
+      elements.push(
+        <ul key={bi} style={{ margin: '0.4em 0 0.5em 1.2em', padding: 0 }}>
+          {lines.filter(l => /^[-*]\s/.test(l.trim())).map((l, i) => (
+            <li key={i} style={{ marginBottom: '0.2em' }}>{inlineStyles(l.replace(/^[-*]\s/, ''))}</li>
+          ))}
+        </ul>
+      )
+    } else if (isNumbered && lines.some(l => /^\d+\.\s/.test(l.trim()))) {
+      elements.push(
+        <ol key={bi} style={{ margin: '0.4em 0 0.5em 1.2em', padding: 0 }}>
+          {lines.filter(l => /^\d+\.\s/.test(l.trim())).map((l, i) => (
+            <li key={i} style={{ marginBottom: '0.2em' }}>{inlineStyles(l.replace(/^\d+\.\s/, ''))}</li>
+          ))}
+        </ol>
+      )
+    } else {
+      // Paragraph — join lines with spaces, treat single newlines as <br>
+      const paraLines = block.split('\n').filter(l => l.trim())
+      elements.push(
+        <p key={bi} style={{ margin: bi < blocks.length - 1 ? '0 0 0.6em' : 0 }}>
+          {paraLines.map((l, i) => (
+            <span key={i}>{inlineStyles(l)}{i < paraLines.length - 1 && <br />}</span>
+          ))}
+        </p>
+      )
+    }
+  })
+
+  return (
+    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>
+      {elements}
+    </div>
+  )
+}
 
 // Parse YouTube timestamp strings like "1m30s", "90", "1h2m3s" → seconds
 function parseYouTubeTimestamp(t) {
@@ -263,9 +330,7 @@ export default function ObjectiveItem({ objective, index, userProgress, onTick, 
                     borderRadius: 6, padding: '10px 12px',
                     borderLeft: '2px solid var(--accent-border)',
                   }}>
-                    <div className="objective-method">
-                      <ReactMarkdown>{objective.method}</ReactMarkdown>
-                    </div>
+                    <MethodMarkdown text={objective.method} />
                   </div>
                 )}
                 {objective.image_url && (
