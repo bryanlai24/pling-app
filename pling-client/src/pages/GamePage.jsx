@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getLibrary, updateLibraryEntry, removeFromLibrary, syncPsnGame } from '../api/games'
-import { listAchievements } from '../api/achievements'
+import { listAchievements, updateAchievementProgress } from '../api/achievements'
 import { listGenres, updateGameGenres } from '../api/genres'
 import { Trophy, Plus, ChevronRight, ChevronLeft, CheckCircle2, Circle, Loader2, Trash2, Pencil, X, Check, RefreshCw, Pin, PinOff } from 'lucide-react'
 import AddAchievementModal from '../components/achievements/AddAchievementModal'
 import { useAuthStore } from '../store/authStore'
+import { useUIStore } from '../store/uiStore'
 import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
 import client from '../api/client'
 
@@ -37,9 +38,17 @@ export default function GamePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [showAddAchievement, setShowAddAchievement] = useState(false)
-  const [filter, setFilter] = useState('incomplete') // incomplete | complete | all
+  const { achievementFilter: filter, setAchievementFilter: setFilter } = useUIStore()
   const { isGuest } = useAuthStore()
   const [showGuestPrompt, setShowGuestPrompt] = useState(false)
+  const [toast, setToast] = useState(null) // { message, type: 'earned' | 'unearned' }
+  const toastTimer = useRef(null)
+
+  const showToast = (message, type = 'earned') => {
+    clearTimeout(toastTimer.current)
+    setToast({ message, type })
+    toastTimer.current = setTimeout(() => setToast(null), 2000)
+  }
   const [editingGenres, setEditingGenres] = useState(false)
   const [pendingGenreIds, setPendingGenreIds] = useState([])
   const { user } = useAuthStore()
@@ -116,6 +125,25 @@ export default function GamePage() {
     },
   })
 
+  const tickMutation = useMutation({
+    mutationFn: ({ achievementId, is_completed }) =>
+      updateAchievementProgress(achievementId, { is_completed }),
+    onSuccess: (_, { title, is_completed }) => {
+      queryClient.invalidateQueries({ queryKey: ['achievements', gameId] })
+      queryClient.invalidateQueries({ queryKey: ['library'] })
+      showToast(
+        is_completed ? `Earned: ${title}` : `Unearned: ${title}`,
+        is_completed ? 'earned' : 'unearned'
+      )
+    },
+  })
+
+  const handleTick = (e, a) => {
+    e.stopPropagation()
+    if (isGuest) { setShowGuestPrompt(true); return }
+    tickMutation.mutate({ achievementId: a.id, is_completed: !a.is_completed, title: a.title })
+  }
+
   const pinMutation = useMutation({
     mutationFn: ({ achievementId, is_pinned }) =>
       client.patch(`/achievements/${achievementId}/progress`, { is_pinned }),
@@ -129,19 +157,31 @@ export default function GamePage() {
   }
 
   const pinned = achievements.filter((a) => a.is_pinned)
-  const filtered = achievements.filter((a) => {
-    if (a.is_pinned) return false // pinned float above, excluded from main list
+
+  const matchesFilter = (a) => {
     if (filter === 'complete') return a.is_completed
     if (filter === 'incomplete') return !a.is_completed
     return true
-  })
+  }
 
-  const groupedAchievements = filtered.reduce((groups, a) => {
+  // Sort: matching achievements first, non-matching pushed to bottom
+  const sorted = [...achievements]
+    .filter((a) => !a.is_pinned)
+    .sort((a, b) => {
+      const aMatch = matchesFilter(a)
+      const bMatch = matchesFilter(b)
+      if (aMatch === bMatch) return 0
+      return aMatch ? -1 : 1
+    })
+
+  const groupedAchievements = sorted.reduce((groups, a) => {
     const key = a.trophy_set_name || 'Base Game'
     if (!groups[key]) groups[key] = []
     groups[key].push(a)
     return groups
   }, {})
+
+  const filtered = sorted // keep alias for length checks below
 
   const completed = achievements.filter((a) => a.is_completed).length
   const total = achievements.length
@@ -478,10 +518,13 @@ export default function GamePage() {
 
               <div className="space-y-2">
                 {setAchievements.map((a) => (
-                  <button
+                  <div
                     key={a.id}
                     onClick={() => navigate(`/achievements/${a.id}`)}
-                    className="w-full border rounded-xl p-4 flex items-center gap-4 transition text-left"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && navigate(`/achievements/${a.id}`)}
+                    className={`w-full border rounded-xl p-4 flex items-center gap-4 transition text-left cursor-pointer ${!matchesFilter(a) ? 'opacity-40' : ''}`}
                     style={{
                       background: 'var(--bg-surface)',
                       borderColor: 'var(--border-subtle)',
@@ -489,6 +532,18 @@ export default function GamePage() {
                     onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-border)'}
                     onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
                   >
+                    {/* Tick button */}
+                    <button
+                      onClick={(e) => handleTick(e, a)}
+                      disabled={tickMutation.isPending}
+                      className="flex-shrink-0 transition hover:scale-110"
+                    >
+                      {a.is_completed
+                        ? <CheckCircle2 size={18} style={{color:'var(--accent)'}} />
+                        : <Circle size={18} className="text-gray-600 hover:text-gray-400" />
+                      }
+                    </button>
+
                     {/* Trophy icon */}
                     <div className="flex-shrink-0">
                       {a.icon_url ? (
@@ -555,7 +610,7 @@ export default function GamePage() {
                       }
                     </button>
                     <ChevronRight size={16} className="flex-shrink-0" style={{color:'var(--text-muted)'}} />
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -563,12 +618,6 @@ export default function GamePage() {
         </div>
       )}
 
-      {/* No results from filter */}
-      {!isLoading && achievements.length > 0 && filtered.length === 0 && (
-        <div className="text-center py-16 text-gray-500 text-sm">
-          No {filter === 'all' ? '' : filter} {trophyLabel}
-        </div>
-      )}
 
       {/* Add achievement modal */}
       {showAddAchievement && (
@@ -626,6 +675,23 @@ export default function GamePage() {
 
       {showGuestPrompt && (
         <GuestTrackingPrompt onClose={() => setShowGuestPrompt(false)} />
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg transition-all animate-fade-in z-50 ${
+            toast.type === 'earned'
+              ? 'bg-violet-600 text-white'
+              : 'bg-gray-700 text-gray-300'
+          }`}
+        >
+          {toast.type === 'earned'
+            ? <CheckCircle2 size={15} />
+            : <Circle size={15} />
+          }
+          {toast.message}
+        </div>
       )}
     </div>
   )

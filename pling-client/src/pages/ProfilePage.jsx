@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getMe, updateMe } from '../api/auth'
+import { getMe, updateMe, getMyStats } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
 import { User, Trophy, Shield, Link, Unlink, Eye, EyeOff, Type } from 'lucide-react'
 import axios from 'axios'
@@ -28,6 +28,11 @@ export default function ProfilePage() {
   const { data: me } = useQuery({
     queryKey: ['me'],
     queryFn: () => getMe().then((r) => r.data),
+  })
+
+  const { data: stats } = useQuery({
+    queryKey: ['myStats'],
+    queryFn: () => getMyStats().then((r) => r.data),
   })
 
   const connectMutation = useMutation({
@@ -84,19 +89,48 @@ export default function ProfilePage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800/50 rounded-xl">
           <div className="text-center">
-            <p className="text-xl font-bold text-white">—</p>
+            <p className="text-xl font-bold text-white">{stats?.games_tracked ?? '—'}</p>
             <p className="text-xs text-gray-500 mt-0.5">Games tracked</p>
           </div>
           <div className="text-center border-x border-gray-700">
-            <p className="text-xl font-bold text-white">—</p>
-            <p className="text-xs text-gray-500 mt-0.5">Trophies earned</p>
+            <p className="text-xl font-bold text-white">{stats?.trophies_earned ?? '—'}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Achievements earned</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-white">—</p>
-            <p className="text-xs text-gray-500 mt-0.5">Platinums</p>
+            <p className="text-xl font-bold text-white">{stats?.platinums ?? '—'}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Completed games</p>
           </div>
         </div>
       </div>
+
+      {stats && (stats.psn || stats.xbox || stats.steam) && (
+        <div className="mt-3 space-y-2 px-1">
+          {stats.psn && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-400">PSN</span>
+              <span className="text-gray-300">
+                {stats.psn.platinums} platinums · {stats.psn.trophies_earned} trophies
+              </span>
+            </div>
+          )}
+          {stats.xbox && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-400">Xbox</span>
+              <span className="text-gray-300">
+                {stats.xbox.gamerscore_earned.toLocaleString()} / {stats.xbox.gamerscore_total.toLocaleString()} G
+              </span>
+            </div>
+          )}
+          {stats.steam && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-400">Steam</span>
+              <span className="text-gray-300">
+                {stats.steam.games_completed} games 100%
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* PSN Connection */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-4">

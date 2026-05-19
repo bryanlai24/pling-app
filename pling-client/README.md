@@ -134,4 +134,8 @@ Live URL: `https://pling-app-alpha.web.app`
 
 Default view is **Incomplete** first. Tab order: Incomplete → Complete → Game Order.
 
+The active filter is persisted in Zustand (`achievementFilter`) so navigating into an achievement and back doesn't reset it. Non-matching achievements are pushed to the bottom at reduced opacity rather than hidden — they're still accessible and clickable.
+
+Achievements can be ticked complete directly from the game page (no need to navigate in). A lightweight toast notification confirms the action for 2 seconds. The toast implementation is intentionally minimal (no library) since this is the only place in the app that needs one.
+
 Pinned achievements are shown in a dedicated section at the top regardless of the active filter. Pinning is per-user and stored in `UserAchievement.is_pinned`.

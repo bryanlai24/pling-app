@@ -11,6 +11,7 @@ import SeedObjectivesModal from '../components/objectives/SeedObjectivesModal'
 import ObjectiveItem from '../components/objectives/ObjectiveItem'
 import ContributorPrompt from '../components/ui/ContributorPrompt'
 import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
+import { useUIStore } from '../store/uiStore'
 
 const TROPHY_COLORS = {
   bronze: 'text-amber-600 bg-amber-600/10 border-amber-600/20',

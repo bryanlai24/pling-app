@@ -26,4 +26,7 @@ export const useUIStore = create((set) => ({
     applyScale(scale)
     set({ scale })
   },
+
+  achievementFilter: 'incomplete',
+  setAchievementFilter: (filter) => set({ achievementFilter: filter }),
 }))
