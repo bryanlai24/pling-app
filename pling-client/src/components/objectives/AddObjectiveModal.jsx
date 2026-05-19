@@ -3,10 +3,17 @@ import { useMutation } from '@tanstack/react-query'
 import { createObjective } from '../../api/objectives'
 import { X } from 'lucide-react'
 
+const inputCls = 'w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none'
+const inputStyle = {
+  background: 'var(--bg-elevated)',
+  border: '0.5px solid var(--border-default)',
+  color: 'var(--text-primary)',
+}
+
 export default function AddObjectiveModal({
   achievementId,
   nextSortOrder,
-  groups = [], // parent objectives with children — for the parent selector
+  groups = [],
   onClose,
   onSuccess,
 }) {
@@ -43,20 +50,26 @@ export default function AddObjectiveModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md p-6">
+      <div className="w-full max-w-md rounded-2xl p-6"
+        style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border-default)' }}>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-white">Add objective</h2>
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Add objective</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-white transition p-1 rounded-lg hover:bg-gray-800"
+            className="p-1 rounded-lg transition"
+            style={{ color: 'var(--text-muted)' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
           >
             <X size={18} />
           </button>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-4">
+          <div className="flex items-start gap-2 rounded-lg px-4 py-3 mb-4 text-sm"
+            style={{ background: 'rgba(248,113,113,0.08)', border: '0.5px solid rgba(248,113,113,0.2)', color: '#f87171' }}>
             {error}
           </div>
         )}
@@ -64,13 +77,15 @@ export default function AddObjectiveModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           {groups.length > 0 && (
             <div>
-              <label className="block text-sm text-gray-400 mb-1.5">
-                Group <span className="text-gray-600">(optional)</span>
+              <label className="block text-sm mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+                Group{' '}
+                <span style={{ color: 'var(--text-muted)' }}>(optional)</span>
               </label>
               <select
                 value={form.parent_objective_id}
                 onChange={(e) => setForm({ ...form, parent_objective_id: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+                className={inputCls}
+                style={inputStyle}
               >
                 <option value="">— No group (top level) —</option>
                 {groups.map((g) => (
@@ -81,33 +96,39 @@ export default function AddObjectiveModal({
           )}
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Objective</label>
+            <label className="block text-sm mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+              Objective
+            </label>
             <input
               type="text"
               required
               autoFocus
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition"
+              className={inputCls}
+              style={inputStyle}
               placeholder="e.g. Acquire the Puppet's Saber"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">
-              Method <span className="text-gray-600">(optional)</span>
+            <label className="block text-sm mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+              Method{' '}
+              <span style={{ color: 'var(--text-muted)' }}>(optional)</span>
             </label>
             <textarea
               value={form.method}
               onChange={(e) => setForm({ ...form, method: e.target.value })}
               rows={3}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition resize-none"
-              placeholder="How to accomplish this — where to find it, what to do..."
+              className={`${inputCls} resize-none`}
+              style={inputStyle}
+              placeholder="How to accomplish this — where to find it, what to do…"
             />
           </div>
 
           {/* Counter toggle */}
-          <div className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+          <div className="flex items-center gap-3 p-3 rounded-lg"
+            style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-subtle)' }}>
             <input
               type="checkbox"
               id="is_counter"
@@ -115,21 +136,25 @@ export default function AddObjectiveModal({
               onChange={(e) => setForm({ ...form, is_counter: e.target.checked, counter_target: '' })}
               className="w-4 h-4 accent-violet-500"
             />
-            <label htmlFor="is_counter" className="text-sm text-gray-300 cursor-pointer">
+            <label htmlFor="is_counter" className="text-sm cursor-pointer"
+              style={{ color: 'var(--text-secondary)' }}>
               This is a counter objective (e.g. kill 1000 enemies)
             </label>
           </div>
 
           {form.is_counter && (
             <div>
-              <label className="block text-sm text-gray-400 mb-1.5">Target count</label>
+              <label className="block text-sm mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+                Target count
+              </label>
               <input
                 type="number"
                 required
                 min={1}
                 value={form.counter_target}
                 onChange={(e) => setForm({ ...form, counter_target: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-violet-500 transition"
+                className={inputCls}
+                style={inputStyle}
                 placeholder="e.g. 1000"
               />
             </div>
@@ -139,16 +164,22 @@ export default function AddObjectiveModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg py-2.5 transition"
+              className="flex-1 py-2.5 rounded-lg text-sm font-medium transition"
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '0.5px solid var(--border-default)',
+                color: 'var(--text-secondary)',
+              }}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg py-2.5 transition"
+              className="flex-1 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-50"
+              style={{ background: 'var(--accent)', color: '#fff' }}
             >
-              {mutation.isPending ? 'Adding...' : 'Add objective'}
+              {mutation.isPending ? 'Adding…' : 'Add objective'}
             </button>
           </div>
         </form>

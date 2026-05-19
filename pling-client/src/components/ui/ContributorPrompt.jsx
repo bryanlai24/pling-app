@@ -9,7 +9,7 @@ export default function ContributorPrompt({ onClose, discordUrl = "https://disco
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent-border)' }}>
+            style={{ background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)' }}>
             <Users size={18} style={{ color: 'var(--accent)' }} />
           </div>
           <button

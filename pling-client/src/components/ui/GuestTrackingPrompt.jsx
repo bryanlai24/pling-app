@@ -11,7 +11,7 @@ export default function GuestTrackingPrompt({ onClose }) {
 
         <div className="flex items-start justify-between mb-4">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{background:'var(--accent-dim)', border:'1px solid var(--accent-border)'}}>
+            style={{background:'var(--accent-dim)', border:'0.5px solid var(--accent-border)'}}>
             <Trophy size={18} style={{color:'var(--accent)'}} />
           </div>
           <button onClick={onClose} className="p-1 rounded-lg"

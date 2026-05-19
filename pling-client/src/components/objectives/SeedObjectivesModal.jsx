@@ -23,7 +23,7 @@ Tatooine Space
  */
 function parseInput(text) {
   const lines = text.split('\n')
-  const groups = [] // [{ title, children: [{ title, method }] }]
+  const groups = []
   let currentGroup = null
 
   for (const raw of lines) {
@@ -37,13 +37,11 @@ function parseInput(text) {
 
     if (isIndented) {
       if (!currentGroup) {
-        // Flat leaf with no parent
         groups.push({ title: title.trim(), method, children: null })
       } else {
         currentGroup.children.push({ title: title.trim(), method })
       }
     } else {
-      // New group header
       currentGroup = { title: title.trim(), method: null, children: [] }
       groups.push(currentGroup)
     }
@@ -55,7 +53,7 @@ function parseInput(text) {
 export default function SeedObjectivesModal({ achievementId, onClose, onSuccess }) {
   const [text, setText] = useState('')
   const [status, setStatus] = useState('idle') // idle | running | done | error
-  const [log, setLog] = useState([]) // [{ msg, type }] type = info | success | error
+  const [log, setLog] = useState([])
 
   const appendLog = (msg, type = 'info') =>
     setLog((prev) => [...prev, { msg, type }])
@@ -71,7 +69,6 @@ export default function SeedObjectivesModal({ achievementId, onClose, onSuccess 
 
     for (const group of groups) {
       if (group.children === null) {
-        // Flat leaf — no parent
         try {
           await client.post(`/objectives/achievement/${achievementId}`, {
             title: group.title,
@@ -86,7 +83,6 @@ export default function SeedObjectivesModal({ achievementId, onClose, onSuccess 
       }
 
       if (group.children.length === 0) {
-        // Group header with no children — create as flat leaf
         try {
           await client.post(`/objectives/achievement/${achievementId}`, {
             title: group.title,
@@ -100,7 +96,6 @@ export default function SeedObjectivesModal({ achievementId, onClose, onSuccess 
         continue
       }
 
-      // Create parent
       let parentId = null
       try {
         const res = await client.post(`/objectives/achievement/${achievementId}`, {
@@ -115,7 +110,6 @@ export default function SeedObjectivesModal({ achievementId, onClose, onSuccess 
         continue
       }
 
-      // Create children
       let childSortOrder = 0
       for (const child of group.children) {
         try {
@@ -142,18 +136,29 @@ export default function SeedObjectivesModal({ achievementId, onClose, onSuccess 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-2xl rounded-2xl flex flex-col max-h-[90vh]"
+        style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border-default)' }}>
+
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-800">
+        <div className="flex items-center justify-between p-6"
+          style={{ borderBottom: '0.5px solid var(--border-subtle)' }}>
           <div>
-            <h2 className="text-lg font-semibold text-white">Seed objectives</h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Indented lines = children. Use <span className="font-mono bg-gray-800 px-1 rounded">|</span> to separate title from method.
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+              Seed objectives
+            </h2>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              Indented lines = children. Use{' '}
+              <span className="font-mono px-1 rounded"
+                style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>|</span>{' '}
+              to separate title from method.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-white transition p-1 rounded-lg hover:bg-gray-800"
+            className="p-1 rounded-lg transition"
+            style={{ color: 'var(--text-muted)' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
           >
             <X size={18} />
           </button>
@@ -167,53 +172,61 @@ export default function SeedObjectivesModal({ achievementId, onClose, onSuccess 
               onChange={(e) => setText(e.target.value)}
               rows={16}
               placeholder={PLACEHOLDER}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm font-mono placeholder-gray-600 focus:outline-none focus:border-violet-500 transition resize-none"
+              className="w-full rounded-xl px-4 py-3 text-sm font-mono focus:outline-none resize-none"
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '0.5px solid var(--border-default)',
+                color: 'var(--text-primary)',
+              }}
             />
           )}
 
           {status !== 'idle' && (
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 font-mono text-xs space-y-1 max-h-80 overflow-y-auto">
+            <div className="rounded-xl p-4 font-mono text-xs space-y-1 max-h-80 overflow-y-auto"
+              style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-subtle)' }}>
               {log.map((entry, i) => (
                 <div
                   key={i}
-                  className={
-                    entry.type === 'success' ? 'text-green-400' :
-                    entry.type === 'error' ? 'text-red-400' :
-                    'text-gray-400'
-                  }
+                  style={{
+                    color: entry.type === 'success' ? '#34d399'
+                         : entry.type === 'error'   ? '#f87171'
+                         : 'var(--text-muted)',
+                  }}
                 >
                   {entry.msg}
                 </div>
               ))}
               {status === 'running' && (
-                <div className="flex items-center gap-2 text-gray-500">
+                <div className="flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
                   <Loader2 size={12} className="animate-spin" />
-                  Running...
+                  Running…
                 </div>
               )}
             </div>
           )}
 
           {(status === 'done' || status === 'error') && (
-            <div className={`flex items-center gap-2 text-sm rounded-lg px-4 py-3 ${
-              errorCount > 0
-                ? 'bg-red-500/10 border border-red-500/30 text-red-400'
-                : 'bg-green-500/10 border border-green-500/30 text-green-400'
-            }`}>
-              {errorCount > 0
-                ? <AlertCircle size={15} />
-                : <CheckCircle2 size={15} />
-              }
+            <div className="flex items-center gap-2 text-sm rounded-lg px-4 py-3"
+              style={errorCount > 0
+                ? { background: 'rgba(248,113,113,0.08)', border: '0.5px solid rgba(248,113,113,0.2)', color: '#f87171' }
+                : { background: 'rgba(52,211,153,0.08)', border: '0.5px solid rgba(52,211,153,0.2)', color: '#34d399' }
+              }>
+              {errorCount > 0 ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
               {successCount} seeded{errorCount > 0 ? `, ${errorCount} failed` : ' successfully'}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-6 border-t border-gray-800">
+        <div className="flex gap-3 p-6" style={{ borderTop: '0.5px solid var(--border-subtle)' }}>
           <button
             onClick={onClose}
-            className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg py-2.5 transition"
+            className="flex-1 py-2.5 rounded-lg text-sm font-medium transition"
+            style={{
+              background: 'var(--bg-elevated)',
+              border: '0.5px solid var(--border-default)',
+              color: 'var(--text-secondary)',
+            }}
           >
             {status === 'done' ? 'Close' : 'Cancel'}
           </button>
@@ -221,7 +234,8 @@ export default function SeedObjectivesModal({ achievementId, onClose, onSuccess 
             <button
               onClick={handleSeed}
               disabled={!text.trim()}
-              className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white text-sm font-medium rounded-lg py-2.5 transition"
+              className="flex-1 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-40"
+              style={{ background: 'var(--accent)', color: '#fff' }}
             >
               Seed objectives
             </button>
@@ -229,7 +243,8 @@ export default function SeedObjectivesModal({ achievementId, onClose, onSuccess 
           {status === 'done' && errorCount > 0 && (
             <button
               onClick={() => { setStatus('idle'); setLog([]) }}
-              className="flex-1 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg py-2.5 transition"
+              className="flex-1 py-2.5 rounded-lg text-sm font-medium transition"
+              style={{ background: 'var(--accent)', color: '#fff' }}
             >
               Try again
             </button>

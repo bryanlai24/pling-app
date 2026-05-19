@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { createGame, addToLibrary, listGames } from '../../api/games'
-import { X, Search, Plus, ChevronRight } from 'lucide-react'
+import { X, Search, Trophy, ChevronRight } from 'lucide-react'
 
 const PLATFORMS = [
   { value: 'psn', label: 'PlayStation (PSN)' },
@@ -11,33 +11,32 @@ const PLATFORMS = [
 ]
 
 const PLATFORM_BADGES = {
-  psn: { label: 'PSN', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  xbox: { label: 'Xbox', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
-  steam: { label: 'Steam', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
-  manual: { label: 'Manual', color: 'bg-violet-500/10 text-violet-400 border-violet-500/20' },
+  psn:    { label: 'PSN',    style: { background: 'rgba(96,165,250,0.08)',  color: '#60a5fa', border: '0.5px solid rgba(96,165,250,0.2)'  } },
+  xbox:   { label: 'Xbox',   style: { background: 'rgba(52,211,153,0.08)',  color: '#34d399', border: '0.5px solid rgba(52,211,153,0.2)'  } },
+  steam:  { label: 'Steam',  style: { background: 'rgba(156,163,175,0.08)', color: '#9ca3af', border: '0.5px solid rgba(156,163,175,0.2)' } },
+  manual: { label: 'Manual', style: { background: 'rgba(167,139,250,0.08)', color: '#a78bfa', border: '0.5px solid rgba(167,139,250,0.2)' } },
+}
+
+const inputCls = 'w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none'
+const inputStyle = {
+  background: 'var(--bg-elevated)',
+  border: '0.5px solid var(--border-default)',
+  color: 'var(--text-primary)',
 }
 
 export default function AddGameModal({ onClose, onSuccess }) {
   const [search, setSearch] = useState('')
   const [mode, setMode] = useState('search') // search | manual
-  const [form, setForm] = useState({
-    title: '',
-    platform: 'psn',
-    cover_image_url: '',
-  })
+  const [form, setForm] = useState({ title: '', platform: 'psn', cover_image_url: '' })
   const [error, setError] = useState(null)
 
-  // Fetch full catalogue
   const { data: catalogue = [] } = useQuery({
     queryKey: ['games'],
     queryFn: () => listGames().then((r) => r.data),
   })
 
-  // Filter by search
   const results = search.length > 1
-    ? catalogue.filter((g) =>
-        g.title.toLowerCase().includes(search.toLowerCase())
-      )
+    ? catalogue.filter((g) => g.title.toLowerCase().includes(search.toLowerCase()))
     : catalogue
 
   const addMutation = useMutation({
@@ -65,63 +64,68 @@ export default function AddGameModal({ onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md">
+      <div className="w-full max-w-md rounded-2xl"
+        style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border-default)' }}>
+
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-4">
-          <h2 className="text-lg font-semibold text-white">Add a game</h2>
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Add a game</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-white transition p-1 rounded-lg hover:bg-gray-800"
+            className="p-1 rounded-lg transition"
+            style={{ color: 'var(--text-muted)' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
           >
             <X size={18} />
           </button>
         </div>
 
         {error && (
-          <div className="mx-6 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-4">
+          <div className="mx-6 flex items-start gap-2 rounded-lg px-4 py-3 mb-4 text-sm"
+            style={{ background: 'rgba(248,113,113,0.08)', border: '0.5px solid rgba(248,113,113,0.2)', color: '#f87171' }}>
             {error}
           </div>
         )}
 
         {/* Tabs */}
-        <div className="flex mx-6 mb-4 bg-gray-800 rounded-lg p-0.5">
-          <button
-            onClick={() => setMode('search')}
-            className={`flex-1 text-sm py-1.5 rounded-md transition ${
-              mode === 'search' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Search catalogue
-          </button>
-          <button
-            onClick={() => setMode('manual')}
-            className={`flex-1 text-sm py-1.5 rounded-md transition ${
-              mode === 'manual' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Add manually
-          </button>
+        <div className="flex mx-6 mb-4 rounded-lg p-0.5"
+          style={{ background: 'var(--bg-elevated)' }}>
+          {['search', 'manual'].map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className="flex-1 text-sm py-1.5 rounded-md transition capitalize"
+              style={{
+                background: mode === m ? 'var(--bg-surface)' : 'transparent',
+                color: mode === m ? 'var(--text-primary)' : 'var(--text-muted)',
+              }}
+            >
+              {m === 'search' ? 'Search catalogue' : 'Add manually'}
+            </button>
+          ))}
         </div>
 
         {/* Search mode */}
         {mode === 'search' && (
           <div className="px-6 pb-6">
             <div className="relative mb-3">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: 'var(--text-muted)' }} />
               <input
                 type="text"
-                placeholder="Search for a game..."
+                placeholder="Search for a game…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 autoFocus
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-9 pr-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-violet-500 transition"
+                className={inputCls}
+                style={{ ...inputStyle, paddingLeft: '2.25rem' }}
               />
             </div>
 
-            {/* Results */}
-            <div className="space-y-1.5 max-h-72 overflow-y-auto">
+            <div className="max-h-72 overflow-y-auto">
               {results.length === 0 && (
-                <div className="text-center py-8 text-gray-500 text-sm">
+                <div className="text-center py-8 text-sm" style={{ color: 'var(--text-muted)' }}>
                   {search.length > 1
                     ? 'No games found — try adding it manually'
                     : 'No games in catalogue yet'}
@@ -134,39 +138,46 @@ export default function AddGameModal({ onClose, onSuccess }) {
                     key={game.id}
                     onClick={() => addMutation.mutate(game.id)}
                     disabled={addMutation.isPending}
-                    className="w-full flex items-center gap-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 rounded-xl px-4 py-3 transition text-left"
+                    className="w-full flex items-center gap-3 transition text-left"
+                    style={{ padding: '10px 0', borderBottom: '0.5px solid var(--border-deep)' }}
                   >
                     {game.cover_image_url ? (
-                      <img
-                        src={game.cover_image_url}
-                        alt={game.title}
-                        className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-                      />
+                      <img src={game.cover_image_url} alt={game.title}
+                        className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                     ) : (
-                      <div className="w-10 h-10 rounded-lg bg-gray-700 flex-shrink-0" />
+                      <div className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center"
+                        style={{ background: 'var(--bg-elevated)' }}>
+                        <Trophy size={14} style={{ color: 'var(--text-muted)' }} />
+                      </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-white truncate">{game.title}</div>
+                      <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                        {game.title}
+                      </p>
                       {(game.genres || []).length > 0 && (
-                        <div className="text-xs text-gray-500 mt-0.5 capitalize">
+                        <p className="text-xs mt-0.5 capitalize" style={{ color: 'var(--text-muted)' }}>
                           {game.genres.map((g) => g.genre).join(', ')}
-                        </div>
+                        </p>
                       )}
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full border flex-shrink-0 ${badge.color}`}>
-                      {badge.label}
-                    </span>
+                    {badge && (
+                      <span className="text-xs px-2 py-0.5 rounded flex-shrink-0" style={badge.style}>
+                        {badge.label}
+                      </span>
+                    )}
+                    <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
                   </button>
                 )
               })}
             </div>
 
             {results.length > 0 && (
-              <p className="text-center text-gray-600 text-xs mt-4">
+              <p className="text-center text-xs mt-4" style={{ color: 'var(--text-muted)' }}>
                 Can't find your game?{' '}
                 <button
                   onClick={() => setMode('manual')}
-                  className="text-violet-400 hover:text-violet-300 transition"
+                  className="transition"
+                  style={{ color: 'var(--accent)' }}
                 >
                   Add it manually
                 </button>
@@ -179,23 +190,29 @@ export default function AddGameModal({ onClose, onSuccess }) {
         {mode === 'manual' && (
           <form onSubmit={handleCreate} className="px-6 pb-6 space-y-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-1.5">Game title</label>
+              <label className="block text-sm mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+                Game title
+              </label>
               <input
                 type="text"
                 required
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition"
+                className={inputCls}
+                style={inputStyle}
                 placeholder="e.g. Elden Ring"
               />
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-1.5">Platform</label>
+              <label className="block text-sm mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+                Platform
+              </label>
               <select
                 value={form.platform}
                 onChange={(e) => setForm({ ...form, platform: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500 transition"
+                className={inputCls}
+                style={inputStyle}
               >
                 {PLATFORMS.map((p) => (
                   <option key={p.value} value={p.value}>{p.label}</option>
@@ -204,15 +221,17 @@ export default function AddGameModal({ onClose, onSuccess }) {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-1.5">
-                Cover image URL <span className="text-gray-600">(optional)</span>
+              <label className="block text-sm mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+                Cover image URL{' '}
+                <span style={{ color: 'var(--text-muted)' }}>(optional)</span>
               </label>
               <input
                 type="url"
                 value={form.cover_image_url}
                 onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-violet-500 transition"
-                placeholder="https://..."
+                className={inputCls}
+                style={inputStyle}
+                placeholder="https://…"
               />
             </div>
 
@@ -220,16 +239,22 @@ export default function AddGameModal({ onClose, onSuccess }) {
               <button
                 type="button"
                 onClick={() => setMode('search')}
-                className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg py-2.5 transition"
+                className="flex-1 py-2.5 rounded-lg text-sm font-medium transition"
+                style={{
+                  background: 'var(--bg-elevated)',
+                  border: '0.5px solid var(--border-default)',
+                  color: 'var(--text-secondary)',
+                }}
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg py-2.5 transition"
+                className="flex-1 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                style={{ background: 'var(--accent)', color: '#fff' }}
               >
-                {createMutation.isPending ? 'Adding...' : 'Add game'}
+                {createMutation.isPending ? 'Adding…' : 'Add game'}
               </button>
             </div>
           </form>

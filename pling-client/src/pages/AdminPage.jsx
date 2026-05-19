@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMe } from '../api/auth'
 import { useNavigate } from 'react-router-dom'
-import { Shield, Download, Loader2, CheckCircle2, AlertCircle, Search, Trophy } from 'lucide-react'
+import { Shield, Download, Loader2, CheckCircle2, AlertCircle, Search, Trophy, ChevronRight } from 'lucide-react'
 import client from '../api/client'
 
 const searchPSN = (query) => client.get(`/admin/psn/search?query=${encodeURIComponent(query)}`)
@@ -14,6 +14,217 @@ const searchXbox = (query) => client.get(`/admin/xbox/search?query=${encodeURICo
 const importXboxGame = (data) => client.post('/admin/import/xbox', data)
 const searchSteam = (query) => client.get(`/admin/steam/search?query=${encodeURIComponent(query)}`)
 const importSteamGame = (data) => client.post('/admin/import/steam', data)
+
+// ── Shared sub-components ──────────────────────────────────────────────────
+
+function SuccessBanner({ message, sub }) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg px-4 py-3 mb-4 text-sm"
+      style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', color: '#34d399' }}>
+      <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" />
+      <div>
+        <p className="font-medium">{message}</p>
+        {sub && <p className="mt-0.5 text-xs" style={{ color: 'rgba(52,211,153,0.6)' }}>{sub}</p>}
+      </div>
+    </div>
+  )
+}
+
+function ErrorBanner({ message }) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg px-4 py-3 mb-4 text-sm"
+      style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', color: '#f87171' }}>
+      <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+      <p>{message}</p>
+    </div>
+  )
+}
+
+function WarnBanner({ children }) {
+  return (
+    <div className="rounded-lg px-4 py-3 mb-4 text-sm"
+      style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', color: '#fbbf24' }}>
+      {children}
+    </div>
+  )
+}
+
+function SectionCard({ children }) {
+  return (
+    <div className="rounded-2xl p-5 sm:p-6 mb-5"
+      style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border-default)' }}>
+      {children}
+    </div>
+  )
+}
+
+function SectionHeader({ icon, label }) {
+  return (
+    <div className="flex items-center gap-2.5 mb-5">
+      {icon}
+      <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{label}</h2>
+    </div>
+  )
+}
+
+function GameCover({ url, alt, size = 'md' }) {
+  const dim = size === 'sm' ? 'w-10 h-10' : 'w-12 h-12'
+  return url ? (
+    <img src={url} alt={alt} className={`${dim} rounded-lg object-cover flex-shrink-0`} />
+  ) : (
+    <div className={`${dim} rounded-lg flex-shrink-0 flex items-center justify-center`}
+      style={{ background: 'var(--bg-elevated)' }}>
+      <Trophy size={size === 'sm' ? 14 : 18} style={{ color: 'var(--text-muted)' }} />
+    </div>
+  )
+}
+
+function FormInput({ label, sub, ...props }) {
+  return (
+    <div>
+      <label className="block text-sm mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+        {label}{sub && <span className="ml-1" style={{ color: 'var(--text-muted)' }}>{sub}</span>}
+      </label>
+      <input
+        className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
+        style={{
+          background: 'var(--bg-elevated)',
+          border: '0.5px solid var(--border-default)',
+          color: 'var(--text-primary)',
+        }}
+        {...props}
+      />
+    </div>
+  )
+}
+
+function FormSelect({ label, sub, children, ...props }) {
+  return (
+    <div>
+      <label className="block text-sm mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+        {label}{sub && <span className="ml-1" style={{ color: 'var(--text-muted)' }}>{sub}</span>}
+      </label>
+      <select
+        className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
+        style={{
+          background: 'var(--bg-elevated)',
+          border: '0.5px solid var(--border-default)',
+          color: 'var(--text-primary)',
+        }}
+        {...props}
+      >
+        {children}
+      </select>
+    </div>
+  )
+}
+
+function SearchInput({ value, onChange, placeholder, icon }) {
+  return (
+    <div className="relative flex-1">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}>
+        {icon || <Search size={15} />}
+      </span>
+      <input
+        type="text"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none"
+        style={{
+          background: 'var(--bg-elevated)',
+          border: '0.5px solid var(--border-default)',
+          color: 'var(--text-primary)',
+        }}
+      />
+    </div>
+  )
+}
+
+function SearchResult({ game, coverUrl, title, sub, disabled, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="w-full flex items-center gap-3 transition text-left"
+      style={{
+        padding: '10px 0',
+        borderBottom: '0.5px solid var(--border-deep)',
+        opacity: disabled ? 0.45 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+      }}
+    >
+      <GameCover url={coverUrl} alt={title} />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{title}</p>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{sub}</p>
+      </div>
+      {!disabled && <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />}
+      {disabled && (
+        <span className="text-xs px-2 py-0.5 rounded flex-shrink-0"
+          style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}>
+          Not owned
+        </span>
+      )}
+    </button>
+  )
+}
+
+function SelectedGameBar({ coverUrl, title, sub, onClear }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl p-4 mb-4"
+      style={{ background: 'var(--bg-card-purple)', border: '0.5px solid var(--accent-border)' }}>
+      <GameCover url={coverUrl} alt={title} />
+      <div className="flex-1 min-w-0">
+        <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{title}</p>
+        {sub && <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{sub}</p>}
+      </div>
+      <button onClick={onClear} className="text-xs transition" style={{ color: 'var(--text-muted)' }}>
+        Change
+      </button>
+    </div>
+  )
+}
+
+function ActionButtons({ onBack, onSubmit, submitLabel, isPending }) {
+  return (
+    <div className="flex gap-3 mt-2">
+      <button
+        type="button"
+        onClick={onBack}
+        className="flex-1 py-2.5 rounded-lg text-sm font-medium transition"
+        style={{
+          background: 'var(--bg-elevated)',
+          border: '0.5px solid var(--border-default)',
+          color: 'var(--text-secondary)',
+        }}
+      >
+        Back
+      </button>
+      <button
+        type="submit"
+        disabled={isPending}
+        className="flex-1 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 disabled:opacity-50"
+        style={{ background: 'var(--accent)', color: '#fff' }}
+      >
+        {isPending ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+        {isPending ? 'Importing…' : (submitLabel || 'Import')}
+      </button>
+    </div>
+  )
+}
+
+// ── Status dot ─────────────────────────────────────────────────────────────
+
+function StatusDot({ status, healthy, warning, danger }) {
+  const color =
+    status === healthy ? '#34d399' :
+    status === warning ? '#fbbf24' :
+    '#f87171'
+  return <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+}
+
+// ── Main page ───────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
   const navigate = useNavigate()
@@ -32,45 +243,51 @@ export default function AdminPage() {
   const { data: psnStatus } = useQuery({
     queryKey: ['psn-status'],
     queryFn: () => client.get('/admin/psn/status').then(r => r.data),
-    refetchInterval: 60000, // check every minute
+    refetchInterval: 60000,
   })
 
+  const { data: xboxStatus, refetch: refetchXboxStatus } = useQuery({
+    queryKey: ['xbox-status'],
+    queryFn: () => client.get('/admin/xbox/status').then(r => r.data),
+    refetchInterval: 60000,
+  })
+
+  // ── PSN state ──
   const [search, setSearch] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [selectedGame, setSelectedGame] = useState(null)
-  const [importForm, setImportForm] = useState({
-    genre: '',
-    trophy_set_name: 'Base Game',
-    existing_game_id: '',
-  })
+  const [importForm, setImportForm] = useState({ genre: '', trophy_set_name: 'Base Game', existing_game_id: '' })
   const [importResult, setImportResult] = useState(null)
   const [importError, setImportError] = useState(null)
 
+  // ── Xbox state ──
   const [xboxAuthUrl, setXboxAuthUrl] = useState(null)
   const [xboxCode, setXboxCode] = useState('')
+  const [xboxAuthError, setXboxAuthError] = useState(null)
   const [xboxSearch, setXboxSearch] = useState('')
   const [xboxResults, setXboxResults] = useState([])
   const [xboxSearching, setXboxSearching] = useState(false)
+  const [xboxSearchError, setXboxSearchError] = useState(null)
   const [selectedXboxGame, setSelectedXboxGame] = useState(null)
   const [xboxImportForm, setXboxImportForm] = useState({
-    genre: '',
-    trophy_set_name: 'Base Game',
-    existing_game_id: '',
-    cover_image_url: '',
+    genre: '', trophy_set_name: 'Base Game', existing_game_id: '', cover_image_url: '',
   })
+  const [xboxImportResult, setXboxImportResult] = useState(null)
+  const [xboxImportError, setXboxImportError] = useState(null)
+  const [xboxImporting, setXboxImporting] = useState(false)
 
+  // ── Steam state ──
   const [steamSearch, setSteamSearch] = useState('')
   const [steamResults, setSteamResults] = useState([])
   const [steamSearching, setSteamSearching] = useState(false)
   const [selectedSteamGame, setSelectedSteamGame] = useState(null)
-  const [steamImportForm, setSteamImportForm] = useState({
-    genre: '',
-    trophy_set_name: 'Base Game',
-    existing_game_id: '',
-  })
+  const [steamImportForm, setSteamImportForm] = useState({ genre: '', trophy_set_name: 'Base Game', existing_game_id: '' })
   const [steamImportResult, setSteamImportResult] = useState(null)
   const [steamImportError, setSteamImportError] = useState(null)
+  const [steamImporting, setSteamImporting] = useState(false)
+
+  // ── PSN handlers ──
 
   const handleSearch = async (e) => {
     e.preventDefault()
@@ -78,6 +295,7 @@ export default function AdminPage() {
     setSearching(true)
     setSearchResults([])
     setSelectedGame(null)
+    setImportError(null)
     try {
       const res = await searchPSN(search)
       setSearchResults(res.data)
@@ -120,351 +338,242 @@ export default function AdminPage() {
     importMutation.mutate(payload)
   }
 
-  const { data: xboxStatus, refetch: refetchXboxStatus } = useQuery({
-    queryKey: ['xbox-status'],
-    queryFn: () => client.get('/admin/xbox/status').then(r => r.data),
-    refetchInterval: 60000,
-  })
+  // ── Access guard ──
 
   if (!meLoading && me?.role !== 'admin') {
     return (
       <div className="text-center py-24">
-        <Shield size={40} className="text-gray-700 mx-auto mb-4" />
-        <h2 className="text-white font-medium mb-1">Access denied</h2>
-        <p className="text-gray-500 text-sm">You need admin access to view this page.</p>
+        <Shield size={40} className="mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
+        <h2 className="font-medium mb-1" style={{ color: 'var(--text-primary)' }}>Access denied</h2>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>You need admin access to view this page.</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <Shield size={20} className="text-violet-400" />
-        <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
+    <div>
+      {/* Page header */}
+      <div className="flex items-center gap-2.5 mb-6">
+        <Shield size={18} style={{ color: 'var(--accent)' }} />
+        <h1 className="font-bold" style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>Admin Panel</h1>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p className="text-2xl font-bold text-white">{gamesData?.length ?? '—'}</p>
-          <p className="text-gray-500 text-sm mt-0.5">Games in catalogue</p>
+      {/* ── Stats row ── */}
+      <div className="rounded-2xl p-5 sm:p-6 mb-5 flex flex-wrap gap-6"
+        style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border-default)' }}>
+
+        {/* Games count */}
+        <div className="flex-1 min-w-[120px]">
+          <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {gamesData?.length ?? '—'}
+          </p>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>Games in catalogue</p>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          {me?.psn_id ? (
-            <>
-              <p className="text-green-400 text-base font-medium">{me.psn_id}</p>
-              <p className="text-gray-500 text-sm mt-0.5">PSN connected</p>
-            </>
-          ) : (
-            <>
-              <p className="text-red-400 text-sm font-medium">Not connected</p>
-              <p className="text-gray-500 text-sm mt-0.5">PSN account</p>
-            </>
-          )}
-        </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+
+        <div className="hidden sm:block w-px self-stretch" style={{ background: 'var(--border-subtle)' }} />
+
+        {/* PSN token status */}
+        <div className="flex-1 min-w-[140px]">
           <div className="flex items-center gap-2 mb-1">
-            <div className={`w-2 h-2 rounded-full ${
-              psnStatus?.status === 'healthy' ? 'bg-green-400' :
-              psnStatus?.status === 'needs_refresh' ? 'bg-yellow-400' :
-              'bg-red-400'
-            }`} />
-            <p className="text-sm font-medium" style={{color:'var(--text-primary)'}}>
-              {psnStatus?.status === 'healthy' ? 'PSN tokens healthy' :
-              psnStatus?.status === 'needs_refresh' ? 'PSN: refreshing...' :
-              psnStatus?.status === 'expired' ? 'PSN token expired!' :
-              'Checking PSN status...'}
+            <StatusDot status={psnStatus?.status} healthy="healthy" warning="needs_refresh" />
+            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              {psnStatus?.status === 'healthy' ? 'PSN healthy' :
+               psnStatus?.status === 'needs_refresh' ? 'PSN refreshing…' :
+               psnStatus?.status === 'expired' ? 'PSN token expired' :
+               'Checking PSN…'}
             </p>
           </div>
           {psnStatus?.refresh_token_expires_at && (
-            <p className="text-xs" style={{color:'var(--text-muted)'}}>
-              Refresh token expires: {new Date(psnStatus.refresh_token_expires_at).toLocaleDateString()}
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              Expires {new Date(psnStatus.refresh_token_expires_at).toLocaleDateString()}
             </p>
           )}
         </div>
-        {/* <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          {me?.psn_id ? (
-            <>
-              <p className="text-green-400 text-base font-medium">{xboxStatus.gamertag}</p>
-              <p className="text-gray-500 text-sm mt-0.5">Xbox connected</p>
-            </>
-          ) : (
-            <>
-              <p className="text-red-400 text-sm font-medium">Not connected</p>
-              <p className="text-gray-500 text-sm mt-0.5">Xbox account</p>
-            </>
-          )}
-        </div> */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+
+        <div className="hidden sm:block w-px self-stretch" style={{ background: 'var(--border-subtle)' }} />
+
+        {/* Xbox token status */}
+        <div className="flex-1 min-w-[140px]">
           <div className="flex items-center gap-2 mb-1">
-            <div className={`w-2 h-2 rounded-full ${
-              xboxStatus?.status === 'healthy' ? 'bg-green-400' :
-              xboxStatus?.status === 'needs_refresh' ? 'bg-yellow-400' :
-              'bg-red-400'
-            }`} />
-            <p className="text-sm font-medium" style={{color:'var(--text-primary)'}}>
-              {xboxStatus?.status === 'healthy' ? 'Xbox tokens healthy' :
-              xboxStatus?.status === 'needs_refresh' ? 'Xbox: refreshing...' :
-              xboxStatus?.status === 'no_tokens' ? 'Xbox token not found!' :
-              'Xbox token expired!'}
+            <StatusDot status={xboxStatus?.status} healthy="healthy" warning="needs_refresh" />
+            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              {xboxStatus?.status === 'healthy' ? 'Xbox healthy' :
+               xboxStatus?.status === 'needs_refresh' ? 'Xbox refreshing…' :
+               xboxStatus?.status === 'no_tokens' ? 'Xbox not connected' :
+               'Xbox token expired'}
             </p>
           </div>
+          {me?.psn_id && (
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>PSN: {me.psn_id}</p>
+          )}
         </div>
       </div>
 
-      {/* PSN Import section */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Download size={18} className="text-violet-400" />
-          <h2 className="text-white font-semibold">Import from PSN</h2>
-        </div>
+      {/* ── PSN Import ── */}
+      <SectionCard>
+        <SectionHeader
+          icon={<Download size={16} style={{ color: 'var(--accent)' }} />}
+          label="Import from PSN"
+        />
 
         {!me?.psn_id && (
-          <div className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm rounded-lg px-4 py-3 mb-4">
+          <WarnBanner>
             Connect your PSN account in your{' '}
-            <button onClick={() => navigate('/profile')} className="underline hover:text-amber-300">
-              profile
-            </button>{' '}
+            <button onClick={() => navigate('/profile')} className="underline">profile</button>{' '}
             before importing games.
-          </div>
+          </WarnBanner>
         )}
 
         {importResult && (
-          <div className="bg-green-500/10 border border-green-500/30 text-green-400 text-sm rounded-lg px-4 py-3 mb-4 flex items-start gap-2">
-            <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium">{importResult.message}</p>
-              <p className="text-green-500/70 text-xs mt-0.5">
-                {importResult.trophies_imported} trophies imported
-              </p>
-            </div>
-          </div>
+          <SuccessBanner
+            message={importResult.message}
+            sub={`${importResult.trophies_imported} trophies imported`}
+          />
         )}
+        {importError && <ErrorBanner message={importError} />}
 
-        {importError && (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-4 flex items-start gap-2">
-            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-            <p>{importError}</p>
-          </div>
-        )}
-
-        {/* Step 1 — Search */}
-        {!selectedGame && (
+        {!selectedGame ? (
           <div>
-            <p className="text-sm text-gray-400 mb-3">
+            <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
               Search your PSN library to find a game to import:
             </p>
             <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-              <div className="relative flex-1">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search your PSN library..."
-                  className="w-full rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none"
-                  style={{
-                    background:'var(--bg-input)',
-                    border:'1px solid var(--border-default)',
-                    color:'var(--text-primary)'
-                  }}
-                />
-              </div>
+              <SearchInput
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search your PSN library…"
+              />
               <button
                 type="submit"
                 disabled={searching || !me?.psn_id}
-                className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition flex-shrink-0"
+                className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg transition disabled:opacity-50 flex-shrink-0"
+                style={{ background: 'var(--accent)', color: '#fff' }}
               >
                 {searching ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
                 Search
               </button>
             </form>
 
-            {/* Search results */}
             {searchResults.length > 0 && (
-              <div className="space-y-2 max-h-72 overflow-y-auto">
+              <div className="max-h-72 overflow-y-auto">
                 {searchResults.map((game) => (
-                  <button
+                  <SearchResult
                     key={game.np_communication_id}
+                    coverUrl={game.cover_image_url}
+                    title={game.title}
+                    sub={`${game.platform.join(', ')} · ${game.total_trophies} trophies${game.defined_trophies?.platinum > 0 ? ' · Platinum' : ''}`}
                     onClick={() => setSelectedGame(game)}
-                    className="w-full flex items-center gap-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-violet-500/50 rounded-xl px-4 py-3 transition text-left"
-                  >
-                    {game.cover_image_url ? (
-                      <img
-                        src={game.cover_image_url}
-                        alt={game.title}
-                        className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-gray-700 flex items-center justify-center flex-shrink-0">
-                        <Trophy size={20} className="text-gray-500" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{game.title}</p>
-                      <p className="text-gray-500 text-xs mt-0.5">
-                        {game.platform.join(', ')} · {game.total_trophies} trophies
-                        {game.defined_trophies.platinum > 0 && (
-                          <span className="text-violet-400 ml-1">· Platinum</span>
-                        )}
-                      </p>
-                    </div>
-                  </button>
+                  />
                 ))}
               </div>
             )}
-
             {searchResults.length === 0 && search && !searching && (
-              <p className="text-gray-500 text-sm text-center py-4">
+              <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>
                 No games found matching "{search}" in your PSN library
               </p>
             )}
           </div>
-        )}
+        ) : (
+          <form onSubmit={handleImport}>
+            <SelectedGameBar
+              coverUrl={selectedGame.cover_image_url}
+              title={selectedGame.title}
+              sub={`${selectedGame.platform.join(', ')} · ${selectedGame.total_trophies} trophies`}
+              onClear={() => setSelectedGame(null)}
+            />
 
-        {/* Step 2 — Configure and import */}
-        {selectedGame && (
-          <div>
-            {/* Selected game preview */}
-            <div className="flex items-center gap-3 bg-gray-800/50 border border-violet-500/30 rounded-xl p-4 mb-4">
-              {selectedGame.cover_image_url ? (
-                <img
-                  src={selectedGame.cover_image_url}
-                  alt={selectedGame.title}
-                  className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormInput
+                  label="Genre" sub="(optional)"
+                  type="text"
+                  value={importForm.genre}
+                  onChange={(e) => setImportForm({ ...importForm, genre: e.target.value })}
+                  placeholder="e.g. Action RPG"
                 />
-              ) : (
-                <div className="w-12 h-12 rounded-lg bg-gray-700 flex-shrink-0" />
-              )}
-              <div className="flex-1">
-                <p className="text-white font-medium">{selectedGame.title}</p>
-                <p className="text-gray-500 text-xs">
-                  {selectedGame.platform.join(', ')} · {selectedGame.total_trophies} trophies
-                </p>
+                <FormInput
+                  label="Trophy set name"
+                  type="text"
+                  required
+                  value={importForm.trophy_set_name}
+                  onChange={(e) => setImportForm({ ...importForm, trophy_set_name: e.target.value })}
+                  placeholder="Base Game"
+                />
               </div>
-              <button
-                onClick={() => setSelectedGame(null)}
-                className="text-gray-500 hover:text-white text-xs transition"
+              <FormSelect
+                label="Add to existing game" sub="(for DLC)"
+                value={importForm.existing_game_id}
+                onChange={(e) => setImportForm({ ...importForm, existing_game_id: e.target.value })}
               >
-                Change
-              </button>
+                <option value="">Create new game entry</option>
+                {gamesData?.map((g) => (
+                  <option key={g.id} value={g.id}>{g.title} ({g.platform})</option>
+                ))}
+              </FormSelect>
             </div>
 
-            <form onSubmit={handleImport} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1.5">
-                    Genre <span className="text-gray-600">(optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={importForm.genre}
-                    onChange={(e) => setImportForm({ ...importForm, genre: e.target.value })}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-violet-500 transition"
-                    placeholder="e.g. Action RPG"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1.5">Trophy set name</label>
-                  <input
-                    type="text"
-                    required
-                    value={importForm.trophy_set_name}
-                    onChange={(e) => setImportForm({ ...importForm, trophy_set_name: e.target.value })}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-violet-500 transition"
-                    placeholder="Base Game"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-400 mb-1.5">
-                  Add to existing game <span className="text-gray-600">(for DLC)</span>
-                </label>
-                <select
-                  value={importForm.existing_game_id}
-                  onChange={(e) => setImportForm({ ...importForm, existing_game_id: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500 transition"
-                >
-                  <option value="">Create new game entry</option>
-                  {gamesData?.map((g) => (
-                    <option key={g.id} value={g.id}>{g.title} ({g.platform})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSelectedGame(null)}
-                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg py-2.5 transition"
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={importMutation.isPending}
-                  className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-medium rounded-lg py-2.5 text-sm transition flex items-center justify-center gap-2"
-                >
-                  {importMutation.isPending ? (
-                    <><Loader2 size={16} className="animate-spin" /> Importing...</>
-                  ) : (
-                    <><Download size={16} /> Import</>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
+            <ActionButtons
+              onBack={() => setSelectedGame(null)}
+              isPending={importMutation.isPending}
+            />
+          </form>
         )}
-      </div>
+      </SectionCard>
 
-      {/* Xbox Import */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-4 h-4 rounded-sm bg-green-500 flex-shrink-0" />
-          <h2 className="text-white font-semibold">Import from Xbox</h2>
-        </div>
+      {/* ── Xbox Import ── */}
+      <SectionCard>
+        <SectionHeader
+          icon={<div className="w-4 h-4 rounded-sm flex-shrink-0" style={{ background: '#107c10' }} />}
+          label="Import from Xbox"
+        />
 
-        {/* Auth flow */}
-        {xboxStatus?.status === 'no_tokens' || xboxStatus?.status === 'expired' ? (
+        {/* Auth flow — no tokens */}
+        {(xboxStatus?.status === 'no_tokens' || xboxStatus?.status === 'expired') ? (
           <div>
-            <p className="text-sm mb-4" style={{color:'var(--text-secondary)'}}>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
               Connect your Xbox account to enable game imports.
             </p>
+
+            {xboxAuthError && <ErrorBanner message={xboxAuthError} />}
+
             {!xboxAuthUrl ? (
               <button
                 onClick={async () => {
-                  const res = await getXboxAuthUrl()
-                  setXboxAuthUrl(res.data.url)
-                  window.open(res.data.url, '_blank')
+                  try {
+                    const res = await getXboxAuthUrl()
+                    setXboxAuthUrl(res.data.url)
+                    window.open(res.data.url, '_blank')
+                  } catch (err) {
+                    setXboxAuthError('Could not get auth URL: ' + (err.response?.data?.detail || err.message))
+                  }
                 }}
                 className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg transition"
-                style={{background:'#107c10', color:'#fff'}}
+                style={{ background: '#107c10', color: '#fff' }}
               >
                 Connect Xbox Account
               </button>
             ) : (
               <div className="space-y-3">
-                <p className="text-sm" style={{color:'var(--text-secondary)'}}>
-                  After authorizing in the browser, copy the full redirect URL and paste it below:
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  After authorizing in the browser, paste the full redirect URL below:
                 </p>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={xboxCode}
                     onChange={(e) => setXboxCode(e.target.value)}
-                    placeholder="Paste the redirect URL here..."
+                    placeholder="Paste the redirect URL here…"
                     className="flex-1 rounded-lg px-4 py-2.5 text-sm focus:outline-none"
                     style={{
-                      background:'var(--bg-input)',
-                      border:'1px solid var(--border-default)',
-                      color:'var(--text-primary)'
+                      background: 'var(--bg-elevated)',
+                      border: '0.5px solid var(--border-default)',
+                      color: 'var(--text-primary)',
                     }}
                   />
                   <button
                     onClick={async () => {
+                      setXboxAuthError(null)
                       try {
-                        // Extract code from URL if full URL pasted
                         let code = xboxCode
                         if (xboxCode.includes('code=')) {
                           code = new URL(xboxCode).searchParams.get('code') || xboxCode
@@ -474,11 +583,11 @@ export default function AdminPage() {
                         setXboxCode('')
                         refetchXboxStatus()
                       } catch (err) {
-                        alert('Auth failed: ' + (err.response?.data?.detail || err.message))
+                        setXboxAuthError('Auth failed: ' + (err.response?.data?.detail || err.message))
                       }
                     }}
-                    className="px-4 py-2.5 rounded-lg text-sm font-medium"
-                    style={{background:'#107c10', color:'#fff'}}
+                    className="px-4 py-2.5 rounded-lg text-sm font-medium flex-shrink-0"
+                    style={{ background: '#107c10', color: '#fff' }}
                   >
                     Connect
                   </button>
@@ -487,46 +596,49 @@ export default function AdminPage() {
             )}
           </div>
         ) : (
+          /* Authenticated — search / configure */
           <div>
-            {/* Search */}
+            {xboxImportResult && (
+              <SuccessBanner
+                message={xboxImportResult.message}
+                sub={`${xboxImportResult.achievements_imported} achievements imported`}
+              />
+            )}
+            {xboxImportError && <ErrorBanner message={xboxImportError} />}
+
             {!selectedXboxGame ? (
               <div>
-                <p className="text-sm mb-3" style={{color:'var(--text-secondary)'}}>
+                <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
                   Search the Xbox catalog to find a game to import:
                 </p>
-                <form onSubmit={async (e) => {
-                  e.preventDefault()
-                  setXboxSearching(true)
-                  setXboxResults([])
-                  try {
-                    const res = await searchXbox(xboxSearch)
-                    setXboxResults(res.data)
-                  } catch (err) {
-                    alert('Search failed: ' + (err.response?.data?.detail || err.message))
-                  } finally {
-                    setXboxSearching(false)
-                  }
-                }} className="flex gap-2 mb-4">
-                  <div className="relative flex-1">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:'var(--text-muted)'}} />
-                    <input
-                      type="text"
-                      value={xboxSearch}
-                      onChange={(e) => setXboxSearch(e.target.value)}
-                      placeholder="Search Xbox catalog..."
-                      className="w-full rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none"
-                      style={{
-                        background:'var(--bg-input)',
-                        border:'1px solid var(--border-default)',
-                        color:'var(--text-primary)'
-                      }}
-                    />
-                  </div>
+                {xboxSearchError && <ErrorBanner message={xboxSearchError} />}
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    setXboxSearching(true)
+                    setXboxResults([])
+                    setXboxSearchError(null)
+                    try {
+                      const res = await searchXbox(xboxSearch)
+                      setXboxResults(res.data)
+                    } catch (err) {
+                      setXboxSearchError('Search failed: ' + (err.response?.data?.detail || err.message))
+                    } finally {
+                      setXboxSearching(false)
+                    }
+                  }}
+                  className="flex gap-2 mb-4"
+                >
+                  <SearchInput
+                    value={xboxSearch}
+                    onChange={(e) => setXboxSearch(e.target.value)}
+                    placeholder="Search Xbox catalog…"
+                  />
                   <button
                     type="submit"
                     disabled={xboxSearching}
-                    className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg transition"
-                    style={{background:'#107c10', color:'#fff'}}
+                    className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg transition disabled:opacity-50 flex-shrink-0"
+                    style={{ background: '#107c10', color: '#fff' }}
                   >
                     {xboxSearching ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
                     Search
@@ -534,248 +646,174 @@ export default function AdminPage() {
                 </form>
 
                 {xboxResults.length > 0 && (
-                  <div className="space-y-2 max-h-72 overflow-y-auto">
+                  <div className="max-h-72 overflow-y-auto">
                     {xboxResults.map((game) => (
-                      <button
+                      <SearchResult
                         key={game.store_id}
-                        onClick={() => game.can_import && setSelectedXboxGame(game)}
+                        coverUrl={game.cover_url}
+                        title={game.title}
+                        sub={game.can_import
+                          ? `${game.platform} · ${game.max_gamerscore}G`
+                          : 'Not in your Xbox library — play it first to import'}
                         disabled={!game.can_import}
-                        className="w-full flex items-center gap-3 rounded-xl px-4 py-3 transition text-left border"
-                        style={{
-                          background: 'var(--bg-elevated)',
-                          borderColor: game.can_import ? 'var(--border-subtle)' : 'var(--border-subtle)',
-                          opacity: game.can_import ? 1 : 0.5,
-                          cursor: game.can_import ? 'pointer' : 'not-allowed',
-                        }}
-                      >
-                        {game.cover_url ? (
-                          <img src={game.cover_url} alt={game.title}
-                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg flex-shrink-0"
-                            style={{background:'var(--bg-input)'}} />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate" style={{color:'var(--text-primary)'}}>
-                            {game.title}
-                          </p>
-                          <p className="text-xs" style={{color:'var(--text-muted)'}}>
-                            {game.can_import
-                              ? `${game.platform} · ${game.max_gamerscore}G`
-                              : 'Not in your Xbox library — play it first to import'}
-                          </p>
-                        </div>
-                        {!game.can_import && (
-                          <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
-                            style={{background:'var(--bg-input)', color:'var(--text-muted)'}}>
-                            Not owned
-                          </span>
-                        )}
-                      </button>
+                        onClick={() => game.can_import && setSelectedXboxGame(game)}
+                      />
                     ))}
                   </div>
                 )}
               </div>
             ) : (
-              /* Configure and import */
               <div>
-                <div className="flex items-center gap-3 rounded-xl p-4 mb-4 border"
-                  style={{background:'var(--bg-elevated)', borderColor:'var(--accent-border)'}}>
-                  {selectedXboxGame.cover_url ? (
-                    <img src={selectedXboxGame.cover_url} alt={selectedXboxGame.title}
-                      className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg flex-shrink-0"
-                      style={{background:'var(--bg-input)'}} />
-                  )}
-                  <div className="flex-1">
-                    <p className="font-medium" style={{color:'var(--text-primary)'}}>{selectedXboxGame.title}</p>
-                  </div>
-                  <button onClick={() => setSelectedXboxGame(null)}
-                    className="text-xs transition" style={{color:'var(--text-muted)'}}>
-                    Change
-                  </button>
-                </div>
+                <SelectedGameBar
+                  coverUrl={selectedXboxGame.cover_url}
+                  title={selectedXboxGame.title}
+                  onClear={() => setSelectedXboxGame(null)}
+                />
 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
-                        Genre <span style={{color:'var(--text-muted)'}}>(optional)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={xboxImportForm.genre}
-                        onChange={(e) => setXboxImportForm({...xboxImportForm, genre: e.target.value})}
-                        placeholder="e.g. Action RPG"
-                        className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
-                        style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
-                        Achievement set name
-                      </label>
-                      <input
-                        type="text"
-                        value={xboxImportForm.trophy_set_name}
-                        onChange={(e) => setXboxImportForm({...xboxImportForm, trophy_set_name: e.target.value})}
-                        className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
-                        style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
-                      Cover image URL <span style={{color:'var(--text-muted)'}}>(optional)</span>
-                    </label>
-                    <input
-                      type="url"
-                      value={xboxImportForm.cover_image_url}
-                      onChange={(e) => setXboxImportForm({...xboxImportForm, cover_image_url: e.target.value})}
-                      placeholder="https://..."
-                      className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
-                      style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormInput
+                      label="Genre" sub="(optional)"
+                      type="text"
+                      value={xboxImportForm.genre}
+                      onChange={(e) => setXboxImportForm({ ...xboxImportForm, genre: e.target.value })}
+                      placeholder="e.g. Action RPG"
+                    />
+                    <FormInput
+                      label="Achievement set name"
+                      type="text"
+                      value={xboxImportForm.trophy_set_name}
+                      onChange={(e) => setXboxImportForm({ ...xboxImportForm, trophy_set_name: e.target.value })}
                     />
                   </div>
+                  <FormInput
+                    label="Cover image URL" sub="(optional)"
+                    type="url"
+                    value={xboxImportForm.cover_image_url}
+                    onChange={(e) => setXboxImportForm({ ...xboxImportForm, cover_image_url: e.target.value })}
+                    placeholder="https://…"
+                  />
+                  <FormSelect
+                    label="Add to existing game" sub="(for DLC)"
+                    value={xboxImportForm.existing_game_id}
+                    onChange={(e) => setXboxImportForm({ ...xboxImportForm, existing_game_id: e.target.value })}
+                  >
+                    <option value="">Create new game entry</option>
+                    {gamesData?.map((g) => (
+                      <option key={g.id} value={g.id}>{g.title} ({g.platform})</option>
+                    ))}
+                  </FormSelect>
+                </div>
 
-                  <div>
-                    <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
-                      Add to existing game <span style={{color:'var(--text-muted)'}}>(for DLC)</span>
-                    </label>
-                    <select
-                      value={xboxImportForm.existing_game_id}
-                      onChange={(e) => setXboxImportForm({...xboxImportForm, existing_game_id: e.target.value})}
-                      className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
-                      style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
-                    >
-                      <option value="">Create new game entry</option>
-                      {gamesData?.map((g) => (
-                        <option key={g.id} value={g.id}>{g.title} ({g.platform})</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setSelectedXboxGame(null)}
-                      className="flex-1 py-2.5 rounded-lg text-sm font-medium transition border"
-                      style={{background:'var(--bg-elevated)', borderColor:'var(--border-subtle)', color:'var(--text-secondary)'}}
-                    >
-                      Back
-                    </button>
-                    <button
-                      onClick={async () => {
-                        try {
-                          const payload = {
-                            title_id: selectedXboxGame.title_id,
-                            game_title: selectedXboxGame.title,
-                            trophy_set_name: xboxImportForm.trophy_set_name,
-                          }
-                          if (xboxImportForm.genre) payload.genre = xboxImportForm.genre
-                          if (xboxImportForm.cover_image_url) payload.cover_image_url = xboxImportForm.cover_image_url
-                          if (xboxImportForm.existing_game_id) payload.existing_game_id = xboxImportForm.existing_game_id
-                          const res = await importXboxGame(payload)
-                          alert(`✅ ${res.data.message} — ${res.data.achievements_imported} achievements imported`)
-                          setSelectedXboxGame(null)
-                          setXboxSearch('')
-                          setXboxResults([])
-                          queryClient.invalidateQueries({ queryKey: ['all-games'] })
-                          queryClient.invalidateQueries({ queryKey: ['games'] })
-                        } catch (err) {
-                          alert('Import failed: ' + (err.response?.data?.detail || err.message))
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => setSelectedXboxGame(null)}
+                    className="flex-1 py-2.5 rounded-lg text-sm font-medium transition"
+                    style={{
+                      background: 'var(--bg-elevated)',
+                      border: '0.5px solid var(--border-default)',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    Back
+                  </button>
+                  <button
+                    disabled={xboxImporting}
+                    onClick={async () => {
+                      setXboxImportError(null)
+                      setXboxImportResult(null)
+                      setXboxImporting(true)
+                      try {
+                        const payload = {
+                          title_id: selectedXboxGame.title_id,
+                          game_title: selectedXboxGame.title,
+                          trophy_set_name: xboxImportForm.trophy_set_name,
                         }
-                      }}
-                      className="flex-1 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
-                      style={{background:'#107c10', color:'#fff'}}
-                    >
-                      <Download size={16} /> Import
-                    </button>
-                  </div>
+                        if (xboxImportForm.genre) payload.genre = xboxImportForm.genre
+                        if (xboxImportForm.cover_image_url) payload.cover_image_url = xboxImportForm.cover_image_url
+                        if (xboxImportForm.existing_game_id) payload.existing_game_id = xboxImportForm.existing_game_id
+                        const res = await importXboxGame(payload)
+                        setXboxImportResult(res.data)
+                        setSelectedXboxGame(null)
+                        setXboxSearch('')
+                        setXboxResults([])
+                        queryClient.invalidateQueries({ queryKey: ['all-games'] })
+                        queryClient.invalidateQueries({ queryKey: ['games'] })
+                      } catch (err) {
+                        setXboxImportError('Import failed: ' + (err.response?.data?.detail || err.message))
+                      } finally {
+                        setXboxImporting(false)
+                      }
+                    }}
+                    className="flex-1 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    style={{ background: '#107c10', color: '#fff' }}
+                  >
+                    {xboxImporting ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+                    {xboxImporting ? 'Importing…' : 'Import'}
+                  </button>
                 </div>
               </div>
             )}
           </div>
         )}
-      </div>
+      </SectionCard>
 
-      {/* Steam Import */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-4 h-4 rounded-sm flex-shrink-0" style={{background:'#1b2838'}} />
-          <h2 className="text-white font-semibold">Import from Steam</h2>
-        </div>
+      {/* ── Steam Import ── */}
+      <SectionCard>
+        <SectionHeader
+          icon={<div className="w-4 h-4 rounded-sm flex-shrink-0" style={{ background: '#4a90d9' }} />}
+          label="Import from Steam"
+        />
 
         {!me?.steam_id ? (
-          <div className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm rounded-lg px-4 py-3">
+          <WarnBanner>
             Add your Steam ID in your{' '}
-            <button onClick={() => navigate('/profile')} className="underline hover:text-amber-300">
-              profile
-            </button>{' '}
+            <button onClick={() => navigate('/profile')} className="underline">profile</button>{' '}
             to enable Steam imports.
-          </div>
+          </WarnBanner>
         ) : (
           <div>
             {steamImportResult && (
-              <div className="bg-green-500/10 border border-green-500/30 text-green-400 text-sm rounded-lg px-4 py-3 mb-4 flex items-start gap-2">
-                <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium">{steamImportResult.message}</p>
-                  <p className="text-green-500/70 text-xs mt-0.5">
-                    {steamImportResult.achievements_imported} achievements imported
-                  </p>
-                </div>
-              </div>
+              <SuccessBanner
+                message={steamImportResult.message}
+                sub={`${steamImportResult.achievements_imported} achievements imported`}
+              />
             )}
-
-            {steamImportError && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-4 flex items-start gap-2">
-                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-                <p>{steamImportError}</p>
-              </div>
-            )}
+            {steamImportError && <ErrorBanner message={steamImportError} />}
 
             {!selectedSteamGame ? (
               <div>
-                <p className="text-sm mb-3" style={{color:'var(--text-secondary)'}}>
+                <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
                   Search your Steam library to find a game to import:
                 </p>
-                <form onSubmit={async (e) => {
-                  e.preventDefault()
-                  setSteamSearching(true)
-                  setSteamResults([])
-                  setSteamImportResult(null)
-                  setSteamImportError(null)
-                  try {
-                    const res = await searchSteam(steamSearch)
-                    setSteamResults(res.data)
-                  } catch (err) {
-                    setSteamImportError('Search failed: ' + (err.response?.data?.detail || err.message))
-                  } finally {
-                    setSteamSearching(false)
-                  }
-                }} className="flex gap-2 mb-4">
-                  <div className="relative flex-1">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:'var(--text-muted)'}} />
-                    <input
-                      type="text"
-                      value={steamSearch}
-                      onChange={(e) => setSteamSearch(e.target.value)}
-                      placeholder="Search your Steam library..."
-                      className="w-full rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none"
-                      style={{
-                        background:'var(--bg-input)',
-                        border:'1px solid var(--border-default)',
-                        color:'var(--text-primary)'
-                      }}
-                    />
-                  </div>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    setSteamSearching(true)
+                    setSteamResults([])
+                    setSteamImportResult(null)
+                    setSteamImportError(null)
+                    try {
+                      const res = await searchSteam(steamSearch)
+                      setSteamResults(res.data)
+                    } catch (err) {
+                      setSteamImportError('Search failed: ' + (err.response?.data?.detail || err.message))
+                    } finally {
+                      setSteamSearching(false)
+                    }
+                  }}
+                  className="flex gap-2 mb-4"
+                >
+                  <SearchInput
+                    value={steamSearch}
+                    onChange={(e) => setSteamSearch(e.target.value)}
+                    placeholder="Search your Steam library…"
+                  />
                   <button
                     type="submit"
                     disabled={steamSearching}
-                    className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg transition"
-                    style={{background:'#1b2838', color:'#fff'}}
+                    className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg transition disabled:opacity-50 flex-shrink-0"
+                    style={{ background: '#4a90d9', color: '#fff' }}
                   >
                     {steamSearching ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
                     Search
@@ -783,191 +821,142 @@ export default function AdminPage() {
                 </form>
 
                 {steamResults.length > 0 && (
-                  <div className="space-y-2 max-h-72 overflow-y-auto">
+                  <div className="max-h-72 overflow-y-auto">
                     {steamResults.map((game) => (
-                      <button
+                      <SearchResult
                         key={game.app_id}
+                        coverUrl={game.cover_url}
+                        title={game.title}
+                        sub={`${game.playtime_hours}h played`}
                         onClick={() => setSelectedSteamGame(game)}
-                        className="w-full flex items-center gap-3 rounded-xl px-4 py-3 transition text-left border"
-                        style={{
-                          background:'var(--bg-elevated)',
-                          borderColor:'var(--border-subtle)',
-                        }}
-                      >
-                        {game.cover_url ? (
-                          <img src={game.cover_url} alt={game.title}
-                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg flex-shrink-0"
-                            style={{background:'var(--bg-input)'}} />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate" style={{color:'var(--text-primary)'}}>
-                            {game.title}
-                          </p>
-                          <p className="text-xs" style={{color:'var(--text-muted)'}}>
-                            {game.playtime_hours}h played
-                          </p>
-                        </div>
-                      </button>
+                      />
                     ))}
                   </div>
                 )}
-
                 {steamResults.length === 0 && steamSearch && !steamSearching && (
-                  <p className="text-center py-4 text-sm" style={{color:'var(--text-muted)'}}>
+                  <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>
                     No games found matching "{steamSearch}"
                   </p>
                 )}
               </div>
             ) : (
               <div>
-                {/* Selected game */}
-                <div className="flex items-center gap-3 rounded-xl p-4 mb-4 border"
-                  style={{background:'var(--bg-elevated)', borderColor:'var(--accent-border)'}}>
-                  {selectedSteamGame.cover_url ? (
-                    <img src={selectedSteamGame.cover_url} alt={selectedSteamGame.title}
-                      className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg flex-shrink-0"
-                      style={{background:'var(--bg-input)'}} />
-                  )}
-                  <div className="flex-1">
-                    <p className="font-medium" style={{color:'var(--text-primary)'}}>{selectedSteamGame.title}</p>
-                    <p className="text-xs" style={{color:'var(--text-muted)'}}>
-                      App ID: {selectedSteamGame.app_id}
-                    </p>
-                  </div>
-                  <button onClick={() => setSelectedSteamGame(null)}
-                    className="text-xs" style={{color:'var(--text-muted)'}}>
-                    Change
-                  </button>
-                </div>
+                <SelectedGameBar
+                  coverUrl={selectedSteamGame.cover_url}
+                  title={selectedSteamGame.title}
+                  sub={`App ID: ${selectedSteamGame.app_id}`}
+                  onClear={() => setSelectedSteamGame(null)}
+                />
 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
-                        Genre <span style={{color:'var(--text-muted)'}}>(optional)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={steamImportForm.genre}
-                        onChange={(e) => setSteamImportForm({...steamImportForm, genre: e.target.value})}
-                        placeholder="e.g. Action RPG"
-                        className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
-                        style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
-                        Achievement set name
-                      </label>
-                      <input
-                        type="text"
-                        value={steamImportForm.trophy_set_name}
-                        onChange={(e) => setSteamImportForm({...steamImportForm, trophy_set_name: e.target.value})}
-                        className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
-                        style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
-                      />
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormInput
+                      label="Genre" sub="(optional)"
+                      type="text"
+                      value={steamImportForm.genre}
+                      onChange={(e) => setSteamImportForm({ ...steamImportForm, genre: e.target.value })}
+                      placeholder="e.g. Action RPG"
+                    />
+                    <FormInput
+                      label="Achievement set name"
+                      type="text"
+                      value={steamImportForm.trophy_set_name}
+                      onChange={(e) => setSteamImportForm({ ...steamImportForm, trophy_set_name: e.target.value })}
+                    />
                   </div>
+                  <FormSelect
+                    label="Add to existing game" sub="(for DLC)"
+                    value={steamImportForm.existing_game_id}
+                    onChange={(e) => setSteamImportForm({ ...steamImportForm, existing_game_id: e.target.value })}
+                  >
+                    <option value="">Create new game entry</option>
+                    {gamesData?.map((g) => (
+                      <option key={g.id} value={g.id}>{g.title} ({g.platform})</option>
+                    ))}
+                  </FormSelect>
+                </div>
 
-                  <div>
-                    <label className="block text-sm mb-1.5" style={{color:'var(--text-secondary)'}}>
-                      Add to existing game <span style={{color:'var(--text-muted)'}}>(for DLC)</span>
-                    </label>
-                    <select
-                      value={steamImportForm.existing_game_id}
-                      onChange={(e) => setSteamImportForm({...steamImportForm, existing_game_id: e.target.value})}
-                      className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
-                      style={{background:'var(--bg-input)', border:'1px solid var(--border-default)', color:'var(--text-primary)'}}
-                    >
-                      <option value="">Create new game entry</option>
-                      {gamesData?.map((g) => (
-                        <option key={g.id} value={g.id}>{g.title} ({g.platform})</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setSelectedSteamGame(null)}
-                      className="flex-1 py-2.5 rounded-lg text-sm font-medium transition border"
-                      style={{background:'var(--bg-elevated)', borderColor:'var(--border-subtle)', color:'var(--text-secondary)'}}
-                    >
-                      Back
-                    </button>
-                    <button
-                      onClick={async () => {
-                        setSteamImportError(null)
-                        setSteamImportResult(null)
-                        try {
-                          const payload = {
-                            app_id: selectedSteamGame.app_id,
-                            game_title: selectedSteamGame.title,
-                            trophy_set_name: steamImportForm.trophy_set_name,
-                          }
-                          if (steamImportForm.genre) payload.genre = steamImportForm.genre
-                          if (steamImportForm.existing_game_id) payload.existing_game_id = steamImportForm.existing_game_id
-                          const res = await importSteamGame(payload)
-                          setSteamImportResult(res.data)
-                          setSelectedSteamGame(null)
-                          setSteamSearch('')
-                          setSteamResults([])
-                          queryClient.invalidateQueries({ queryKey: ['all-games'] })
-                          queryClient.invalidateQueries({ queryKey: ['games'] })
-                        } catch (err) {
-                          setSteamImportError('Import failed: ' + (err.response?.data?.detail || err.message))
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => setSelectedSteamGame(null)}
+                    className="flex-1 py-2.5 rounded-lg text-sm font-medium transition"
+                    style={{
+                      background: 'var(--bg-elevated)',
+                      border: '0.5px solid var(--border-default)',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    Back
+                  </button>
+                  <button
+                    disabled={steamImporting}
+                    onClick={async () => {
+                      setSteamImportError(null)
+                      setSteamImportResult(null)
+                      setSteamImporting(true)
+                      try {
+                        const payload = {
+                          app_id: selectedSteamGame.app_id,
+                          game_title: selectedSteamGame.title,
+                          trophy_set_name: steamImportForm.trophy_set_name,
                         }
-                      }}
-                      className="flex-1 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
-                      style={{background:'#1b2838', color:'#fff'}}
-                    >
-                      <Download size={16} /> Import
-                    </button>
-                  </div>
+                        if (steamImportForm.genre) payload.genre = steamImportForm.genre
+                        if (steamImportForm.existing_game_id) payload.existing_game_id = steamImportForm.existing_game_id
+                        const res = await importSteamGame(payload)
+                        setSteamImportResult(res.data)
+                        setSelectedSteamGame(null)
+                        setSteamSearch('')
+                        setSteamResults([])
+                        queryClient.invalidateQueries({ queryKey: ['all-games'] })
+                        queryClient.invalidateQueries({ queryKey: ['games'] })
+                      } catch (err) {
+                        setSteamImportError('Import failed: ' + (err.response?.data?.detail || err.message))
+                      } finally {
+                        setSteamImporting(false)
+                      }
+                    }}
+                    className="flex-1 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    style={{ background: '#4a90d9', color: '#fff' }}
+                  >
+                    {steamImporting ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+                    {steamImporting ? 'Importing…' : 'Import'}
+                  </button>
                 </div>
               </div>
             )}
           </div>
         )}
-      </div>
+      </SectionCard>
 
-      {/* Catalogue */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-        <h2 className="text-white font-semibold mb-4">
-          Catalogue
-          <span className="text-gray-500 text-sm font-normal ml-2">
-            {gamesData?.length ?? 0} games
-          </span>
-        </h2>
-        <div className="space-y-2">
-          {gamesData?.map((g) => (
-            <div key={g.id} className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl">
-              {g.cover_image_url ? (
-                <img
-                  src={g.cover_image_url}
-                  alt={g.title}
-                  className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-lg bg-gray-700 flex-shrink-0" />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-medium truncate">{g.title}</p>
-                <p className="text-gray-500 text-xs">{g.platform} · {g.genre || 'No genre'}</p>
-              </div>
-              <button
-                onClick={() => navigate(`/games/${g.id}`)}
-                className="text-xs text-gray-500 hover:text-violet-400 transition"
-              >
-                View →
-              </button>
-            </div>
-          ))}
+      {/* ── Catalogue ── */}
+      <SectionCard>
+        <div className="flex items-baseline gap-2 mb-4">
+          <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Catalogue</h2>
+          <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{gamesData?.length ?? 0} games</span>
         </div>
-      </div>
+
+        {gamesData?.map((g) => (
+          <button
+            key={g.id}
+            onClick={() => navigate(`/games/${g.id}`)}
+            className="w-full flex items-center gap-3 transition text-left"
+            style={{ padding: '10px 0', borderBottom: '0.5px solid var(--border-deep)' }}
+          >
+            <GameCover url={g.cover_image_url} alt={g.title} size="sm" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{g.title}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                {g.platform}{g.genre ? ` · ${g.genre}` : ''}
+              </p>
+            </div>
+            <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          </button>
+        ))}
+
+        {!gamesData?.length && (
+          <p className="text-sm py-6 text-center" style={{ color: 'var(--text-muted)' }}>No games imported yet</p>
+        )}
+      </SectionCard>
     </div>
   )
 }

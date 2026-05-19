@@ -159,7 +159,7 @@ export default function ObjectiveItem({ objective, index, userProgress, onTick, 
               className="flex-shrink-0 transition hover:scale-110 mt-0.5">
               {isCompleted
                 ? <CheckCircle2 size={22} style={{ color: 'var(--accent)' }} />
-                : <Circle size={22} style={{ color: '#333' }} />
+                : <Circle size={22} style={{ color: 'var(--border-default)' }} />
               }
             </button>
           ) : (
@@ -168,8 +168,8 @@ export default function ObjectiveItem({ objective, index, userProgress, onTick, 
                 ? <CheckCircle2 size={22} style={{ color: 'var(--accent)' }} />
                 : (
                   <div className="w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ border: '1.5px solid #444' }}>
-                    <span className="text-xs font-bold" style={{ color: '#444' }}>#</span>
+                    style={{ border: '0.5px solid var(--border-default)' }}>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>#</span>
                   </div>
                 )
               }
@@ -210,7 +210,7 @@ export default function ObjectiveItem({ objective, index, userProgress, onTick, 
                   <span>{counterValue.toLocaleString()} / {counterTarget.toLocaleString()}</span>
                   <span>{counterTarget > 0 ? Math.min(Math.round((counterValue / counterTarget) * 100), 100) : 0}%</span>
                 </div>
-                <div className="rounded" style={{ height: 3, background: '#1c1c2e' }}>
+                <div className="rounded" style={{ height: 3, background: 'var(--bg-elevated)' }}>
                   <div className="rounded transition-all" style={{
                     height: 3, background: 'var(--accent)',
                     width: `${counterTarget > 0 ? Math.min((counterValue / counterTarget) * 100, 100) : 0}%`,
@@ -287,9 +287,9 @@ export default function ObjectiveItem({ objective, index, userProgress, onTick, 
             {hasExpandable && (
               <button onClick={() => setExpanded(!expanded)}
                 className="p-1.5 rounded transition"
-                style={{ color: expanded ? 'rgba(167,139,250,0.55)' : '#333' }}
+                style={{ color: expanded ? 'var(--accent)' : 'var(--text-muted)' }}
                 onMouseEnter={e => e.currentTarget.style.color = 'var(--text-secondary)'}
-                onMouseLeave={e => e.currentTarget.style.color = expanded ? 'rgba(167,139,250,0.55)' : '#333'}>
+                onMouseLeave={e => e.currentTarget.style.color = expanded ? 'var(--accent)' : 'var(--text-muted)'}>
                 {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </button>
             )}
