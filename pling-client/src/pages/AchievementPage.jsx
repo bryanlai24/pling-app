@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAchievement, updateAchievementProgress } from '../api/achievements'
 import { updateObjectiveProgress } from '../api/objectives'
-import { ChevronLeft, Plus, Trophy, CheckCircle2, Circle, Loader2, UserPlus, Layers, Crown } from 'lucide-react'
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, Trophy, CheckCircle2, Circle, Loader2, UserPlus, Layers, Crown } from 'lucide-react'
 import { useContributorCheck } from '../hooks/useContributorCheck'
 import { useAuthStore } from '../store/authStore'
 import AddObjectiveModal from '../components/objectives/AddObjectiveModal'
@@ -27,6 +27,13 @@ export default function AchievementPage() {
   const queryClient = useQueryClient()
   const [showAddObjective, setShowAddObjective] = useState(false)
   const [showSeedObjectives, setShowSeedObjectives] = useState(false)
+  const [collapsedGroups, setCollapsedGroups] = useState(new Set())
+
+  const toggleGroup = (id) => setCollapsedGroups(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
   const { showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
   const { isGuest } = useAuthStore()
   const [showGuestPrompt, setShowGuestPrompt] = useState(false)
@@ -329,22 +336,29 @@ export default function AchievementPage() {
           {achievement.objectives.map((objective) =>
             objective.children?.length > 0 ? (
               <div key={objective.id}>
-                {/* Group header — thin uppercase divider */}
-                <div
-                  className="flex items-center justify-between py-3 mt-2"
+                {/* Group header — clickable to collapse */}
+                <button
+                  onClick={() => toggleGroup(objective.id)}
+                  className="w-full flex items-center justify-between py-3 mt-2 transition"
                   style={{ borderBottom: '0.5px solid var(--border-subtle)' }}
                 >
-                  <span
-                    className="text-xs font-medium uppercase"
-                    style={{ color: 'var(--text-muted)', letterSpacing: '0.06em' }}
-                  >
-                    {objective.title}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {collapsedGroups.has(objective.id)
+                      ? <ChevronDown size={13} style={{ color: 'var(--text-muted)' }} />
+                      : <ChevronUp size={13} style={{ color: 'var(--text-muted)' }} />
+                    }
+                    <span
+                      className="text-xs font-medium uppercase"
+                      style={{ color: 'var(--text-muted)', letterSpacing: '0.06em' }}
+                    >
+                      {objective.title}
+                    </span>
+                  </div>
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     {objective.children.filter(c => c.user_progress?.is_completed).length}/{objective.children.length}
                   </span>
-                </div>
-                {objective.children.map((child) => (
+                </button>
+                {!collapsedGroups.has(objective.id) && objective.children.map((child) => (
                   <ObjectiveItem
                     key={child.id}
                     objective={child}
