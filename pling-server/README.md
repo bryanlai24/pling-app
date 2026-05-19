@@ -141,6 +141,16 @@ gcloud run services update-traffic pling-server \
 
 ## Data Models
 
+### UserStats (`GET /users/me/stats`)
+Returns a structured stats object:
+- `games_tracked` — total games in library
+- `games_fully_completed` — games at `platinum` or `full_completion` status, cross-platform
+- `psn` — `{ trophies_earned, platinums }` — null if no PSN games in library
+- `xbox` — `{ gamerscore_earned, gamerscore_total }` — null if no Xbox games in library
+- `steam` — `{ games_completed }` — null if no Steam completions
+
+Platform blocks are only included when the user has relevant data, so the frontend can conditionally render per-platform rows. `recalculate_completion` (called after every sync and achievement tick) auto-promotes `UserGame.status` to `in_progress`, `platinum`, or `full_completion` based on completion percent and whether a platinum trophy exists.
+
 ### Objective
 Belongs to an Achievement. Can be nested one level deep via `parent_objective_id` (group header → leaf steps).
 
@@ -171,6 +181,7 @@ Per-user progress row for an achievement: `is_completed`, `is_pinned`, `progress
 | `d7e3f9a1b205` | PSN NPSSO token on users |
 | `e8b2c4d6f901` | `is_pinned` on user_achievements |
 | `f1a2b3c4d5e6` | `image_url` + `video_url` on objectives |
+| `a1b2c3d4e5f6` | Create `xbox_tokens` table (backfill — original migration was a no-op) |
 
 ## PSN Sync Architecture
 

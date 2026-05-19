@@ -54,6 +54,28 @@ class UserSummary(PlingBase):
     role: UserRole
 
 
+class PsnStats(PlingBase):
+    platinums: int
+    trophies_earned: int
+
+
+class XboxStats(PlingBase):
+    gamerscore_earned: int
+    gamerscore_total: int
+
+
+class SteamStats(PlingBase):
+    games_completed: int
+
+
+class UserStats(PlingBase):
+    games_tracked: int
+    games_fully_completed: int  # across all platforms (platinum or full_completion status)
+    psn: PsnStats | None = None
+    xbox: XboxStats | None = None
+    steam: SteamStats | None = None
+
+
 class TokenResponse(PlingBase):
     access_token: str
     token_type: str = "bearer"

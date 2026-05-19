@@ -7,7 +7,7 @@ from app.auth.jwt import create_access_token
 from app.models.user import User
 from app.schemas.user import (
     UserRegister, UserLogin, UserUpdate,
-    UserPublic, TokenResponse, PasswordChange,
+    UserPublic, TokenResponse, PasswordChange, UserStats,
 )
 from app.services import user_service
 
@@ -50,3 +50,11 @@ async def change_password(
     current_user: User = Depends(get_current_user),
 ):
     await user_service.change_password(db, current_user, data)
+
+
+@router.get("/me/stats", response_model=UserStats)
+async def get_my_stats(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await user_service.get_user_stats(db, current_user.id)

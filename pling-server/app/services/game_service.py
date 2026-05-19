@@ -203,6 +203,39 @@ async def recalculate_completion(
     ug = result.scalar_one_or_none()
     if ug:
         ug.completion_percent = percent
+
+        # Auto-promote status based on completion
+        if percent == 100:
+            # Check if the game has a platinum trophy and the user earned it
+            from app.models.achievement import Achievement, TrophyType
+            platinum_achievement = await db.scalar(
+                select(Achievement).where(
+                    Achievement.game_id == game_id,
+                    Achievement.trophy_type == TrophyType.platinum,
+                )
+            )
+            if platinum_achievement:
+                # Check if user earned it
+                from app.models.achievement import UserAchievement
+                earned_platinum = await db.scalar(
+                    select(UserAchievement).where(
+                        UserAchievement.user_id == user_id,
+                        UserAchievement.achievement_id == platinum_achievement.id,
+                        UserAchievement.is_completed == True,
+                    )
+                )
+                if earned_platinum:
+                    ug.status = GameStatus.platinum
+                else:
+                    ug.status = GameStatus.full_completion
+            else:
+                ug.status = GameStatus.full_completion
+        elif percent > 0 and ug.status == GameStatus.not_started:
+            ug.status = GameStatus.in_progress
+            if not ug.started_at:
+                from datetime import datetime, timezone
+                ug.started_at = datetime.now(timezone.utc)
+
         await db.flush()
 
     return percent
