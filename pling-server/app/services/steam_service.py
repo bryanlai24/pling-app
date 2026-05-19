@@ -107,7 +107,6 @@ async def fetch_steam_achievements(steam_id: str, app_id: str) -> dict:
         )
         schema_response.raise_for_status()
         schema_data = schema_response.json()
-        print(f"Schema response: {schema_data}")  # add this
 
         achievements_schema = (
             schema_data

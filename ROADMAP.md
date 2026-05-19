@@ -13,6 +13,9 @@
 - [x] Live cache invalidation on edits/deletes
 - [x] Account stats endpoint (games tracked, trophies, platinums, per-platform breakdown)
 - [x] PS5-inspired dark UI redesign (OLED black, purple accent, flat rows, scalable rem typography)
+- [x] Steam achievement sync (vanity URL resolver, per-game sync, privacy setting guidance)
+- [x] Xbox achievement sync (per-user OAuth, copy-paste auth code flow, per-game sync)
+- [x] Game request system (vote ranking, contributor seed queue, social graph foundation)
 
 ---
 
@@ -31,17 +34,6 @@ Getting content into the shared catalogue so it's useful out of the box. This is
 
 ---
 
-### Xbox & Steam Achievement Sync
-Mirror the PSN sync architecture for the other two platforms.
-
-**Xbox:** Connect via Xbox token (storage already exists), fetch earned achievements from the Xbox Live API, match against `platform_achievement_id`, write to `UserAchievement`.
-
-**Steam:** Connect via Steam API key + Steam ID, fetch earned achievements from `ISteamUserStats/GetPlayerAchievements`, same matching + write pattern.
-
-Both platforms already have token storage models and stub services — needs the sync logic wired up end-to-end.
-
----
-
 ### Mobile Responsiveness
 The app works on mobile but isn't optimized for it. The flat row layout and rem-based scaling are a good foundation — needs a focused pass on:
 - Nav (collapse to bottom bar or hamburger)
@@ -53,6 +45,11 @@ The app works on mobile but isn't optimized for it. The flat row layout and rem-
 
 ### Profile & Admin Page Redesign
 Bring the profile and admin pages into the new design system. Currently functional but visually mismatched — still using gray-* Tailwind classes and card layouts from the old design.
+
+---
+
+### Objective Text Formatting (QOL)
+Rich text support in objective method fields — newlines, bold, italics. Low priority but meaningful for readability on longer guides. Likely a lightweight markdown renderer (no full editor needed) since contributors paste content rather than compose it in-app.
 
 ---
 

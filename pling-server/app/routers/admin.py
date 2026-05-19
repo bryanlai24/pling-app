@@ -230,7 +230,7 @@ async def search_psn_library(
         results = await asyncio.get_event_loop().run_in_executor(None, _search)
         return results
     except Exception as e:
-        print(f"PSN search error: {e}")
+        # PSN search error logged via exception propagation
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"PSN search failed: {str(e)}"
@@ -333,9 +333,6 @@ async def xbox_auth_callback(
         result = await exchange_code_for_tokens(db, data.code)
         return {"status": "connected", **result}
     except Exception as e:
-        import traceback
-        print(f"Xbox auth error: {e}")
-        print(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Xbox auth failed: {str(e)}"
