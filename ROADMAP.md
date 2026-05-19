@@ -16,43 +16,42 @@
 - [x] Steam achievement sync (vanity URL resolver, per-game sync, privacy setting guidance)
 - [x] Xbox achievement sync (per-user OAuth, copy-paste auth code flow, per-game sync)
 - [x] Game request system (vote ranking, contributor seed queue, social graph foundation)
+- [x] Mobile responsiveness pass (bottom nav, touch targets, responsive hero panels)
+- [x] Profile & Admin page redesign (full design system alignment)
+- [x] Design system polish pass (0.5px hairlines, CSS vars throughout, modal consistency)
+- [x] Backend deployed to Cloud Run (Alembic migrations, Cloud SQL)
 
 ---
 
 ## Upcoming
 
 ### Catalogue Population
-Getting content into the shared catalogue so it's useful out of the box. This is probably the highest-leverage thing right now — the app experience is great, but there's nothing to browse.
+The highest-leverage thing right now — the app experience is solid, but there's nothing to browse as a new user.
 
-**What to add first:** Use PSN/Xbox/Steam trending or top-played data to prioritize. Options:
-- Pull from PSN's public trophy lists (most earned = most played)
-- Cross-reference with Steam's "most played" charts
-- Let users request games via the UI
-- Community seeding sprints (contributors pick a game and fill objectives)
+**Strategy:** Community seeding sprints. Contributors pick a game and fill objectives using the seeding tool (one sitting per game). Prioritise by request votes.
 
-**Objective quality:** Beyond just having games, objectives need methods. The seeding tool makes this manageable — a small group of contributors can meaningfully fill a game in one sitting.
-
----
-
-### Mobile Responsiveness
-The app works on mobile but isn't optimized for it. The flat row layout and rem-based scaling are a good foundation — needs a focused pass on:
-- Nav (collapse to bottom bar or hamburger)
-- Hero panels (tighter padding, smaller trophy art)
-- Row density (touch target sizing)
-- Filter tabs (scrollable or collapsed)
-
----
-
-### Profile & Admin Page Redesign
-Bring the profile and admin pages into the new design system. Currently functional but visually mismatched — still using gray-* Tailwind classes and card layouts from the old design.
+**What makes a good catalogue game:**
+- Has a well-known trophy/achievement list (popular or notorious)
+- Has enough community documentation to write good objective methods
+- Requested by multiple users
 
 ---
 
 ### Objective Text Formatting (QOL)
-Rich text support in objective method fields — newlines, bold, italics. Low priority but meaningful for readability on longer guides. Likely a lightweight markdown renderer (no full editor needed) since contributors paste content rather than compose it in-app.
+Rich text in objective method fields — newlines, bold, italics. Lightweight markdown renderer (no editor needed — contributors paste content). Meaningful for readability on longer guides.
 
 ---
 
-### v3 Cleanup
-- Delete old Cloud Run revisions (28 currently) — keep only the active one
-- Review and prune unused migrations
+### Shareable Profile / Social
+Public profile URL (`pling.app/u/username`) showing completion stats, pinned achievements, recently played. Foundation for social graph — follow friends, see their activity.
+
+---
+
+### Notifications
+In-app or push notifications for: game added to catalogue (matching a request), friend completes a game, new objective added to a tracked game.
+
+---
+
+### Cloud Run housekeeping
+- Delete old revisions (keep only active + 1 prior)
+- Set min-instances to 0 on non-prod (cost)
