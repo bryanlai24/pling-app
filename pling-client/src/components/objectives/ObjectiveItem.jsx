@@ -152,8 +152,14 @@ export default function ObjectiveItem({ objective, index, userProgress, onTick, 
             <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Method</label>
             <textarea value={editForm.method}
               onChange={(e) => setEditForm({ ...editForm, method: e.target.value })}
-              rows={3} placeholder="How to accomplish this objective..."
-              style={{ ...inputStyle, resize: 'none' }} />
+              rows={5} placeholder="How to accomplish this objective..."
+              style={{ ...inputStyle, resize: 'vertical' }} />
+            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4 }}>
+              Supports markdown: <code style={{ color: 'var(--accent-soft)' }}>**bold**</code>{' '}
+              <code style={{ color: 'var(--accent-soft)' }}>*italic*</code>{' '}
+              <code style={{ color: 'var(--accent-soft)' }}>- list</code>{' '}
+              <code style={{ color: 'var(--accent-soft)' }}>1. numbered</code>
+            </p>
           </div>
           <div>
             <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Image URL</label>
