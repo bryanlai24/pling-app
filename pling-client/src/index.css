@@ -1,23 +1,27 @@
 @import "tailwindcss";
 
 /* UI Scale — applied to <html> element */
-html.scale-sm { font-size: 14px; }
-html.scale-default { font-size: 16px; }
-html.scale-lg { font-size: 18px; }
-html.scale-xl { font-size: 20px; }
+html.scale-sm { font-size: 16px; }
+html.scale-default { font-size: 20px; }
+html.scale-lg { font-size: 28px; }
+html.scale-xl { font-size: 40px; }
 
 /* OLED Purple theme variables */
 :root {
   --bg-base: #000000;
   --bg-surface: #0d0d0d;
+  --bg-hero: #0a0a12;
   --bg-elevated: #141414;
+  --bg-card-purple: #1a1225;
   --bg-input: #1a1a1a;
   --border-subtle: #1c1c1c;
+  --border-deep: #111111;
   --border-default: #222222;
   --text-primary: #f0ecff;
   --text-secondary: #8b8aaa;
   --text-muted: #444455;
   --accent: #a78bfa;
+  --accent-soft: #c4b5fd;
   --accent-dim: #a78bfa18;
   --accent-border: #a78bfa33;
 }

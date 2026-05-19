@@ -302,8 +302,8 @@ export default function ProfilePage() {
           <Type size={18} className="text-violet-400" />
           <h3 className="text-white font-medium">Display size</h3>
         </div>
-        <p className="text-gray-500 text-sm mb-4">
-          Adjust the size of text and UI elements across the app.
+        <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+          Adjust the size of text and UI elements across the app. Default is a comfortable reading size.
         </p>
         <div className="grid grid-cols-4 gap-2">
           {scales.map((s) => (

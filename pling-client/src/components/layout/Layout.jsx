@@ -22,9 +22,9 @@ export default function Layout() {
   return (
     <div className="min-h-screen text-[#f0ecff]" style={{background:'var(--bg-base)'}}>
       <header className="border-b sticky top-0 z-10 backdrop-blur-sm"
-        style={{background:'rgba(0,0,0,0.85)', borderColor:'var(--border-subtle)'}}>
+        style={{background:'rgba(10,10,18,0.9)', borderColor:'var(--border-subtle)'}}>
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <NavLink to="/library" className="text-xl font-bold tracking-tight text-white">
+          <NavLink to="/library" className="font-bold tracking-tight text-white" style={{ fontSize: '1.1rem' }}>
             Pling<span style={{color:'var(--accent)'}}>.</span>
           </NavLink>
 

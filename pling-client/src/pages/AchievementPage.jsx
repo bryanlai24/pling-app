@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAchievement, updateAchievementProgress } from '../api/achievements'
 import { updateObjectiveProgress } from '../api/objectives'
-import { ChevronLeft, Plus, Trophy, CheckCircle2, Circle, Loader2, UserPlus, Layers } from 'lucide-react'
+import { ChevronLeft, Plus, Trophy, CheckCircle2, Circle, Loader2, UserPlus, Layers, Crown } from 'lucide-react'
 import { useContributorCheck } from '../hooks/useContributorCheck'
 import { useAuthStore } from '../store/authStore'
 import AddObjectiveModal from '../components/objectives/AddObjectiveModal'
@@ -11,21 +11,15 @@ import SeedObjectivesModal from '../components/objectives/SeedObjectivesModal'
 import ObjectiveItem from '../components/objectives/ObjectiveItem'
 import ContributorPrompt from '../components/ui/ContributorPrompt'
 import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
-import { useUIStore } from '../store/uiStore'
 
 const TROPHY_COLORS = {
-  bronze: 'text-amber-600 bg-amber-600/10 border-amber-600/20',
-  silver: 'text-gray-400 bg-gray-400/10 border-gray-400/20',
-  gold: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
-  platinum: 'text-violet-400 bg-violet-400/10 border-violet-400/20',
+  bronze:  { text: '#d97706', bg: 'rgba(217,119,6,0.08)',   border: 'rgba(217,119,6,0.2)'   },
+  silver:  { text: '#9ca3af', bg: 'rgba(156,163,175,0.08)', border: 'rgba(156,163,175,0.2)' },
+  gold:    { text: '#facc15', bg: 'rgba(250,204,21,0.08)',   border: 'rgba(250,204,21,0.2)'  },
+  platinum:{ text: '#c4b5fd', bg: '#a78bfa18',               border: '#a78bfa33'              },
 }
 
-const TROPHY_LABELS = {
-  bronze: 'Bronze',
-  silver: 'Silver',
-  gold: 'Gold',
-  platinum: 'Platinum',
-}
+const TROPHY_LABELS = { bronze: 'Bronze', silver: 'Silver', gold: 'Gold', platinum: 'Platinum' }
 
 export default function AchievementPage() {
   const { achievementId } = useParams()
@@ -33,7 +27,7 @@ export default function AchievementPage() {
   const queryClient = useQueryClient()
   const [showAddObjective, setShowAddObjective] = useState(false)
   const [showSeedObjectives, setShowSeedObjectives] = useState(false)
-  const { isContributor, showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
+  const { showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
   const { isGuest } = useAuthStore()
   const [showGuestPrompt, setShowGuestPrompt] = useState(false)
 
@@ -56,27 +50,16 @@ export default function AchievementPage() {
     mutationFn: ({ objectiveId, data }) => updateObjectiveProgress(objectiveId, data),
     onSuccess: async (_, { allCompleted }) => {
       await queryClient.invalidateQueries({ queryKey: ['achievement', achievementId] })
-
-      // Auto-complete achievement if all objectives done
       if (allCompleted) {
-        progressMutation.mutate({
-          is_completed: true,
-          completed_at: new Date().toISOString(),
-        })
+        progressMutation.mutate({ is_completed: true, completed_at: new Date().toISOString() })
       }
     },
   })
 
   const handleTickObjective = (objective, userProgress) => {
-    if (isGuest) {
-      setShowGuestPrompt(true)
-      return
-    }
-
+    if (isGuest) { setShowGuestPrompt(true); return }
     const isCurrentlyCompleted = userProgress?.is_completed ?? false
     const newCompleted = !isCurrentlyCompleted
-
-    // Calculate if all leaf objectives will be complete after this tick
     const leafObjectives = achievement.objectives.flatMap(o =>
       o.children?.length > 0 ? o.children : [o]
     )
@@ -84,19 +67,11 @@ export default function AchievementPage() {
       if (o.id === objective.id) return newCompleted
       return o.user_progress?.is_completed ?? false
     })
-
-    objectiveProgressMutation.mutate({
-      objectiveId: objective.id,
-      data: { is_completed: newCompleted },
-      allCompleted,
-    })
+    objectiveProgressMutation.mutate({ objectiveId: objective.id, data: { is_completed: newCompleted }, allCompleted })
   }
 
   const handleToggleAchievement = () => {
-    if (isGuest) {
-      setShowGuestPrompt(true)
-      return
-    }
+    if (isGuest) { setShowGuestPrompt(true); return }
     const isCompleted = achievement?.user_progress?.is_completed ?? false
     progressMutation.mutate({ is_completed: !isCompleted })
   }
@@ -104,15 +79,13 @@ export default function AchievementPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={20} className="text-gray-500 animate-spin" />
+        <Loader2 size={20} className="animate-spin" style={{ color: 'var(--text-muted)' }} />
       </div>
     )
   }
 
   if (!achievement) {
-    return (
-      <div className="text-center py-24 text-gray-500">Achievement not found.</div>
-    )
+    return <div className="text-center py-24" style={{ color: 'var(--text-muted)' }}>Achievement not found.</div>
   }
 
   const isCompleted = achievement.user_progress?.is_completed ?? false
@@ -122,148 +95,207 @@ export default function AchievementPage() {
   const completedCount = allObjectives.filter(o => o.user_progress?.is_completed).length
   const totalCount = allObjectives.length
   const allObjectivesDone = totalCount > 0 && completedCount === totalCount
+  const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
+  const trophyColor = achievement.trophy_type ? TROPHY_COLORS[achievement.trophy_type] : null
 
   return (
     <div>
-      {/* Back button */}
+      {/* Back */}
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition mb-6"
+        className="flex items-center gap-1.5 text-sm transition mb-6"
+        style={{ color: 'var(--text-muted)' }}
+        onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
       >
         <ChevronLeft size={16} />
         Back
       </button>
 
-      {/* Achievement header */}
-      <div className={`bg-gray-900 border rounded-2xl p-6 mb-6 transition ${
-        isCompleted ? 'border-violet-500/30' : 'border-gray-800'
-      }`}>
-        <div className="flex items-start gap-4">
-          {/* Icon */}
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden ${
-          !achievement.icon_url && (isCompleted ? 'bg-violet-500/20' : 'bg-gray-800')
-          }`}>
-          {achievement.icon_url ? (
-              <img
-              src={achievement.icon_url}
-              alt={achievement.title}
-              className={`w-full h-full object-cover transition ${
-                  isCompleted ? 'opacity-100' : 'opacity-50 grayscale'
-              }`}
-              />
-          ) : (
-              <Trophy size={22} className={isCompleted ? 'text-violet-400' : 'text-gray-600'} />
-          )}
-          </div>
+      {/* Hero — dark panel with always-on radial glow */}
+      <div
+        className="rounded-2xl mb-2 relative overflow-hidden"
+        style={{ background: 'var(--bg-hero)', border: '0.5px solid var(--border-default)' }}
+      >
+        {/* Radial purple glow — always on */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            width: 240, height: 240,
+            background: 'radial-gradient(circle, rgba(167,139,250,0.12) 0%, transparent 70%)',
+            top: -60, left: 20,
+          }}
+        />
 
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h1 className={`text-xl font-bold ${isCompleted ? 'text-gray-400' : 'text-white'}`}>
-                  {achievement.title}
-                </h1>
-                {achievement.description && (
-                  <p className="text-gray-500 text-sm mt-1">{achievement.description}</p>
-                )}
-                <div className="flex items-center gap-2 mt-2">
-                  {achievement.trophy_type && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full border ${TROPHY_COLORS[achievement.trophy_type]}`}>
-                      {TROPHY_LABELS[achievement.trophy_type]}
-                    </span>
-                  )}
-                  {achievement.gamerscore && (
-                    <span className="text-xs px-2 py-0.5 rounded-full border bg-green-500/10 text-green-400 border-green-500/20">
-                      {achievement.gamerscore}G
-                    </span>
-                  )}
-                  {achievement.rarity && (
-                    <span className="text-xs text-gray-500">{achievement.rarity}</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Complete toggle */}
-              {isGuest ? (
-                <button
-                  onClick={() => setShowGuestPrompt(true)}
-                  className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition flex-shrink-0"
+        <div className="p-6 relative" style={{ zIndex: 1 }}>
+          <div className="flex items-start gap-4">
+            {/* Trophy art — 80×80, purple-tinted bg */}
+            <div
+              className="flex-shrink-0 rounded-xl flex items-center justify-center overflow-hidden relative"
+              style={{
+                width: 80, height: 80,
+                background: achievement.icon_url ? 'transparent' : 'var(--bg-card-purple)',
+                border: '0.5px solid var(--accent-border)',
+              }}
+            >
+              {achievement.icon_url ? (
+                <img
+                  src={achievement.icon_url}
+                  alt={achievement.title}
+                  className="w-full h-full object-cover"
+                  style={{ opacity: isCompleted ? 1 : 0.45, filter: isCompleted ? 'none' : 'grayscale(1)' }}
+                />
+              ) : (
+                <Trophy size={32} style={{ color: 'var(--accent)' }} />
+              )}
+              {/* Platinum crown badge */}
+              {achievement.trophy_type === 'platinum' && (
+                <div
+                  className="absolute flex items-center justify-center rounded-full"
                   style={{
-                    background:'var(--bg-elevated)',
-                    borderColor:'var(--border-subtle)',
-                    color:'var(--text-muted)'
+                    bottom: -6, right: -6,
+                    width: 22, height: 22,
+                    background: 'var(--accent)',
+                    border: '2px solid var(--bg-hero)',
                   }}
                 >
-                  <UserPlus size={15} />
-                  Sign up to track
-                </button>
-              ) : (
-                <button
-                  onClick={handleToggleAchievement}
-                  disabled={progressMutation.isPending}
-                  className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg border transition flex-shrink-0 ${
-                    isCompleted
-                      ? 'bg-violet-500/10 border-violet-500/30 text-violet-400 hover:bg-violet-500/20'
-                      : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
-                  }`}
-                >
-                  {isCompleted ? (
-                    <><CheckCircle2 size={15} /> Earned</>
-                  ) : (
-                    <><Circle size={15} /> Mark earned</>
-                  )}
-                </button>
+                  <Crown size={11} style={{ color: '#0a0012' }} />
+                </div>
               )}
             </div>
 
-            {/* Objectives progress bar */}
-            {totalCount > 0 && (
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-gray-500">
-                    {completedCount} / {totalCount} objectives
+            {/* Title / description / badges */}
+            <div className="flex-1 min-w-0">
+              <h1
+                className="font-medium leading-snug mb-1"
+                style={{ fontSize: '1rem', color: 'var(--text-primary)' }}
+              >
+                {achievement.title}
+              </h1>
+              {achievement.description && (
+                <p className="text-sm leading-relaxed mb-2.5" style={{ color: 'var(--text-secondary)' }}>
+                  {achievement.description}
+                </p>
+              )}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {trophyColor && (
+                  <span
+                    className="text-xs font-medium px-2 py-0.5 rounded"
+                    style={{ color: trophyColor.text, background: trophyColor.bg, border: `0.5px solid ${trophyColor.border}` }}
+                  >
+                    {achievement.trophy_type === 'platinum' && <Crown size={9} className="inline mr-1 -mt-0.5" />}
+                    {TROPHY_LABELS[achievement.trophy_type]}
                   </span>
-                  <span className="text-xs font-medium text-white">
-                    {Math.round((completedCount / totalCount) * 100)}%
+                )}
+                {achievement.gamerscore && (
+                  <span
+                    className="text-xs font-medium px-2 py-0.5 rounded"
+                    style={{ color: '#34d399', background: 'rgba(52,211,153,0.08)', border: '0.5px solid rgba(52,211,153,0.2)' }}
+                  >
+                    {achievement.gamerscore}G
                   </span>
-                </div>
-                <div className="w-full h-1.5 bg-gray-800 rounded-full">
-                  <div
-                    className="h-1.5 bg-violet-500 rounded-full transition-all"
-                    style={{ width: `${(completedCount / totalCount) * 100}%` }}
-                  />
-                </div>
+                )}
+                {achievement.rarity && (
+                  <span
+                    className="text-xs px-2 py-0.5 rounded"
+                    style={{ color: 'var(--text-secondary)', background: 'var(--bg-card-purple)', border: '0.5px solid var(--border-default)' }}
+                  >
+                    {achievement.rarity}
+                  </span>
+                )}
               </div>
-            )}
+            </div>
           </div>
+
+          {/* Progress bar */}
+          {totalCount > 0 && (
+            <div className="mt-5">
+              <div className="flex justify-between mb-1.5" style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
+                <span>Progress</span>
+                <span>{completedCount} / {totalCount} objectives</span>
+              </div>
+              <div className="rounded" style={{ height: 3, background: '#1c1c2e' }}>
+                <div
+                  className="rounded transition-all"
+                  style={{ width: `${progressPct}%`, height: 3, background: 'var(--accent)' }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Objectives section */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Mark earned / unmark button — full width below hero */}
+      {!isGuest ? (
+        <button
+          onClick={handleToggleAchievement}
+          disabled={progressMutation.isPending}
+          className="w-full text-sm font-medium py-2.5 rounded-xl transition mb-4"
+          style={isCompleted
+            ? { background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)', color: 'var(--accent-soft)' }
+            : { background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)', color: 'var(--accent-soft)' }
+          }
+          onMouseEnter={e => e.currentTarget.style.background = '#a78bfa28'}
+          onMouseLeave={e => e.currentTarget.style.background = 'var(--accent-dim)'}
+        >
+          {isCompleted ? <><CheckCircle2 size={14} className="inline mr-1.5 -mt-0.5" />Earned</> : 'Mark as earned'}
+        </button>
+      ) : (
+        <button
+          onClick={() => setShowGuestPrompt(true)}
+          className="w-full text-sm font-medium py-2.5 rounded-xl transition mb-4"
+          style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)', color: 'var(--text-muted)' }}
+        >
+          <UserPlus size={14} className="inline mr-1.5 -mt-0.5" />
+          Sign up to track
+        </button>
+      )}
+
+      {/* All-done banner */}
+      {allObjectivesDone && !isCompleted && (
+        <div
+          className="rounded-xl p-4 flex items-center justify-between mb-4"
+          style={{ background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)' }}
+        >
+          <div>
+            <p className="text-sm font-medium" style={{ color: 'var(--accent-soft)' }}>All objectives complete!</p>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(167,139,250,0.5)' }}>Mark the trophy as earned?</p>
+          </div>
+          <button
+            onClick={handleToggleAchievement}
+            className="text-sm font-medium px-4 py-2 rounded-lg transition"
+            style={{ background: 'var(--accent)', color: '#fff' }}
+          >
+            Mark earned
+          </button>
+        </div>
+      )}
+
+      {/* Objectives section header */}
+      <div className="flex items-center justify-between mb-1 mt-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold text-white">Objectives</h2>
+          <span className="text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--text-muted)', letterSpacing: '0.07em' }}>
+            Objectives
+          </span>
           {totalCount > 0 && (
-            <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
-              {totalCount}
-            </span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{totalCount}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => requireContributor(() => setShowSeedObjectives(true))}
-            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition"
-            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-secondary)' }}
+            className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition"
+            style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)', color: 'var(--text-muted)' }}
           >
-            <Layers size={15} />
+            <Layers size={13} />
             Seed
           </button>
           <button
             onClick={() => requireContributor(() => setShowAddObjective(true))}
-            className="flex items-center gap-1.5 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition"
-            style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', color: 'var(--accent)' }}
+            className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition"
+            style={{ background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)', color: 'var(--accent-soft)' }}
           >
-            <Plus size={15} />
+            <Plus size={13} />
             Add
           </button>
         </div>
@@ -271,15 +303,19 @@ export default function AchievementPage() {
 
       {/* Empty state */}
       {totalCount === 0 && (
-        <div className="text-center py-24 border border-dashed border-gray-800 rounded-2xl">
-          <div className="text-gray-700 text-4xl mb-4">📋</div>
-          <h3 className="text-white font-medium mb-1">No objectives yet</h3>
-          <p className="text-gray-500 text-sm mb-6">
+        <div
+          className="text-center py-24 rounded-2xl border border-dashed mt-4"
+          style={{ borderColor: 'var(--border-default)' }}
+        >
+          <div className="mb-4" style={{ color: 'var(--text-muted)', fontSize: 36 }}>📋</div>
+          <h3 className="font-medium mb-1" style={{ color: 'var(--text-primary)' }}>No objectives yet</h3>
+          <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
             Break this trophy down into steps with methods for each
           </p>
           <button
             onClick={() => requireContributor(() => setShowAddObjective(true))}
-            className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition mx-auto"
+            className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition mx-auto"
+            style={{ background: 'var(--accent)', color: '#fff' }}
           >
             <Plus size={16} />
             Add first objective
@@ -287,23 +323,27 @@ export default function AchievementPage() {
         </div>
       )}
 
-      {/* Objectives list */}
+      {/* Objectives list — flat rows, no individual cards */}
       {totalCount > 0 && (
-        <div className="space-y-2">
-          {achievement.objectives.map((objective) => (
+        <div>
+          {achievement.objectives.map((objective) =>
             objective.children?.length > 0 ? (
               <div key={objective.id}>
-                {/* Group header */}
-                <div className="flex items-center gap-3 mb-2 mt-4">
-                  <h3 className="text-xs font-medium uppercase tracking-wider text-gray-500">
+                {/* Group header — thin uppercase divider */}
+                <div
+                  className="flex items-center justify-between py-3 mt-2"
+                  style={{ borderBottom: '0.5px solid var(--border-subtle)' }}
+                >
+                  <span
+                    className="text-xs font-medium uppercase"
+                    style={{ color: 'var(--text-muted)', letterSpacing: '0.06em' }}
+                  >
                     {objective.title}
-                  </h3>
-                  <div className="flex-1 h-px bg-gray-800" />
-                  <span className="text-xs text-gray-500">
+                  </span>
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     {objective.children.filter(c => c.user_progress?.is_completed).length}/{objective.children.length}
                   </span>
                 </div>
-                {/* Child steps */}
                 {objective.children.map((child) => (
                   <ObjectiveItem
                     key={child.id}
@@ -325,38 +365,18 @@ export default function AchievementPage() {
                 isPending={objectiveProgressMutation.isPending}
               />
             )
-          ))}
+          )}
         </div>
       )}
 
-      {/* All done banner */}
-      {allObjectivesDone && !isCompleted && (
-        <div className="mt-6 bg-violet-500/10 border border-violet-500/30 rounded-xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-violet-300 font-medium text-sm">All objectives complete!</p>
-            <p className="text-violet-400/60 text-xs mt-0.5">Mark the trophy as earned?</p>
-          </div>
-          <button
-            onClick={handleToggleAchievement}
-            className="bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
-          >
-            Mark earned
-          </button>
-        </div>
-      )}
-
-      {/* Seed objectives modal */}
+      {/* Modals */}
       {showSeedObjectives && (
         <SeedObjectivesModal
           achievementId={achievementId}
           onClose={() => setShowSeedObjectives(false)}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['achievement', achievementId] })
-          }}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['achievement', achievementId] })}
         />
       )}
-
-      {/* Add objective modal */}
       {showAddObjective && (
         <AddObjectiveModal
           achievementId={achievementId}
@@ -369,14 +389,9 @@ export default function AchievementPage() {
           }}
         />
       )}
-
       {showPrompt && (
-        <ContributorPrompt
-          onClose={() => setShowPrompt(false)}
-          discordUrl="https://discord.gg/VCKmQ7jftR"
-        />
+        <ContributorPrompt onClose={() => setShowPrompt(false)} discordUrl="https://discord.gg/VCKmQ7jftR" />
       )}
-
       {showGuestPrompt && (
         <GuestTrackingPrompt onClose={() => setShowGuestPrompt(false)} />
       )}

@@ -8,11 +8,11 @@ import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
 import { useAuthStore } from '../store/authStore'
 
 const STATUS_COLORS = {
-  not_started: 'text-gray-500',
-  in_progress: 'text-blue-400',
-  completed: 'text-green-400',
-  platinum: 'text-violet-400',
-  full_completion: 'text-amber-400',
+  not_started: 'var(--text-muted)',
+  in_progress: '#60a5fa',
+  completed: '#34d399',
+  platinum: '#a78bfa',
+  full_completion: '#fbbf24',
 }
 
 const STATUS_LABELS = {
@@ -24,10 +24,10 @@ const STATUS_LABELS = {
 }
 
 const PLATFORM_BADGES = {
-  psn: { label: 'PSN', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  xbox: { label: 'Xbox', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
-  steam: { label: 'Steam', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
-  manual: { label: 'Manual', color: 'bg-violet-500/10 text-violet-400 border-violet-500/20' },
+  psn:    { label: 'PSN',    style: { background: 'rgba(96,165,250,0.08)',  color: '#60a5fa', border: '1px solid rgba(96,165,250,0.2)'  } },
+  xbox:   { label: 'Xbox',   style: { background: 'rgba(52,211,153,0.08)',  color: '#34d399', border: '1px solid rgba(52,211,153,0.2)'  } },
+  steam:  { label: 'Steam',  style: { background: 'rgba(156,163,175,0.08)', color: '#9ca3af', border: '1px solid rgba(156,163,175,0.2)' } },
+  manual: { label: 'Manual', style: { background: 'rgba(167,139,250,0.08)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.2)' } },
 }
 
 export default function LibraryPage() {
@@ -77,10 +77,10 @@ export default function LibraryPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold" style={{color:'var(--text-primary)'}}>
+          <h1 className="font-bold" style={{ fontSize: '1.2rem', color:'var(--text-primary)'}}>
             {isGuest ? 'Game Catalogue' : 'My Library'}
           </h1>
-          <p className="text-sm mt-0.5" style={{color:'var(--text-muted)'}}>
+          <p className="mt-0.5" style={{ fontSize: '0.75rem', color:'var(--text-muted)'}}>
             {isGuest
               ? `${catalogue.length} games available`
               : `${library.length} ${library.length === 1 ? 'game' : 'games'} tracked`}
@@ -88,8 +88,8 @@ export default function LibraryPage() {
         </div>
         <button
           onClick={() => isGuest ? setShowGuestPrompt(true) : setShowAddGame(true)}
-          className="flex items-center gap-2 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
-          style={{background:'var(--accent)'}}
+          className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition"
+          style={{ background: 'var(--accent)', color: '#fff' }}
         >
           <Plus size={16} />
           {isGuest ? 'Sign up to add games' : 'Add game'}
@@ -138,12 +138,12 @@ export default function LibraryPage() {
 
       {/* Empty state */}
       {displayGames.length === 0 && (
-        <div className="text-center py-24 border border-dashed border-gray-800 rounded-2xl">
-          <Gamepad2 size={40} className="text-gray-700 mx-auto mb-4" />
-          <h3 className="text-white font-medium mb-1">
+        <div className="text-center py-24 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border-default)' }}>
+          <Gamepad2 size={40} className="mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
+          <h3 className="font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
             {isGuest ? 'No games in catalogue yet' : 'No games yet'}
           </h3>
-          <p className="text-gray-500 text-sm mb-6">
+          <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
             {isGuest
               ? 'Check back soon as the catalogue grows'
               : 'Add your first game to start tracking achievements'}
@@ -151,8 +151,8 @@ export default function LibraryPage() {
           {!isGuest && (
             <button
               onClick={() => setShowAddGame(true)}
-              className="flex items-center gap-2 text-white text-sm font-medium px-4 py-2 rounded-lg transition mx-auto"
-              style={{background:'var(--accent)'}}
+              className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition mx-auto"
+              style={{ background: 'var(--accent)', color: '#fff' }}
             >
               <Plus size={16} />
               Add game
@@ -163,7 +163,7 @@ export default function LibraryPage() {
 
       {/* Game list */}
       {filtered.length > 0 && (
-        <div className="space-y-2">
+        <div>
           {filtered.map((item) => {
             const game = isGuest ? item : item.game
             const completion = isGuest ? null : item.completion_percent
@@ -174,95 +174,72 @@ export default function LibraryPage() {
               <button
                 key={game.id}
                 onClick={() => navigate(`/games/${game.id}`)}
-                className="w-full border rounded-xl p-4 flex items-center gap-4 transition text-left"
-                style={{background:'var(--bg-surface)', borderColor:'var(--border-subtle)'}}
+                className="w-full flex items-center gap-4 transition text-left"
+                style={{ padding: '12px 0', borderBottom: '0.5px solid var(--border-deep)' }}
               >
-                {/* Cover */}
-                <div className="w-12 h-12 rounded-lg flex-shrink-0 overflow-hidden"
-                  style={{background:'var(--bg-elevated)'}}>
+                {/* Cover — compact square */}
+                <div
+                  className="w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center"
+                  style={{ background: 'var(--bg-card-purple)', border: '0.5px solid var(--accent-border)' }}
+                >
                   {game.cover_image_url ? (
-                    <img src={game.cover_image_url} alt={game.title}
-                      className="w-full h-full object-cover" />
+                    <img src={game.cover_image_url} alt={game.title} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Trophy size={20} style={{color:'var(--text-muted)'}} />
-                    </div>
+                    <Trophy size={16} style={{ color: 'var(--accent)' }} />
                   )}
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-sm truncate"
-                      style={{color:'var(--text-primary)'}}>
+                  <div className="flex items-baseline gap-2">
+                    <span style={{ fontSize: '1rem', color: 'var(--text-primary)', lineHeight: 1.3 }}>
                       {game.title}
                     </span>
                     {platform && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full border flex-shrink-0 ${platform.color}`}>
+                      <span className="flex-shrink-0 px-1.5 py-0.5 rounded" style={{ ...platform.style, fontSize: '0.65rem' }}>
                         {platform.label}
                       </span>
                     )}
                   </div>
-                  {status && (
-                    <span className={`text-xs ${STATUS_COLORS[status]}`}>
-                      {STATUS_LABELS[status]}
-                    </span>
-                  )}
-                  {/* Genre chips */}
-                  {(game.genres || []).length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {game.genres.slice(0, 3).map((g) => (
-                        <span
-                          key={g.id}
-                          className="text-xs px-1.5 py-0.5 rounded-full border capitalize"
-                          style={{
-                            background: 'var(--accent-dim)',
-                            borderColor: 'var(--accent-border)',
-                            color: 'var(--accent)',
-                          }}
-                        >
-                          {g.genre}
-                        </span>
-                      ))}
-                      {game.genres.length > 3 && (
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                          +{game.genres.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {isGuest && (game.genres || []).length === 0 && (
-                    <span className="text-xs" style={{color:'var(--text-muted)'}}>
-                      Browse achievements →
-                    </span>
-                  )}
-                  {!isGuest && item.game?.platform === 'xbox' && item.gamerscore_total > 0 && (
-                    <span className="text-xs text-gray-500 ml-2">
-                      {item.gamerscore_earned ?? 0}G / {item.gamerscore_total}G
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    {status && (
+                      <span style={{ fontSize: '0.75rem', color: STATUS_COLORS[status] }}>
+                        {STATUS_LABELS[status]}
+                      </span>
+                    )}
+                    {(game.genres || []).slice(0, 3).map((g) => (
+                      <span
+                        key={g.id}
+                        className="capitalize"
+                        style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}
+                      >
+                        {g.genre}
+                      </span>
+                    ))}
+                    {!isGuest && item.game?.platform === 'xbox' && item.gamerscore_total > 0 && (
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        {item.gamerscore_earned ?? 0}G / {item.gamerscore_total}G
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                {/* Progress — logged in only */}
+                {/* Progress */}
                 {!isGuest && completion !== null && (
-                  <div className="items-center gap-3 flex-shrink-0 hidden sm:flex">
-                    <div className="text-right">
-                      <div className="text-sm font-medium" style={{color:'var(--text-primary)'}}>
-                        {completion}%
-                      </div>
-                      <div className="w-24 h-1.5 rounded-full mt-1"
-                        style={{background:'var(--bg-elevated)'}}>
-                        <div
-                          className="h-1.5 rounded-full transition-all"
-                          style={{width:`${completion}%`, background:'var(--accent)'}}
-                        />
-                      </div>
+                  <div className="text-right flex-shrink-0 hidden sm:block">
+                    <div style={{ fontSize: '0.75rem', color: completion === 100 ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: 500 }}>
+                      {completion}%
+                    </div>
+                    <div className="w-20 rounded-full mt-1" style={{ height: 2, background: 'var(--border-subtle)' }}>
+                      <div
+                        className="rounded-full transition-all"
+                        style={{ width: `${completion}%`, height: 2, background: 'var(--accent)' }}
+                      />
                     </div>
                   </div>
                 )}
 
-                <ChevronRight size={16} className="flex-shrink-0"
-                  style={{color:'var(--text-muted)'}} />
+                <ChevronRight size={15} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
               </button>
             )
           })}

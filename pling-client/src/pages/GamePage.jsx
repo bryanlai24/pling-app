@@ -12,10 +12,10 @@ import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
 import client from '../api/client'
 
 const TROPHY_COLORS = {
-  bronze: 'text-amber-600',
-  silver: 'text-gray-400',
-  gold: 'text-yellow-400',
-  platinum: 'text-violet-400',
+  bronze: '#d97706',
+  silver: '#9ca3af',
+  gold: '#facc15',
+  platinum: '#a78bfa',
 }
 
 const TROPHY_LABELS = {
@@ -32,6 +32,97 @@ const STATUS_OPTIONS = [
   { value: 'platinum', label: 'Platinum' },
   { value: 'full_completion', label: '100%' },
 ]
+
+function AchievementRow({ a, matchesFilter, onNavigate, onTick, onPin, tickPending, isPinned }) {
+  return (
+    <div
+      onClick={onNavigate}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onNavigate()}
+      className="flex items-center gap-3 cursor-pointer transition"
+      style={{
+        padding: '12px 0',
+        borderBottom: '0.5px solid var(--border-deep)',
+        opacity: matchesFilter ? 1 : 0.35,
+      }}
+    >
+      {/* Tick */}
+      <button
+        onClick={onTick}
+        disabled={tickPending}
+        className="flex-shrink-0 transition hover:scale-110"
+        style={{ color: a.is_completed ? 'var(--accent)' : '#333' }}
+      >
+        {a.is_completed
+          ? <CheckCircle2 size={20} style={{ color: 'var(--accent)' }} />
+          : <Circle size={20} style={{ color: '#333' }} />
+        }
+      </button>
+
+      {/* Icon — only shown when there's an actual image */}
+      {a.icon_url && (
+        <div className="relative flex-shrink-0">
+          <img
+            src={a.icon_url}
+            alt={a.title}
+            className="w-9 h-9 rounded-lg object-cover"
+            style={{ opacity: a.is_completed ? 1 : 0.4, filter: a.is_completed ? 'none' : 'grayscale(1)' }}
+          />
+          {a.is_completed && (
+            <CheckCircle2 size={13} className="absolute -bottom-1 -right-1 rounded-full"
+              style={{ color: 'var(--accent)', background: 'var(--bg-base)' }} />
+          )}
+        </div>
+      )}
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline gap-2">
+          <span
+            style={{
+              fontSize: '1rem',
+              color: a.is_completed ? 'var(--text-muted)' : 'var(--text-primary)',
+              textDecoration: a.is_completed ? 'line-through' : 'none',
+              lineHeight: 1.3,
+            }}
+          >
+            {a.title}
+          </span>
+          {a.trophy_type && (
+            <span className="flex-shrink-0" style={{ fontSize: '0.65rem', color: TROPHY_COLORS[a.trophy_type] }}>
+              {TROPHY_LABELS[a.trophy_type]}
+            </span>
+          )}
+          {a.gamerscore && (
+            <span className="flex-shrink-0" style={{ fontSize: '0.65rem', color: '#34d399' }}>{a.gamerscore}G</span>
+          )}
+        </div>
+        {a.description && (
+          <p className="truncate mt-0.5" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {a.description}
+          </p>
+        )}
+      </div>
+
+      {/* Right side */}
+      {a.rarity && (
+        <span className="flex-shrink-0" style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{a.rarity}</span>
+      )}
+      <button
+        onClick={onPin}
+        className="flex-shrink-0 p-1 rounded transition"
+        title={isPinned ? 'Unpin' : 'Pin to top'}
+        style={{ color: isPinned ? 'var(--accent)' : 'var(--text-muted)' }}
+        onMouseEnter={e => { e.stopPropagation(); e.currentTarget.style.color = isPinned ? 'var(--text-muted)' : 'var(--accent)' }}
+        onMouseLeave={e => { e.stopPropagation(); e.currentTarget.style.color = isPinned ? 'var(--accent)' : 'var(--text-muted)' }}
+      >
+        {isPinned ? <PinOff size={13} /> : <Pin size={13} />}
+      </button>
+      <ChevronRight size={15} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+    </div>
+  )
+}
 
 export default function GamePage() {
   const { gameId } = useParams()
@@ -215,10 +306,10 @@ export default function GamePage() {
 
       {/* Game header */}
       {game && (
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
+        <div className="rounded-2xl p-6 mb-6" style={{ background: 'var(--bg-hero)', border: '0.5px solid var(--border-default)' }}>
           <div className="flex items-start gap-4">
             {/* Cover */}
-            <div className="w-16 h-16 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <div className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: 'var(--bg-card-purple)', border: '0.5px solid var(--accent-border)' }}>
               {game.cover_image_url ? (
                 <img
                   src={game.cover_image_url}
@@ -226,7 +317,7 @@ export default function GamePage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Trophy size={24} className="text-gray-600" />
+                <Trophy size={24} style={{ color: 'var(--text-muted)' }} />
               )}
             </div>
 
@@ -234,7 +325,7 @@ export default function GamePage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-xl font-bold text-white">{game.title}</h1>
+                  <h1 className="font-semibold" style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>{game.title}</h1>
 
                   {/* Genre chips */}
                   <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
@@ -312,32 +403,63 @@ export default function GamePage() {
                   </div>
                 </div>
 
-                {/* Status selector */}
-                <select
-                  value={userGame?.status || 'not_started'}
-                  onChange={(e) => statusMutation.mutate(e.target.value)}
-                  className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-violet-500 transition flex-shrink-0"
-                >
-                  {STATUS_OPTIONS.map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
+                {/* Status selector + remove */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {!isGuest && (
+                    <>
+                      <select
+                        value={userGame?.status || 'not_started'}
+                        onChange={(e) => statusMutation.mutate(e.target.value)}
+                        className="rounded-lg px-3 py-1.5 text-sm transition focus:outline-none"
+                        style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)', color: 'var(--text-secondary)' }}
+                      >
+                        {STATUS_OPTIONS.map((s) => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Remove ${game?.title} from your library?`)) {
+                            removeMutation.mutate()
+                          }
+                        }}
+                        disabled={removeMutation.isPending}
+                        className="p-1.5 rounded-lg transition"
+                        style={{ color: 'var(--text-muted)' }}
+                        onMouseEnter={e => { e.currentTarget.style.color = '#f87171'; e.currentTarget.style.background = 'rgba(248,113,113,0.08)' }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}
+                        title="Remove from library"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </>
+                  )}
+                  {isGuest && (
+                    <button
+                      onClick={() => setShowGuestPrompt(true)}
+                      className="text-sm px-4 py-1.5 rounded-lg border transition"
+                      style={{ background: 'rgba(167,139,250,0.08)', borderColor: 'rgba(167,139,250,0.25)', color: 'var(--accent)' }}
+                    >
+                      Track this game →
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Progress bar + sync */}
               {game.platform === 'psn' && (
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-gray-500">{completed} / {total} {trophyLabel}</span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{completed} / {total} {trophyLabel}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-white">{percent}%</span>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 500, color: 'var(--text-primary)' }}>{percent}%</span>
                       {!isGuest && (
                         <button
                           onClick={() => { setSyncResult(null); syncMutation.mutate() }}
                           disabled={syncMutation.isPending}
                           title="Sync trophies from PSN"
-                          className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition"
-                          style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-full border transition"
+                          style={{ fontSize: '0.65rem', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
                         >
                           <RefreshCw size={10} className={syncMutation.isPending ? 'animate-spin' : ''} />
                           {syncMutation.isPending ? 'Syncing...' : 'Sync PSN'}
@@ -345,10 +467,10 @@ export default function GamePage() {
                       )}
                     </div>
                   </div>
-                  <div className="w-full h-2 bg-gray-800 rounded-full">
+                  <div className="w-full rounded-full" style={{ height: 3, background: 'var(--bg-elevated)' }}>
                     <div
-                      className="h-2 bg-violet-500 rounded-full transition-all"
-                      style={{ width: `${percent}%` }}
+                      className="rounded-full transition-all"
+                      style={{ width: `${percent}%`, height: 3, background: 'var(--accent)' }}
                     />
                   </div>
                   {/* Sync result toast */}
@@ -369,23 +491,29 @@ export default function GamePage() {
       {/* Achievements header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold text-white">{trophyLabel}</h2>
-          <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
+          <h2 className="font-semibold" style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{trophyLabel}</h2>
+          <span
+            className="px-2 py-0.5 rounded-full"
+            style={{ fontSize: '0.65rem', background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}
+          >
             {total}
           </span>
         </div>
         <div className="flex items-center gap-2">
           {/* Filter tabs */}
-          <div className="flex bg-gray-900 border border-gray-800 rounded-lg p-0.5 text-xs">
+          <div
+            className="flex rounded-lg p-0.5"
+            style={{ fontSize: '0.65rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
+          >
             {[['incomplete', 'Incomplete'], ['complete', 'Complete'], ['all', 'Game Order']].map(([f, label]) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 rounded-md transition ${
-                  filter === f
-                    ? 'bg-gray-700 text-white'
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
+                className="px-3 py-1.5 rounded-md transition"
+                style={filter === f
+                  ? { background: 'var(--bg-elevated)', color: 'var(--text-primary)' }
+                  : { color: 'var(--text-muted)' }
+                }
               >
                 {label}
               </button>
@@ -394,9 +522,10 @@ export default function GamePage() {
           {!isGuest && (
             <button
               onClick={() => setShowAddAchievement(true)}
-              className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition"
+              className="flex items-center gap-1.5 font-medium px-3 py-1.5 rounded-lg transition"
+              style={{ fontSize: '0.65rem', background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.25)', color: 'var(--accent)' }}
             >
-              <Plus size={15} />
+              <Plus size={12} />
               Add
             </button>
           )}
@@ -405,22 +534,23 @@ export default function GamePage() {
 
       {/* Loading */}
       {isLoading && (
-        <div className="text-center py-16 text-gray-500 text-sm">
+        <div className="text-center py-16 text-sm" style={{ color: 'var(--text-muted)' }}>
           Loading {trophyLabel}...
         </div>
       )}
 
       {/* Empty state */}
       {!isLoading && achievements.length === 0 && (
-        <div className="text-center py-24 border border-dashed border-gray-800 rounded-2xl">
-          <Trophy size={40} className="text-gray-700 mx-auto mb-4" />
-          <h3 className="text-white font-medium mb-1">No {trophyLabel.toLowerCase()} yet</h3>
-          <p className="text-gray-500 text-sm mb-6">
+        <div className="text-center py-24 rounded-2xl border border-dashed" style={{ borderColor: 'var(--border-default)' }}>
+          <Trophy size={40} className="mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
+          <h3 className="font-medium mb-1" style={{ color: 'var(--text-primary)' }}>No {trophyLabel.toLowerCase()} yet</h3>
+          <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
             Add the {trophyLabel.toLowerCase()} you want to track for this game
           </p>
           <button
             onClick={() => setShowAddAchievement(true)}
-            className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition mx-auto"
+            className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition mx-auto"
+            style={{ background: 'var(--accent)', color: '#fff' }}
           >
             <Plus size={16} />
             Add {trophyLabel.slice(0, -1)}
@@ -430,70 +560,25 @@ export default function GamePage() {
 
       {/* Pinned achievements */}
       {pinned.length > 0 && (
-        <div className="mb-4">
-          <div className="flex items-center gap-3 mb-3">
-            <Pin size={12} style={{color:'var(--accent)'}} />
-            <h3 className="text-xs font-medium uppercase tracking-wider" style={{color:'var(--accent)'}}>
-              Pinned
-            </h3>
-            <div className="flex-1 h-px" style={{background:'var(--border-subtle)'}} />
+        <div className="mb-2">
+          <div className="flex items-center justify-between py-2.5" style={{ borderBottom: '0.5px solid var(--border-subtle)' }}>
+            <div className="flex items-center gap-2">
+              <Pin size={11} style={{ color: 'var(--accent)' }} />
+              <span className="text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--accent)', letterSpacing: '0.07em' }}>Pinned</span>
+            </div>
           </div>
-          <div className="space-y-2">
-            {pinned.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => navigate(`/achievements/${a.id}`)}
-                className="w-full border rounded-xl p-4 flex items-center gap-4 transition text-left"
-                style={{
-                  background: 'var(--bg-surface)',
-                  borderColor: 'var(--accent-border)',
-                }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--accent-border)'}
-              >
-                <div className="flex-shrink-0">
-                  {a.icon_url ? (
-                    <div className="relative">
-                      <img
-                        src={a.icon_url}
-                        alt={a.title}
-                        className={`w-10 h-10 rounded-lg object-cover transition ${a.is_completed ? 'opacity-100' : 'opacity-40 grayscale'}`}
-                      />
-                      {a.is_completed && (
-                        <CheckCircle2 size={14} className="absolute -bottom-1 -right-1 bg-black rounded-full" style={{color:'var(--accent)'}} />
-                      )}
-                    </div>
-                  ) : (
-                    a.is_completed
-                      ? <CheckCircle2 size={20} style={{color:'var(--accent)'}} />
-                      : <Circle size={20} style={{color:'var(--text-muted)'}} />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className={`font-medium text-sm ${a.is_completed ? 'line-through' : ''}`}
-                      style={{color: a.is_completed ? 'var(--text-muted)' : 'var(--text-primary)'}}>
-                      {a.title}
-                    </span>
-                    {a.trophy_type && <span className={`text-xs ${TROPHY_COLORS[a.trophy_type]}`}>{TROPHY_LABELS[a.trophy_type]}</span>}
-                    {a.gamerscore && <span className="text-xs text-green-400">{a.gamerscore}G</span>}
-                  </div>
-                  {a.description && (
-                    <p className="text-xs truncate" style={{color:'var(--text-muted)'}}>{a.description}</p>
-                  )}
-                </div>
-                {a.rarity && <span className="text-xs flex-shrink-0" style={{color:'var(--text-muted)'}}>{a.rarity}</span>}
-                <button
-                  onClick={(e) => handlePin(e, a.id, true)}
-                  className="flex-shrink-0 p-1 rounded transition hover:bg-gray-700/50"
-                  title="Unpin"
-                >
-                  <PinOff size={14} style={{color:'var(--accent)'}} />
-                </button>
-                <ChevronRight size={16} className="flex-shrink-0" style={{color:'var(--text-muted)'}} />
-              </button>
-            ))}
-          </div>
+          {pinned.map((a) => (
+            <AchievementRow
+              key={a.id}
+              a={a}
+              matchesFilter={true}
+              onNavigate={() => navigate(`/achievements/${a.id}`)}
+              onTick={(e) => handleTick(e, a)}
+              onPin={(e) => handlePin(e, a.id, true)}
+              tickPending={tickMutation.isPending}
+              isPinned={true}
+            />
+          ))}
         </div>
       )}
 
@@ -502,117 +587,28 @@ export default function GamePage() {
         <div>
           {Object.entries(groupedAchievements).map(([setName, setAchievements]) => (
             <div key={setName} className="mb-6">
-              {/* Trophy set header — only show if multiple sets */}
               {hasMultipleSets && (
-                <div className="flex items-center gap-3 mb-3">
-                  <h3 className="text-xs font-medium uppercase tracking-wider"
-                    style={{color:'var(--text-muted)'}}>
+                <div className="flex items-center justify-between py-2.5 mt-2" style={{ borderBottom: '0.5px solid var(--border-subtle)' }}>
+                  <span className="text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
                     {setName}
-                  </h3>
-                  <div className="flex-1 h-px" style={{background:'var(--border-subtle)'}} />
-                  <span className="text-xs" style={{color:'var(--text-muted)'}}>
+                  </span>
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     {setAchievements.filter(a => a.is_completed).length}/{setAchievements.length}
                   </span>
                 </div>
               )}
-
-              <div className="space-y-2">
-                {setAchievements.map((a) => (
-                  <div
-                    key={a.id}
-                    onClick={() => navigate(`/achievements/${a.id}`)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && navigate(`/achievements/${a.id}`)}
-                    className={`w-full border rounded-xl p-4 flex items-center gap-4 transition text-left cursor-pointer ${!matchesFilter(a) ? 'opacity-40' : ''}`}
-                    style={{
-                      background: 'var(--bg-surface)',
-                      borderColor: 'var(--border-subtle)',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-border)'}
-                    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
-                  >
-                    {/* Tick button */}
-                    <button
-                      onClick={(e) => handleTick(e, a)}
-                      disabled={tickMutation.isPending}
-                      className="flex-shrink-0 transition hover:scale-110"
-                    >
-                      {a.is_completed
-                        ? <CheckCircle2 size={18} style={{color:'var(--accent)'}} />
-                        : <Circle size={18} className="text-gray-600 hover:text-gray-400" />
-                      }
-                    </button>
-
-                    {/* Trophy icon */}
-                    <div className="flex-shrink-0">
-                      {a.icon_url ? (
-                        <div className="relative">
-                          <img
-                            src={a.icon_url}
-                            alt={a.title}
-                            className={`w-10 h-10 rounded-lg object-cover transition ${
-                              a.is_completed ? 'opacity-100' : 'opacity-40 grayscale'
-                            }`}
-                          />
-                          {a.is_completed && (
-                            <CheckCircle2
-                              size={14}
-                              className="absolute -bottom-1 -right-1 bg-black rounded-full"
-                              style={{color:'var(--accent)'}}
-                            />
-                          )}
-                        </div>
-                      ) : (
-                        a.is_completed
-                          ? <CheckCircle2 size={20} style={{color:'var(--accent)'}} />
-                          : <Circle size={20} style={{color:'var(--text-muted)'}} />
-                      )}
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className={`font-medium text-sm ${
-                          a.is_completed ? 'line-through' : ''
-                        }`} style={{color: a.is_completed ? 'var(--text-muted)' : 'var(--text-primary)'}}>
-                          {a.title}
-                        </span>
-                        {a.trophy_type && (
-                          <span className={`text-xs ${TROPHY_COLORS[a.trophy_type]}`}>
-                            {TROPHY_LABELS[a.trophy_type]}
-                          </span>
-                        )}
-                        {a.gamerscore && (
-                          <span className="text-xs text-green-400">{a.gamerscore}G</span>
-                        )}
-                      </div>
-                      {a.description && (
-                        <p className="text-xs truncate" style={{color:'var(--text-muted)'}}>
-                          {a.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {a.rarity && (
-                      <span className="text-xs flex-shrink-0" style={{color:'var(--text-muted)'}}>
-                        {a.rarity}
-                      </span>
-                    )}
-                    <button
-                      onClick={(e) => handlePin(e, a.id, a.is_pinned)}
-                      className="flex-shrink-0 p-1 rounded transition hover:bg-gray-700/50"
-                      title={a.is_pinned ? 'Unpin' : 'Pin to top'}
-                    >
-                      {a.is_pinned
-                        ? <PinOff size={14} style={{color:'var(--accent)'}} />
-                        : <Pin size={14} style={{color:'var(--text-muted)'}} />
-                      }
-                    </button>
-                    <ChevronRight size={16} className="flex-shrink-0" style={{color:'var(--text-muted)'}} />
-                  </div>
-                ))}
-              </div>
+              {setAchievements.map((a) => (
+                <AchievementRow
+                  key={a.id}
+                  a={a}
+                  matchesFilter={matchesFilter(a)}
+                  onNavigate={() => navigate(`/achievements/${a.id}`)}
+                  onTick={(e) => handleTick(e, a)}
+                  onPin={(e) => handlePin(e, a.id, a.is_pinned)}
+                  tickPending={tickMutation.isPending}
+                  isPinned={a.is_pinned}
+                />
+              ))}
             </div>
           ))}
         </div>
@@ -632,47 +628,6 @@ export default function GamePage() {
         />
       )}
 
-      {/* Status + remove — logged in only */}
-      {!isGuest && (
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <select
-            value={userGame?.status || 'not_started'}
-            onChange={(e) => statusMutation.mutate(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-violet-500 transition"
-          >
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
-          <button
-            onClick={() => {
-              if (confirm(`Remove ${game?.title} from your library?`)) {
-                removeMutation.mutate()
-              }
-            }}
-            disabled={removeMutation.isPending}
-            className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-gray-800 rounded-lg transition"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
-      )}
-
-      {/* Guest CTA */}
-      {isGuest && (
-        <button
-          onClick={() => setShowGuestPrompt(true)}
-          className="text-sm px-4 py-2 rounded-lg border transition flex-shrink-0"
-          style={{
-            background:'var(--accent-dim)',
-            borderColor:'var(--accent-border)',
-            color:'var(--accent)'
-          }}
-        >
-          Track this game →
-        </button>
-      )}
-
       {showGuestPrompt && (
         <GuestTrackingPrompt onClose={() => setShowGuestPrompt(false)} />
       )}
@@ -680,11 +635,11 @@ export default function GamePage() {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg transition-all animate-fade-in z-50 ${
-            toast.type === 'earned'
-              ? 'bg-violet-600 text-white'
-              : 'bg-gray-700 text-gray-300'
-          }`}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium animate-fade-in z-50"
+          style={toast.type === 'earned'
+            ? { background: 'var(--accent)', color: '#fff' }
+            : { background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-secondary)' }
+          }
         >
           {toast.type === 'earned'
             ? <CheckCircle2 size={15} />

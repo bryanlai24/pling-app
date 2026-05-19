@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { updateObjective, deleteObjective, updateObjectiveProgress } from '../../api/objectives'
 import { CheckCircle2, Circle, ChevronDown, ChevronUp, Pencil, Trash2, X, Check, Plus, Minus } from 'lucide-react'
-import { useParams } from 'react-router-dom'
 import { useContributorCheck } from '../../hooks/useContributorCheck'
 import { useAuthStore } from '../../store/authStore'
 import ContributorPrompt from '../ui/ContributorPrompt'
@@ -13,27 +12,15 @@ function getYouTubeEmbedUrl(url) {
   try {
     const u = new URL(url)
     let videoId = null
-    if (u.hostname.includes('youtu.be')) {
-      videoId = u.pathname.slice(1)
-    } else if (u.hostname.includes('youtube.com')) {
-      videoId = u.searchParams.get('v')
-    }
+    if (u.hostname.includes('youtu.be')) videoId = u.pathname.slice(1)
+    else if (u.hostname.includes('youtube.com')) videoId = u.searchParams.get('v')
     if (!videoId) return null
     const start = u.searchParams.get('t') || u.searchParams.get('start')
     return `https://www.youtube.com/embed/${videoId}${start ? `?start=${start}` : ''}`
-  } catch {
-    return null
-  }
+  } catch { return null }
 }
 
-export default function ObjectiveItem({
-  objective,
-  index,
-  userProgress,
-  onTick,
-  onUpdated,
-  isPending,
-}) {
+export default function ObjectiveItem({ objective, index, userProgress, onTick, onUpdated, isPending }) {
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({
@@ -42,37 +29,30 @@ export default function ObjectiveItem({
     image_url: objective.image_url || '',
     video_url: objective.video_url || '',
   })
-  const [counterValue, setCounterValue] = useState(
-    userProgress?.counter_current ?? 0
-  )
-  useEffect(() => {
-    setCounterValue(userProgress?.counter_current ?? 0)
-  }, [userProgress?.counter_current])
+  const [counterValue, setCounterValue] = useState(userProgress?.counter_current ?? 0)
+  useEffect(() => { setCounterValue(userProgress?.counter_current ?? 0) }, [userProgress?.counter_current])
+
+  const { showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
+  const { isGuest } = useAuthStore()
+  const [showGuestPrompt, setShowGuestPrompt] = useState(false)
 
   const isCompleted = userProgress?.is_completed ?? false
   const isCounter = objective.is_counter
   const counterTarget = objective.counter_target ?? 0
-  const counterCurrent = userProgress?.counter_current ?? 0
-  const counterPercent = counterTarget > 0
-    ? Math.min(Math.round((counterCurrent / counterTarget) * 100), 100)
-    : 0
+  const hasMethod = !!objective.method
+  const hasMedia = !!(objective.image_url || objective.video_url)
+  const hasExpandable = hasMethod || hasMedia
 
   const updateMutation = useMutation({
     mutationFn: (data) => updateObjective(objective.id, data),
-    onSuccess: () => {
-      setEditing(false)
-      onUpdated()
-    },
+    onSuccess: () => { setEditing(false); onUpdated() },
   })
-
   const deleteMutation = useMutation({
     mutationFn: () => deleteObjective(objective.id),
     onSuccess: onUpdated,
   })
-
   const counterMutation = useMutation({
-    mutationFn: (counter_current) =>
-      updateObjectiveProgress(objective.id, { counter_current }),
+    mutationFn: (counter_current) => updateObjectiveProgress(objective.id, { counter_current }),
     onSuccess: onUpdated,
   })
 
@@ -94,9 +74,7 @@ export default function ObjectiveItem({
 
   const handleCounterInput = (e) => {
     const val = parseInt(e.target.value)
-    if (!isNaN(val)) {
-      setCounterValue(val)
-    }
+    if (!isNaN(val)) setCounterValue(val)
   }
 
   const handleCounterBlur = () => {
@@ -106,275 +84,238 @@ export default function ObjectiveItem({
   }
 
   const handleTick = () => {
-    if (isGuest) {
-      setShowGuestPrompt(true)
-      return
-    }
+    if (isGuest) { setShowGuestPrompt(true); return }
     onTick()
   }
 
-  const { isContributor, showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
-  const { isGuest } = useAuthStore()
-  const [showGuestPrompt, setShowGuestPrompt] = useState(false)
+  // Flat-row style: bottom border separator, no card bg
+  const rowStyle = {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 14,
+    padding: '14px 0',
+    borderBottom: '0.5px solid var(--border-deep)',
+  }
+
+  const inputStyle = {
+    width: '100%',
+    background: 'var(--bg-elevated)',
+    border: '0.5px solid var(--border-default)',
+    borderRadius: 8,
+    padding: '8px 12px',
+    color: 'var(--text-primary)',
+    fontSize: '1rem',
+    outline: 'none',
+  }
 
   return (
-    <div className={`border rounded-xl transition ${
-      isCompleted
-        ? 'bg-gray-900/50 border-gray-800/50'
-        : 'bg-gray-900 border-gray-800'
-    }`}>
-      {/* Main row */}
-      <div className="flex items-center gap-3 p-4">
-        {/* Checkbox — only for non-counter objectives */}
-        {!isCounter && (
-          <button
-            onClick={handleTick}
-            disabled={isPending}
-            className="flex-shrink-0 transition hover:scale-110"
-          >
-            {isCompleted ? (
-              <CheckCircle2 size={20} className="text-violet-400" />
-            ) : (
-              <Circle size={20} className="text-gray-600 hover:text-gray-400" />
-            )}
-          </button>
-        )}
-
-        {/* Counter icon */}
-        {isCounter && (
-          <div className="flex-shrink-0">
-            {isCompleted ? (
-              <CheckCircle2 size={20} className="text-violet-400" />
-            ) : (
-              <div className="w-5 h-5 rounded-full border-2 border-gray-600 flex items-center justify-center">
-                <span className="text-gray-600 text-xs font-bold">#</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Title + counter */}
-        <div className="flex-1 min-w-0">
-          <span className={`text-sm font-medium ${
-            isCompleted ? 'text-gray-500 line-through' : 'text-white'
-          }`}>
-            {index !== undefined && <span className="text-gray-600 mr-2">{index + 1}.</span>}
-            {objective.title}
-          </span>
-
-        {/* Counter progress bar */}
-        {isCounter && !isCompleted && (
-            <div className="mt-2">
-                <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-gray-500">
-                    {counterValue.toLocaleString()} / {counterTarget.toLocaleString()}
-                </span>
-                <span className="text-xs text-gray-500">
-                    {counterTarget > 0 ? Math.min(Math.round((counterValue / counterTarget) * 100), 100) : 0}%
-                </span>
-                </div>
-                <div className="w-full h-1.5 bg-gray-800 rounded-full">
-                <div
-                    className="h-1.5 bg-violet-500 rounded-full transition-all"
-                    style={{ width: `${counterTarget > 0 ? Math.min((counterValue / counterTarget) * 100, 100) : 0}%` }}
-                />
-                </div>
-            </div>
-        )}
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {objective.method && !isCounter && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="p-1.5 text-gray-500 hover:text-white transition rounded-lg hover:bg-gray-800"
-            >
-              {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-            </button>
-          )}
-          {objective.method && isCounter && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="p-1.5 text-gray-500 hover:text-white transition rounded-lg hover:bg-gray-800"
-            >
-              {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-            </button>
-          )}
-          {/* Edit */}
-          <button
-            onClick={() => requireContributor(() => {
-              setEditing(!editing)
-              setExpanded(false)
-            })}
-            className="p-1.5 rounded-lg transition"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <Pencil size={14} />
-          </button>
-          {/* Delete */}
-          <button
-            onClick={() => requireContributor(() => {
-              if (confirm(`Delete "${objective.title}"?`)) {
-                deleteMutation.mutate()
-              }
-            })}
-            className="p-1.5 rounded-lg transition"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-      </div>
-
-      {/* Counter controls */}
-      {isCounter && !isCompleted && !editing && (
-        <div className="px-4 pb-4 pt-0">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleCounterChange(counterValue - 1)}
-              disabled={counterValue <= 0 || counterMutation.isPending}
-              className="w-8 h-8 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-400 hover:text-white hover:border-gray-600 disabled:opacity-30 transition"
-            >
-              <Minus size={14} />
-            </button>
-
-            <input
-              type="number"
-              value={counterValue}
-              onChange={handleCounterInput}
-              onBlur={handleCounterBlur}
-              min={0}
-              max={counterTarget}
-              className="w-24 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white text-sm text-center focus:outline-none focus:border-violet-500 transition"
-            />
-
-            <button
-              onClick={() => handleCounterChange(counterValue + 1)}
-              disabled={counterValue >= counterTarget || counterMutation.isPending}
-              className="w-8 h-8 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-400 hover:text-white hover:border-gray-600 disabled:opacity-30 transition"
-            >
-              <Plus size={14} />
-            </button>
-
-            <span className="text-gray-600 text-sm">of {counterTarget.toLocaleString()}</span>
-
-            {/* Jump to max button for testing */}
-            <button
-              onClick={() => handleCounterChange(counterTarget)}
-              className="ml-auto text-xs text-gray-600 hover:text-violet-400 transition"
-            >
-              Max
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Method + media expanded */}
-      {expanded && !editing && (
-        <div className="px-4 pb-4 pt-0 space-y-3">
-          {objective.method && (
-            <div className="bg-gray-800/50 rounded-lg px-4 py-3 border border-gray-700/50">
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1.5 font-medium">Method</p>
-              <p className="text-sm text-gray-300 leading-relaxed">{objective.method}</p>
-            </div>
-          )}
-          {objective.image_url && (
-            <img
-              src={objective.image_url}
-              alt="Guide"
-              className="w-full rounded-lg border border-gray-700/50 object-cover max-h-64"
-            />
-          )}
-          {objective.video_url && getYouTubeEmbedUrl(objective.video_url) && (
-            <div className="rounded-lg overflow-hidden border border-gray-700/50 aspect-video">
-              <iframe
-                src={getYouTubeEmbedUrl(objective.video_url)}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* No method hint */}
-      {!objective.method && !objective.image_url && !objective.video_url && !editing && !isCounter && (
-        <div className="px-4 pb-3 pt-0">
-          <p className="text-xs text-gray-600 italic">No method added yet</p>
-        </div>
-      )}
-
-      {/* Edit form */}
-      {editing && (
-        <form onSubmit={handleSaveEdit} className="px-4 pb-4 pt-0 space-y-3">
+    <div>
+      {/* Edit form — shown above the row when editing */}
+      {editing ? (
+        <form onSubmit={handleSaveEdit} style={{ padding: '12px 0', borderBottom: '0.5px solid var(--border-deep)' }} className="space-y-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Title</label>
-            <input
-              type="text"
-              required
-              value={editForm.title}
+            <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Title</label>
+            <input type="text" required value={editForm.title}
               onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 transition"
-            />
+              style={inputStyle} />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Method</label>
-            <textarea
-              value={editForm.method}
+            <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Method</label>
+            <textarea value={editForm.method}
               onChange={(e) => setEditForm({ ...editForm, method: e.target.value })}
-              rows={3}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 transition resize-none"
-              placeholder="How to accomplish this objective..."
-            />
+              rows={3} placeholder="How to accomplish this objective..."
+              style={{ ...inputStyle, resize: 'none' }} />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Image URL</label>
-            <input
-              type="url"
-              value={editForm.image_url}
+            <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Image URL</label>
+            <input type="url" value={editForm.image_url}
               onChange={(e) => setEditForm({ ...editForm, image_url: e.target.value })}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 transition"
-              placeholder="https://example.com/image.jpg"
-            />
+              placeholder="https://example.com/image.jpg" style={inputStyle} />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">YouTube URL</label>
-            <input
-              type="url"
-              value={editForm.video_url}
+            <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>YouTube URL</label>
+            <input type="url" value={editForm.video_url}
               onChange={(e) => setEditForm({ ...editForm, video_url: e.target.value })}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-violet-500 transition"
-              placeholder="https://youtube.com/watch?v=..."
-            />
+              placeholder="https://youtube.com/watch?v=..." style={inputStyle} />
           </div>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setEditing(false)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs rounded-lg transition"
-            >
+            <button type="button" onClick={() => setEditing(false)}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition"
+              style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)', color: 'var(--text-secondary)' }}>
               <X size={13} /> Cancel
             </button>
-            <button
-              type="submit"
-              disabled={updateMutation.isPending}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-xs rounded-lg transition"
-            >
-              <Check size={13} /> Save
+            <button type="submit" disabled={updateMutation.isPending}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition"
+              style={{ background: 'var(--accent)', color: '#fff' }}>
+              <Check size={13} /> {updateMutation.isPending ? 'Saving...' : 'Save'}
             </button>
           </div>
         </form>
+      ) : (
+        <div style={rowStyle}>
+          {/* Checkbox / counter icon */}
+          {!isCounter ? (
+            <button onClick={handleTick} disabled={isPending}
+              className="flex-shrink-0 transition hover:scale-110 mt-0.5">
+              {isCompleted
+                ? <CheckCircle2 size={22} style={{ color: 'var(--accent)' }} />
+                : <Circle size={22} style={{ color: '#333' }} />
+              }
+            </button>
+          ) : (
+            <div className="flex-shrink-0 mt-0.5">
+              {isCompleted
+                ? <CheckCircle2 size={22} style={{ color: 'var(--accent)' }} />
+                : (
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{ border: '1.5px solid #444' }}>
+                    <span className="text-xs font-bold" style={{ color: '#444' }}>#</span>
+                  </div>
+                )
+              }
+            </div>
+          )}
+
+          {/* Body */}
+          <div className="flex-1 min-w-0">
+            {/* Title */}
+            <p style={{
+              fontSize: '1rem',
+              color: isCompleted ? 'var(--text-muted)' : 'var(--text-primary)',
+              textDecoration: isCompleted ? 'line-through' : 'none',
+              margin: 0,
+              lineHeight: 1.4,
+              fontWeight: 400,
+            }}>
+              {index !== undefined && (
+                <span style={{ color: 'var(--text-muted)', marginRight: 6 }}>{index + 1}.</span>
+              )}
+              {objective.title}
+            </p>
+
+            {/* Method snippet — shown inline when not expanded */}
+            {hasMethod && !expanded && !isCompleted && (
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '4px 0 0', lineHeight: 1.55 }}>
+                {objective.method.length > 120
+                  ? objective.method.slice(0, 120) + '…'
+                  : objective.method
+                }
+              </p>
+            )}
+
+            {/* Counter progress */}
+            {isCounter && !isCompleted && (
+              <div className="mt-2">
+                <div className="flex justify-between mb-1" style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
+                  <span>{counterValue.toLocaleString()} / {counterTarget.toLocaleString()}</span>
+                  <span>{counterTarget > 0 ? Math.min(Math.round((counterValue / counterTarget) * 100), 100) : 0}%</span>
+                </div>
+                <div className="rounded" style={{ height: 3, background: '#1c1c2e' }}>
+                  <div className="rounded transition-all" style={{
+                    height: 3, background: 'var(--accent)',
+                    width: `${counterTarget > 0 ? Math.min((counterValue / counterTarget) * 100, 100) : 0}%`,
+                  }} />
+                </div>
+              </div>
+            )}
+
+            {/* Expanded: full method + media */}
+            {expanded && !editing && (
+              <div className="mt-2 space-y-3">
+                {hasMethod && (
+                  <div style={{
+                    background: 'var(--bg-elevated)',
+                    borderRadius: 6, padding: '10px 12px',
+                    borderLeft: '2px solid var(--accent-border)',
+                  }}>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
+                      {objective.method}
+                    </p>
+                  </div>
+                )}
+                {objective.image_url && (
+                  <img src={objective.image_url} alt="Guide"
+                    className="w-full rounded-lg object-cover max-h-64"
+                    style={{ border: '0.5px solid var(--border-subtle)' }} />
+                )}
+                {objective.video_url && getYouTubeEmbedUrl(objective.video_url) && (
+                  <div className="rounded-lg overflow-hidden aspect-video"
+                    style={{ border: '0.5px solid var(--border-subtle)' }}>
+                    <iframe src={getYouTubeEmbedUrl(objective.video_url)}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Counter controls */}
+            {isCounter && !isCompleted && (
+              <div className="flex items-center gap-2 mt-3">
+                <button onClick={() => handleCounterChange(counterValue - 1)}
+                  disabled={counterValue <= 0 || counterMutation.isPending}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition disabled:opacity-30"
+                  style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)', color: 'var(--text-secondary)' }}>
+                  <Minus size={14} />
+                </button>
+                <input type="number" value={counterValue}
+                  onChange={handleCounterInput} onBlur={handleCounterBlur}
+                  min={0} max={counterTarget}
+                  className="rounded-lg text-center text-sm focus:outline-none"
+                  style={{ width: 80, background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)', color: 'var(--text-primary)', padding: '6px 8px' }} />
+                <button onClick={() => handleCounterChange(counterValue + 1)}
+                  disabled={counterValue >= counterTarget || counterMutation.isPending}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition disabled:opacity-30"
+                  style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)', color: 'var(--text-secondary)' }}>
+                  <Plus size={14} />
+                </button>
+                <span className="text-sm" style={{ color: 'var(--text-muted)' }}>of {counterTarget.toLocaleString()}</span>
+                <button onClick={() => handleCounterChange(counterTarget)}
+                  className="ml-auto text-xs transition"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                  Max
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Right: expand + edit + delete */}
+          <div className="flex items-center gap-0.5 flex-shrink-0 mt-0.5">
+            {hasExpandable && (
+              <button onClick={() => setExpanded(!expanded)}
+                className="p-1.5 rounded transition"
+                style={{ color: expanded ? 'rgba(167,139,250,0.55)' : '#333' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                onMouseLeave={e => e.currentTarget.style.color = expanded ? 'rgba(167,139,250,0.55)' : '#333'}>
+                {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            )}
+            <button onClick={() => requireContributor(() => { setEditing(true); setExpanded(false) })}
+              className="p-1.5 rounded transition"
+              style={{ color: 'var(--text-muted)' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+              <Pencil size={13} />
+            </button>
+            <button onClick={() => requireContributor(() => {
+              if (confirm(`Delete "${objective.title}"?`)) deleteMutation.mutate()
+            })}
+              className="p-1.5 rounded transition"
+              style={{ color: 'var(--text-muted)' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+              <Trash2 size={13} />
+            </button>
+          </div>
+        </div>
       )}
 
       {showPrompt && (
-        <ContributorPrompt
-          onClose={() => setShowPrompt(false)}
-          discordUrl="https://discord.gg/VCKmQ7jftR"
-        />
+        <ContributorPrompt onClose={() => setShowPrompt(false)} discordUrl="https://discord.gg/VCKmQ7jftR" />
       )}
-
       {showGuestPrompt && (
         <GuestTrackingPrompt onClose={() => setShowGuestPrompt(false)} />
       )}

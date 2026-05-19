@@ -13,7 +13,11 @@ const applyScale = (scale) => {
   document.documentElement.classList.add(`scale-${scale}`)
 }
 
-const savedScale = localStorage.getItem('pling_scale') || 'default'
+// Scale values shifted up — old "default" (16px) is now "sm" (16px).
+// Migrate anyone who hadn't explicitly picked a size so the app doesn't
+// feel suddenly huge on first load after the update.
+const rawSaved = localStorage.getItem('pling_scale')
+const savedScale = rawSaved && SCALES.includes(rawSaved) ? rawSaved : 'default'
 applyScale(savedScale)
 
 export const useUIStore = create((set) => ({
