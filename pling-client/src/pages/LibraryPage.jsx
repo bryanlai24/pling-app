@@ -77,7 +77,7 @@ export default function LibraryPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="font-bold" style={{ fontSize: '1.2rem', color:'var(--text-primary)'}}>
             {isGuest ? 'Game Catalogue' : 'My Library'}

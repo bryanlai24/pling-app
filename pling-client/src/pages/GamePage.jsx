@@ -324,7 +324,7 @@ export default function GamePage() {
 
       {/* Game header */}
       {game && (
-        <div className="rounded-2xl p-6 mb-6" style={{ background: 'var(--bg-hero)', border: '0.5px solid var(--border-default)' }}>
+        <div className="rounded-2xl p-4 sm:p-6 mb-6" style={{ background: 'var(--bg-hero)', border: '0.5px solid var(--border-default)' }}>
           <div className="flex items-start gap-4">
             {/* Cover */}
             <div className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: 'var(--bg-card-purple)', border: '0.5px solid var(--accent-border)' }}>
@@ -341,7 +341,7 @@ export default function GamePage() {
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h1 className="font-semibold" style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>{game.title}</h1>
 
@@ -554,7 +554,11 @@ export default function GamePage() {
             className="flex rounded-lg p-0.5"
             style={{ fontSize: '0.65rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}
           >
-            {[['incomplete', 'Incomplete'], ['complete', 'Complete'], ['all', 'Game Order']].map(([f, label]) => (
+            {[
+              ['incomplete', 'Todo',  'Incomplete'],
+              ['complete',   'Done',  'Complete'],
+              ['all',        'All',   'Game Order'],
+            ].map(([f, shortLabel, fullLabel]) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
@@ -564,7 +568,8 @@ export default function GamePage() {
                   : { color: 'var(--text-muted)' }
                 }
               >
-                {label}
+                <span className="sm:hidden">{shortLabel}</span>
+                <span className="hidden sm:inline">{fullLabel}</span>
               </button>
             ))}
           </div>
@@ -684,7 +689,7 @@ export default function GamePage() {
       {/* Toast */}
       {toast && (
         <div
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium animate-fade-in z-50"
+          className="fixed bottom-24 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium animate-fade-in z-50 max-w-[calc(100vw-2rem)] text-center"
           style={toast.type === 'earned'
             ? { background: 'var(--accent)', color: '#fff' }
             : { background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', color: 'var(--text-secondary)' }

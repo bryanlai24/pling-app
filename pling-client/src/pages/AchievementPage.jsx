@@ -127,7 +127,7 @@ export default function AchievementPage() {
           }}
         />
 
-        <div className="p-6 relative" style={{ zIndex: 1 }}>
+        <div className="p-4 sm:p-6 relative" style={{ zIndex: 1 }}>
           <div className="flex items-start gap-4">
             {/* Trophy art — 80×80, purple-tinted bg */}
             <div
