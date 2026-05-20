@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     steam_api_key: str = ""
     xbox_client_id: str = ""
     xbox_client_secret: str = ""
+    xbox_redirect_uri: str = "http://localhost:5173/auth/xbox/callback"
 
     @property
     def is_production(self) -> bool:

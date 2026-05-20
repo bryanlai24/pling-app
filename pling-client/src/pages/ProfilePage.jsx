@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMe, updateMe, getMyStats } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
@@ -128,10 +128,10 @@ export default function ProfilePage() {
   const [steamError, setSteamError] = useState(null)
   const [steamExpanded, setSteamExpanded] = useState(false)
 
-  const [xboxCode, setXboxCode] = useState('')
   const [xboxError, setXboxError] = useState(null)
-  const [xboxAuthUrl, setXboxAuthUrl] = useState(null)
   const [xboxExpanded, setXboxExpanded] = useState(false)
+  const [xboxConnecting, setXboxConnecting] = useState(false)
+  const xboxPopupRef = useRef(null)
 
   const { scale, scales, scaleLabels, setScale } = useUIStore()
 
@@ -167,22 +167,50 @@ export default function ProfilePage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
   })
 
-  // Xbox
-  const connectXboxMutation = useMutation({
-    mutationFn: (code) => client.post('/users/me/xbox/connect', { code }),
-    onSuccess: () => { setXboxCode(''); setXboxError(null); setXboxAuthUrl(null); setXboxExpanded(false); queryClient.invalidateQueries({ queryKey: ['me'] }) },
-    onError: (err) => setXboxError(err.response?.data?.detail || 'Failed to connect Xbox account — check the code and try again.'),
-  })
+  // Xbox — popup OAuth flow
   const disconnectXboxMutation = useMutation({
     mutationFn: () => client.delete('/users/me/xbox/disconnect'),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
   })
-  const fetchXboxAuthUrl = async () => {
+
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data?.type === 'xbox_connected') {
+        setXboxConnecting(false)
+        setXboxError(null)
+        setXboxExpanded(false)
+        xboxPopupRef.current?.close()
+        queryClient.invalidateQueries({ queryKey: ['me'] })
+      } else if (event.data?.type === 'xbox_error') {
+        setXboxConnecting(false)
+        setXboxError(event.data.message || 'Failed to connect Xbox account')
+        xboxPopupRef.current?.close()
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [queryClient])
+
+  const openXboxPopup = async () => {
+    setXboxError(null)
+    setXboxConnecting(true)
     try {
       const res = await client.get('/users/me/xbox/auth-url')
-      setXboxAuthUrl(res.data.auth_url)
-      window.open(res.data.auth_url, '_blank', 'noopener,noreferrer')
+      const popup = window.open(
+        res.data.auth_url,
+        'xbox_auth',
+        'width=520,height=620,left=200,top=100,resizable=yes,scrollbars=yes'
+      )
+      xboxPopupRef.current = popup
+      // Detect if popup was closed manually without completing auth
+      const poll = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(poll)
+          setXboxConnecting(false)
+        }
+      }, 500)
     } catch {
+      setXboxConnecting(false)
       setXboxError('Could not generate Xbox auth URL.')
     }
   }
@@ -359,53 +387,22 @@ export default function ProfilePage() {
           onDisconnect={() => disconnectXboxMutation.mutate()}
           disconnecting={disconnectXboxMutation.isPending}
           expanded={xboxExpanded}
-          onToggle={() => { setXboxExpanded(v => !v); setXboxError(null); setXboxAuthUrl(null) }}
+          onToggle={() => { setXboxExpanded(v => !v); setXboxError(null) }}
         >
-          {!xboxAuthUrl ? (
-            <button
-              onClick={fetchXboxAuthUrl}
-              className="flex items-center gap-2 font-medium px-4 py-2.5 rounded-lg transition"
-              style={{ fontSize: '0.85rem', background: '#107c10', color: '#fff' }}
-            >
-              <ExternalLink size={13} />
-              Sign in with Microsoft
-            </button>
-          ) : (
-            <>
-              <InstructionBox>
-                <p style={{ fontSize: '0.7rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 6 }}>Almost there:</p>
-                <InstructionList steps={[
-                  'Sign in with your Microsoft account in the window that opened',
-                  "After signing in, you'll be redirected to a blank-looking page",
-                  <span>Copy the <code style={{ background: 'var(--bg-hero)', padding: '1px 4px', borderRadius: 3 }}>code=</code> value from the URL</span>,
-                  'Paste it below and click Connect',
-                ]} />
-              </InstructionBox>
-              <ErrorBanner message={xboxError} />
-              <form onSubmit={(e) => { e.preventDefault(); connectXboxMutation.mutate(xboxCode.trim()) }} className="flex gap-2">
-                <input
-                  type="text"
-                  value={xboxCode}
-                  onChange={(e) => setXboxCode(e.target.value)}
-                  placeholder="Paste auth code here"
-                  required
-                  autoFocus
-                  style={{ ...inputStyle, flex: 1 }}
-                />
-                <button type="submit" disabled={connectXboxMutation.isPending || !xboxCode.trim()}
-                  className="flex items-center gap-1.5 font-medium px-4 rounded-lg flex-shrink-0 transition disabled:opacity-50"
-                  style={{ fontSize: '0.85rem', background: '#107c10', color: '#fff' }}>
-                  <Link size={13} />
-                  {connectXboxMutation.isPending ? 'Connecting...' : 'Connect'}
-                </button>
-              </form>
-              <button
-                onClick={() => { setXboxAuthUrl(null); setXboxError(null) }}
-                style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 12, display: 'block' }}
-              >
-                ← Start over
-              </button>
-            </>
+          <ErrorBanner message={xboxError} />
+          <button
+            onClick={openXboxPopup}
+            disabled={xboxConnecting}
+            className="flex items-center gap-2 font-medium px-4 py-2.5 rounded-lg transition disabled:opacity-50"
+            style={{ fontSize: '0.85rem', background: '#107c10', color: '#fff' }}
+          >
+            <ExternalLink size={13} />
+            {xboxConnecting ? 'Waiting for sign-in…' : 'Sign in with Microsoft'}
+          </button>
+          {xboxConnecting && (
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 8 }}>
+              Complete sign-in in the popup window — it will close automatically when done.
+            </p>
           )}
         </PlatformRow>
 

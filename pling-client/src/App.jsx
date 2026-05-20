@@ -11,6 +11,7 @@ import Layout from './components/layout/Layout'
 import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
 import RequestsPage from './pages/RequestsPage'
+import XboxCallbackPage from './pages/XboxCallbackPage'
 
 function ProtectedRoute({ children }) {
   const { token, isGuest } = useAuthStore()
@@ -30,6 +31,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/auth/xbox/callback" element={<XboxCallbackPage />} />
       <Route
         path="/"
         element={

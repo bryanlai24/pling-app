@@ -1,5 +1,6 @@
 import asyncio, inspect, uuid
 from datetime import datetime, timezone, timedelta
+from urllib.parse import quote
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from xbox.webapi.authentication.manager import AuthenticationManager
@@ -9,30 +10,29 @@ from xbox.webapi.common.signed_session import SignedSession
 from app.config import get_settings
 from app.models.xbox_token import XboxToken
 
-settings = get_settings()
-
-XBOX_REDIRECT_URI = "https://login.microsoftonline.com/common/oauth2/nativeclient"
 
 def _make_auth_manager(session, settings) -> AuthenticationManager:
     return AuthenticationManager(
         session,
         settings.xbox_client_id,
         settings.xbox_client_secret,
-        XBOX_REDIRECT_URI,
+        settings.xbox_redirect_uri,
     )
 
 
-def generate_auth_url() -> str:
+def generate_auth_url(state: str = "") -> str:
     settings = get_settings()
-    auth_url = (
+    url = (
         "https://login.live.com/oauth20_authorize.srf"
         f"?client_id={settings.xbox_client_id}"
         "&response_type=code"
         "&approval_prompt=auto"
         "&scope=XboxLive.signin+XboxLive.offline_access"
-        f"&redirect_uri={XBOX_REDIRECT_URI}"
+        f"&redirect_uri={quote(settings.xbox_redirect_uri, safe='')}"
     )
-    return auth_url
+    if state:
+        url += f"&state={quote(state, safe='')}"
+    return url
 
 
 async def exchange_code_for_tokens(db: AsyncSession, code: str) -> dict:
@@ -418,14 +418,3 @@ async def fetch_xbox_achievements(db: AsyncSession, title_id: str, xuid: str) ->
     finally:
         await session.__aexit__(None, None, None)
 
-def generate_auth_url() -> str:
-    settings = get_settings()
-    auth_url = (
-        "https://login.live.com/oauth20_authorize.srf"
-        f"?client_id={settings.xbox_client_id}"
-        "&response_type=code"
-        "&approval_prompt=auto"
-        "&scope=XboxLive.signin+XboxLive.offline_access"
-        "&redirect_uri=https://login.microsoftonline.com/common/oauth2/nativeclient"
-    )
-    return auth_url
