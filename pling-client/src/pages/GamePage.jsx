@@ -8,6 +8,7 @@ import { Trophy, Plus, ChevronRight, ChevronLeft, CheckCircle2, Circle, Loader2,
 import AddAchievementModal from '../components/achievements/AddAchievementModal'
 import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
+import { usePageTitle } from '../hooks/usePageTitle'
 import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
 import client from '../api/client'
 
@@ -135,6 +136,7 @@ export default function GamePage() {
   const [toast, setToast] = useState(null) // { message, type: 'earned' | 'unearned' }
   const toastTimer = useRef(null)
 
+
   const showToast = (message, type = 'earned') => {
     clearTimeout(toastTimer.current)
     setToast({ message, type })
@@ -159,6 +161,7 @@ export default function GamePage() {
 
   const userGame = isGuest ? null : library.find((ug) => ug.game.id === gameId)
   const game = isGuest ? catalogueGame : userGame?.game
+  usePageTitle(game?.title || null)
 
   const { data: achievements = [], isLoading } = useQuery({
     queryKey: ['achievements', gameId],

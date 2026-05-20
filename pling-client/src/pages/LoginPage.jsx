@@ -3,8 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { login } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 export default function LoginPage() {
+  usePageTitle('Sign In')
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
   const [form, setForm] = useState({ email: '', password: '' })

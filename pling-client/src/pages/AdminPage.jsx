@@ -4,6 +4,7 @@ import { getMe } from '../api/auth'
 import { useNavigate } from 'react-router-dom'
 import { Shield, Download, Loader2, CheckCircle2, AlertCircle, Search, Trophy, ChevronRight, Sparkles } from 'lucide-react'
 import client from '../api/client'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const searchPSN = (query) => client.get(`/admin/psn/search?query=${encodeURIComponent(query)}`)
 const importGame = (data) => client.post('/admin/import/psn', data)
@@ -356,6 +357,7 @@ function SeedSection({ queryClient }) {
 // ── Main page ───────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
+  usePageTitle('Admin')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 

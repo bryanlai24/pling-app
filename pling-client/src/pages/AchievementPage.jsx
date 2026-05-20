@@ -6,6 +6,7 @@ import { updateObjectiveProgress } from '../api/objectives'
 import { ChevronLeft, ChevronDown, ChevronUp, Plus, Trophy, CheckCircle2, Circle, Loader2, UserPlus, Layers, Crown } from 'lucide-react'
 import { useContributorCheck } from '../hooks/useContributorCheck'
 import { useAuthStore } from '../store/authStore'
+import { usePageTitle } from '../hooks/usePageTitle'
 import AddObjectiveModal from '../components/objectives/AddObjectiveModal'
 import SeedObjectivesModal from '../components/objectives/SeedObjectivesModal'
 import ObjectiveItem from '../components/objectives/ObjectiveItem'
@@ -37,6 +38,8 @@ export default function AchievementPage() {
   const { showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
   const { isGuest } = useAuthStore()
   const [showGuestPrompt, setShowGuestPrompt] = useState(false)
+
+  usePageTitle(achievement?.title || null)
 
   const { data: achievement, isLoading } = useQuery({
     queryKey: ['achievement', achievementId],

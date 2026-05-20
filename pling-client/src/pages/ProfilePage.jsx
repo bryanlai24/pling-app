@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore'
 import { User, Link, Unlink, Eye, EyeOff, Type, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
 import client from '../api/client'
 import { useUIStore } from '../store/uiStore'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const connectPSN = (data) => client.post('/users/me/psn/connect', data)
 const disconnectPSN = () => client.delete('/users/me/psn/disconnect')
@@ -118,6 +119,7 @@ function ErrorBanner({ message }) {
 }
 
 export default function ProfilePage() {
+  usePageTitle('Profile')
   const queryClient = useQueryClient()
   const [npsso, setNpsso] = useState('')
   const [showNpsso, setShowNpsso] = useState(false)

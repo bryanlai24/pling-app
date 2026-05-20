@@ -7,6 +7,7 @@ import AddGameModal from '../components/games/AddGameModal.jsx'
 import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
 import RequestGameModal from '../components/requests/RequestGameModal.jsx'
 import { useAuthStore } from '../store/authStore'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const STATUS_COLORS = {
   not_started: 'var(--text-muted)',
@@ -32,6 +33,7 @@ const PLATFORM_BADGES = {
 }
 
 export default function LibraryPage() {
+  usePageTitle('Your Library')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [showAddGame, setShowAddGame] = useState(false)

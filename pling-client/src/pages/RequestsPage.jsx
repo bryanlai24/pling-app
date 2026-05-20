@@ -6,6 +6,7 @@ import { listGames } from '../api/games'
 import { useAuthStore } from '../store/authStore'
 import { MessageSquarePlus, ChevronUp, Trophy, CheckCircle2, Search } from 'lucide-react'
 import RequestGameModal from '../components/requests/RequestGameModal.jsx'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const PLATFORM_LABELS = {
   psn: 'PSN',
@@ -245,6 +246,7 @@ function RequestRow({ req, isContributor, onFulfill }) {
 }
 
 export default function RequestsPage() {
+  usePageTitle('Game Requests')
   const { data: me } = useQuery({
     queryKey: ['me'],
     queryFn: () => import('../api/auth').then(m => m.getMe()).then(r => r.data),
