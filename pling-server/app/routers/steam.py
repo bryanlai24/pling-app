@@ -8,7 +8,7 @@ from app.auth.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.user import UserPublic
 from app.services.sync_service import sync_steam_game
-from app.services.steam_service import resolve_steam_id
+from app.services.steam_service import resolve_steam_id, get_steam_display_name
 
 router = APIRouter()
 
@@ -35,6 +35,7 @@ async def connect_steam(
         )
 
     current_user.steam_id = steam_id
+    current_user.steam_display_name = await get_steam_display_name(steam_id)
     await db.flush()
     await db.refresh(current_user)
     return UserPublic.model_validate(current_user)
@@ -47,6 +48,7 @@ async def disconnect_steam(
 ):
     """Disconnect Steam account."""
     current_user.steam_id = None
+    current_user.steam_display_name = None
     await db.flush()
     await db.refresh(current_user)
     return UserPublic.model_validate(current_user)

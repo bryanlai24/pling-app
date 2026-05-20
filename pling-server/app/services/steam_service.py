@@ -53,6 +53,23 @@ async def resolve_steam_id(input_str: str) -> str:
     raise ValueError(f"Could not resolve Steam ID from '{input_str}' — check the URL or username and try again.")
 
 
+async def get_steam_display_name(steam_id: str) -> str | None:
+    """Fetch a user's Steam display name (persona name) via GetPlayerSummaries."""
+    async with httpx.AsyncClient(timeout=10) as client:
+        try:
+            response = await client.get(
+                f"{STEAM_API_BASE}/ISteamUser/GetPlayerSummaries/v2/",
+                params={"key": settings.steam_api_key, "steamids": steam_id},
+            )
+            response.raise_for_status()
+            players = response.json().get("response", {}).get("players", [])
+            if players:
+                return players[0].get("personaname")
+        except Exception:
+            pass
+    return None
+
+
 async def get_owned_games(steam_id: str) -> list[dict]:
     """Get all games owned by a Steam user."""
     async with httpx.AsyncClient() as client:

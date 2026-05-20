@@ -45,6 +45,7 @@ class UserPublic(PlingBase):
     psn_account_id: str | None
     xbox_gamertag: str | None
     steam_id: str | None
+    steam_display_name: str | None
     created_at: datetime
 
 

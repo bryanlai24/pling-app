@@ -344,7 +344,7 @@ export default function ProfilePage() {
           color="#1b2838"
           label="Steam"
           connected={!!me?.steam_id}
-          connectedLabel={me?.steam_id}
+          connectedLabel={me?.steam_display_name || me?.steam_id}
           onDisconnect={() => disconnectSteamMutation.mutate()}
           disconnecting={disconnectSteamMutation.isPending}
           expanded={steamExpanded}
