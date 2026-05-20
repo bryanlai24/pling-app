@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, DateTime, func, ForeignKey, Integer
+from sqlalchemy import String, DateTime, func, ForeignKey, Integer, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.database import Base
+from app.models.game import Platform
 
 
 class TrophySet(Base):
@@ -16,7 +17,10 @@ class TrophySet(Base):
         UUID(as_uuid=True), ForeignKey("games.id", ondelete="CASCADE"), nullable=False
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)  # e.g. "Base Game", "Deluxe Edition DLC"
-    platform_communication_id: Mapped[str | None] = mapped_column(String(255), nullable=True)  # npCommunicationId
+    platform_communication_id: Mapped[str | None] = mapped_column(String(255), nullable=True)  # npCommunicationId / appid / title_id
+    platform: Mapped[Platform | None] = mapped_column(
+        Enum(Platform, name="platform_enum"), nullable=True
+    )  # psn / xbox / steam / manual — null means "universal / no platform sync"
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(

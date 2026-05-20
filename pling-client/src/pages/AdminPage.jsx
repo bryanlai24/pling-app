@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMe } from '../api/auth'
 import { useNavigate } from 'react-router-dom'
-import { Shield, Download, Loader2, CheckCircle2, AlertCircle, Search, Trophy, ChevronRight } from 'lucide-react'
+import { Shield, Download, Loader2, CheckCircle2, AlertCircle, Search, Trophy, ChevronRight, Sparkles } from 'lucide-react'
 import client from '../api/client'
 
 const searchPSN = (query) => client.get(`/admin/psn/search?query=${encodeURIComponent(query)}`)
@@ -14,6 +14,8 @@ const searchXbox = (query) => client.get(`/admin/xbox/search?query=${encodeURICo
 const importXboxGame = (data) => client.post('/admin/import/xbox', data)
 const searchSteam = (query) => client.get(`/admin/steam/search?query=${encodeURIComponent(query)}`)
 const importSteamGame = (data) => client.post('/admin/import/steam', data)
+const getSeedCatalogue = () => client.get('/admin/seed/catalogue')
+const seedGame = (slug) => client.post('/admin/seed/game', { slug })
 
 // ── Shared sub-components ──────────────────────────────────────────────────
 
@@ -222,6 +224,133 @@ function StatusDot({ status, healthy, warning, danger }) {
     status === warning ? '#fbbf24' :
     '#f87171'
   return <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+}
+
+// ── Seed Section ───────────────────────────────────────────────────────────
+
+const PLATFORM_COLORS = {
+  steam: '#4a90d9',
+  xbox: '#107c10',
+  psn: '#003791',
+  manual: 'var(--text-muted)',
+}
+
+function SeedSection({ queryClient }) {
+  const [seedingSlug, setSeedingSlug] = useState(null)
+  const [seedResults, setSeedResults] = useState({}) // slug → result
+  const [seedErrors, setSeedErrors] = useState({})   // slug → error string
+
+  const { data: catalogue, isLoading } = useQuery({
+    queryKey: ['seed-catalogue'],
+    queryFn: () => getSeedCatalogue().then(r => r.data),
+  })
+
+  const handleSeed = async (slug) => {
+    setSeedingSlug(slug)
+    setSeedErrors(prev => ({ ...prev, [slug]: null }))
+    try {
+      const res = await seedGame(slug)
+      setSeedResults(prev => ({ ...prev, [slug]: res.data }))
+      queryClient.invalidateQueries({ queryKey: ['seed-catalogue'] })
+      queryClient.invalidateQueries({ queryKey: ['all-games'] })
+      queryClient.invalidateQueries({ queryKey: ['games'] })
+    } catch (err) {
+      setSeedErrors(prev => ({
+        ...prev,
+        [slug]: err.response?.data?.detail || 'Seed failed',
+      }))
+    } finally {
+      setSeedingSlug(null)
+    }
+  }
+
+  const pending = catalogue?.filter(g => !g.already_imported && !seedResults[g.slug]?.status === 'imported')
+  const allDone = catalogue?.every(g => g.already_imported || seedResults[g.slug]?.status === 'imported')
+
+  return (
+    <SectionCard>
+      <SectionHeader
+        icon={<Sparkles size={16} style={{ color: 'var(--accent)' }} />}
+        label="Seed Catalogue"
+      />
+
+      <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+        Import iconic games directly — no platform account needed. Achievements are pulled from Steam's public API.
+      </p>
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 py-4" style={{ color: 'var(--text-muted)' }}>
+          <Loader2 size={15} className="animate-spin" />
+          <span className="text-sm">Loading catalogue…</span>
+        </div>
+      ) : (
+        <div>
+          {catalogue?.map((game) => {
+            const result = seedResults[game.slug]
+            const error = seedErrors[game.slug]
+            const isImported = game.already_imported || result?.status === 'imported'
+            const isSeeding = seedingSlug === game.slug
+
+            return (
+              <div
+                key={game.slug}
+                className="flex items-center gap-3"
+                style={{ padding: '10px 0', borderBottom: '0.5px solid var(--border-deep)' }}
+              >
+                {/* Platform dot */}
+                <div
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ background: PLATFORM_COLORS[game.platform] || 'var(--text-muted)' }}
+                />
+
+                {/* Title + meta */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{game.title}</p>
+                  {result?.status === 'imported' && (
+                    <p className="text-xs mt-0.5" style={{ color: '#34d399' }}>
+                      {result.achievements_imported} achievements imported
+                    </p>
+                  )}
+                  {result?.status === 'skipped' && (
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Already in catalogue</p>
+                  )}
+                  {error && (
+                    <p className="text-xs mt-0.5" style={{ color: '#f87171' }}>{error}</p>
+                  )}
+                </div>
+
+                {/* Action */}
+                {isImported ? (
+                  <div className="flex items-center gap-1.5 text-xs flex-shrink-0" style={{ color: '#34d399' }}>
+                    <CheckCircle2 size={13} />
+                    <span>Imported</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleSeed(game.slug)}
+                    disabled={!!seedingSlug}
+                    className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition disabled:opacity-40 flex-shrink-0"
+                    style={{ background: 'var(--accent)', color: '#fff' }}
+                  >
+                    {isSeeding
+                      ? <><Loader2 size={12} className="animate-spin" />Seeding…</>
+                      : <><Download size={12} />Seed</>
+                    }
+                  </button>
+                )}
+              </div>
+            )
+          })}
+
+          {allDone && catalogue?.length > 0 && (
+            <p className="text-sm text-center pt-4" style={{ color: '#34d399' }}>
+              All games in the seed catalogue have been imported ✓
+            </p>
+          )}
+        </div>
+      )}
+    </SectionCard>
+  )
 }
 
 // ── Main page ───────────────────────────────────────────────────────────────
@@ -927,6 +1056,9 @@ export default function AdminPage() {
           </div>
         )}
       </SectionCard>
+
+      {/* ── Seed Catalogue ── */}
+      <SeedSection queryClient={queryClient} />
 
       {/* ── Catalogue ── */}
       <SectionCard>

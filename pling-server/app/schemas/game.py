@@ -10,7 +10,7 @@ from app.schemas.genre import GenreResponse
 
 class GameCreate(PlingBase):
     title: str = Field(..., min_length=1, max_length=255)
-    platform: Platform
+    platform: Platform | None = None
     platform_game_id: str | None = Field(None, max_length=255)
     cover_image_url: str | None = Field(None, max_length=500)
 
@@ -39,7 +39,7 @@ class UserGameUpdate(PlingBase):
 class GameResponse(PlingBase):
     id: uuid.UUID
     title: str
-    platform: Platform
+    platform: Platform | None
     platform_game_id: str | None
     cover_image_url: str | None
     genres: list[GenreResponse] = []

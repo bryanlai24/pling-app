@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, DateTime, func, ForeignKey, Integer, Boolean, Enum
+from sqlalchemy import String, DateTime, func, ForeignKey, Integer, Boolean, Enum, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.database import Base
@@ -54,6 +54,9 @@ class Achievement(Base):
         cascade="all, delete-orphan"
     )
     user_achievements: Mapped[list["UserAchievement"]] = relationship(
+        back_populates="achievement", cascade="all, delete-orphan"
+    )
+    platform_ids: Mapped[list["AchievementPlatformId"]] = relationship(
         back_populates="achievement", cascade="all, delete-orphan"
     )
 
@@ -149,3 +152,31 @@ class UserObjective(Base):
     # Relationships
     user: Mapped["User"] = relationship(back_populates="user_objectives")
     objective: Mapped["Objective"] = relationship(back_populates="user_objectives")
+
+
+class AchievementPlatformId(Base):
+    """Maps a platform-specific achievement ID to an Achievement row.
+
+    Allows one Achievement to be matched by multiple platforms — e.g. the same
+    achievement exists on Steam (apiname "ACH_WIN_1"), Xbox (id "12345"), and
+    PSN (trophyId "0"). Each row stores one platform's identifier.
+
+    Sync services look up achievements via (platform, platform_achievement_id)
+    rather than the bare platform_achievement_id on the Achievement row.
+    """
+    __tablename__ = "achievement_platform_ids"
+    __table_args__ = (
+        UniqueConstraint("platform", "platform_achievement_id", name="uq_platform_achievement"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    achievement_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("achievements.id", ondelete="CASCADE"), nullable=False
+    )
+    platform: Mapped[str] = mapped_column(String(20), nullable=False)  # "psn" | "xbox" | "steam"
+    platform_achievement_id: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    # Relationship
+    achievement: Mapped["Achievement"] = relationship(back_populates="platform_ids")

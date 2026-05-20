@@ -22,8 +22,8 @@ class Game(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    platform: Mapped[Platform] = mapped_column(
-        Enum(Platform, name="platform_enum"), nullable=False
+    platform: Mapped[Platform | None] = mapped_column(
+        Enum(Platform, name="platform_enum"), nullable=True
     )
     platform_game_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)

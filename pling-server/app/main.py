@@ -9,9 +9,27 @@ from app.routers import users, games, achievements, objectives, admin, psn, genr
 settings = get_settings()
 
 
+def run_migrations():
+    """Run alembic upgrade head on startup. Safe to call repeatedly — alembic is idempotent."""
+    import subprocess, sys
+    result = subprocess.run(
+        ["alembic", "upgrade", "head"],
+        capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        print(f"[startup] Migration failed:\n{result.stderr}", file=sys.stderr)
+        raise RuntimeError("Database migration failed — aborting startup")
+    if result.stdout.strip():
+        print(f"[startup] Migration output:\n{result.stdout}")
+    else:
+        print("[startup] Database schema up to date")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if not settings.is_production:
+    if settings.is_production:
+        run_migrations()
+    else:
         await init_db()
     yield
 

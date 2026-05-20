@@ -10,7 +10,7 @@ from app.auth.dependencies import get_current_user, require_admin
 from app.models.user import User, UserRole
 from app.models.game import Game
 from app.models.trophy_set import TrophySet
-from app.models.achievement import Achievement
+from app.models.achievement import Achievement, AchievementPlatformId
 from app.models.xbox_token import XboxToken
 from app.services.psn_service import fetch_trophies, get_psnawp
 from app.schemas.user import UserPublic
@@ -22,6 +22,7 @@ from app.services.xbox_service import (
     fetch_xbox_achievements,
 )
 from app.services.steam_service import search_owned_games, fetch_steam_achievements, get_game_details
+from app.services.seed_service import seed_game, SEED_CATALOGUE
 
 settings = get_settings()
 router = APIRouter()
@@ -110,12 +111,13 @@ async def import_psn_game(
         game_id=game.id,
         name=data.trophy_set_name,
         platform_communication_id=data.np_communication_id,
+        platform="psn",
         sort_order=set_count,
     )
     db.add(trophy_set)
     await db.flush()
 
-    # Create achievements
+    # Create achievements + platform ID rows
     for trophy in psn_data["trophies"]:
         achievement = Achievement(
             game_id=game.id,
@@ -127,6 +129,12 @@ async def import_psn_game(
             icon_url=trophy.get("icon_url"),
         )
         db.add(achievement)
+        await db.flush()
+        db.add(AchievementPlatformId(
+            achievement_id=achievement.id,
+            platform="psn",
+            platform_achievement_id=trophy["platform_achievement_id"],
+        ))
 
     await db.flush()
 
@@ -431,15 +439,17 @@ async def import_xbox_game(
         game_id=game.id,
         name=data.trophy_set_name,
         platform_communication_id=data.title_id,
+        platform="xbox",
         sort_order=set_count,
         gamerscore_total=xbox_data["gamerscore_total"],
     )
     db.add(trophy_set)
     await db.flush()
 
-    # Create achievements
+    # Create achievements + platform ID rows
     gamerscore_total = xbox_data["gamerscore_total"]
     for ach in xbox_data["achievements"]:
+        pid = str(ach["platform_achievement_id"])
         achievement = Achievement(
             game_id=game.id,
             trophy_set_id=trophy_set.id,
@@ -447,9 +457,15 @@ async def import_xbox_game(
             description=ach["description"],
             gamerscore=ach["gamerscore"],
             icon_url=ach["icon_url"],
-            platform_achievement_id=str(ach["platform_achievement_id"]),
+            platform_achievement_id=pid,
         )
         db.add(achievement)
+        await db.flush()
+        db.add(AchievementPlatformId(
+            achievement_id=achievement.id,
+            platform="xbox",
+            platform_achievement_id=pid,
+        ))
 
     await db.flush()
 
@@ -567,23 +583,31 @@ async def import_steam_game(
         game_id=game.id,
         name=data.trophy_set_name,
         platform_communication_id=data.app_id,
+        platform="steam",
         sort_order=set_count,
     )
     db.add(trophy_set)
     await db.flush()
 
     for ach in steam_data["achievements"]:
+        pid = ach["platform_achievement_id"]
         achievement = Achievement(
             game_id=game.id,
             trophy_set_id=trophy_set.id,
             title=ach["title"],
             description=ach["description"],
-            platform_achievement_id=ach["platform_achievement_id"],
+            platform_achievement_id=pid,
             icon_url=ach["icon_url"],
             rarity=ach["rarity"],
             sort_order=ach.get("sort_order", 0),
         )
         db.add(achievement)
+        await db.flush()
+        db.add(AchievementPlatformId(
+            achievement_id=achievement.id,
+            platform="steam",
+            platform_achievement_id=pid,
+        ))
 
     await db.flush()
 
@@ -593,3 +617,50 @@ async def import_steam_game(
         "trophy_set_id": str(trophy_set.id),
         "achievements_imported": steam_data["total"],
     }
+
+
+# ── Seed catalogue ─────────────────────────────────────────────────────────────
+
+@router.get("/seed/catalogue")
+async def get_seed_catalogue(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    """Return the list of seed-able games, flagging which are already imported."""
+    # Get all already-imported platform_communication_ids
+    result = await db.execute(select(TrophySet.platform_communication_id))
+    imported_ids = {row[0] for row in result.fetchall() if row[0]}
+
+    return [
+        {
+            "slug": g["slug"],
+            "title": g["title"],
+            "app_id": g["app_id"],
+            "platform": g["platform"],
+            "already_imported": g["app_id"] in imported_ids,
+        }
+        for g in SEED_CATALOGUE
+    ]
+
+
+class SeedRequest(BaseModel):
+    slug: str
+
+
+@router.post("/seed/game", status_code=status.HTTP_200_OK)
+async def seed_game_endpoint(
+    data: SeedRequest,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    """Seed a game from the built-in catalogue. Skips silently if already imported."""
+    try:
+        result = await seed_game(db, data.slug)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Seed failed: {str(e)}",
+        )
+    return result

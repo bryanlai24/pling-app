@@ -179,6 +179,44 @@ async def _get_authenticated_client(db: AsyncSession):
 
     return XboxLiveClient(auth_mgr), token_record, session
 
+def _is_public_client(settings) -> bool:
+    """Public client = mobile/desktop redirect URI (http://). No client_secret allowed."""
+    return settings.xbox_redirect_uri.startswith("http://")
+
+
+async def _live_token_request(data: dict, settings) -> "OAuth2TokenResponse":
+    """POST to Microsoft's token endpoint, omitting client_secret for public clients."""
+    import httpx
+    data["client_id"] = settings.xbox_client_id
+    if not _is_public_client(settings) and settings.xbox_client_secret:
+        data["client_secret"] = settings.xbox_client_secret
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post("https://login.live.com/oauth20_token.srf", data=data)
+        if not resp.is_success:
+            print(f"[xbox] Token request failed {resp.status_code}: {resp.text}")
+            resp.raise_for_status()
+
+    return OAuth2TokenResponse(**resp.json())
+
+
+async def _exchange_code_directly(code: str, settings) -> "OAuth2TokenResponse":
+    return await _live_token_request({
+        "grant_type": "authorization_code",
+        "code": code,
+        "scope": "XboxLive.signin XboxLive.offline_access",
+        "redirect_uri": settings.xbox_redirect_uri,
+    }, settings)
+
+
+async def _refresh_token_directly(refresh_token: str, settings) -> "OAuth2TokenResponse":
+    return await _live_token_request({
+        "grant_type": "refresh_token",
+        "scope": "XboxLive.signin XboxLive.offline_access",
+        "refresh_token": refresh_token,
+    }, settings)
+
+
 async def exchange_code_for_user_tokens(db: AsyncSession, user_id: uuid.UUID, code: str) -> dict:
     """Exchange an OAuth code for tokens and store them against a specific user."""
     import uuid as _uuid
@@ -186,10 +224,14 @@ async def exchange_code_for_user_tokens(db: AsyncSession, user_id: uuid.UUID, co
     async with SignedSession() as session:
         auth_mgr = _make_auth_manager(session, settings)
 
-        oauth_response = await auth_mgr.request_oauth_token(code)
+        # Use direct HTTP calls to control exactly what's sent to Microsoft.
+        # Public clients (http:// redirect URIs) must NOT send client_secret.
+        oauth_response = await _exchange_code_directly(code, settings)
         auth_mgr.oauth = oauth_response
-        auth_mgr.oauth = await auth_mgr.refresh_oauth_token()
-        await auth_mgr.refresh_tokens()
+        # Skip refresh_oauth_token — the code exchange already gave us valid tokens.
+        # Just get the XSTS token chain (user token → XSTS).
+        auth_mgr.user_token = await auth_mgr.request_user_token()
+        auth_mgr.xsts_token = await auth_mgr.request_xsts_token()
 
         oauth = auth_mgr.oauth
         xuid = str(auth_mgr.xsts_token.xuid)
