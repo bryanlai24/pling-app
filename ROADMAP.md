@@ -14,38 +14,46 @@
 - [x] Account stats endpoint (games tracked, trophies, platinums, per-platform breakdown)
 - [x] PS5-inspired dark UI redesign (OLED black, purple accent, flat rows, scalable rem typography)
 - [x] Steam achievement sync (vanity URL resolver, per-game sync, privacy setting guidance)
-- [x] Xbox achievement sync (per-user OAuth, copy-paste auth code flow, per-game sync)
+- [x] Xbox achievement sync (per-user OAuth, popup flow, per-game sync)
 - [x] Game request system (vote ranking, contributor seed queue, social graph foundation)
 - [x] Mobile responsiveness pass (bottom nav, touch targets, responsive hero panels)
 - [x] Profile & Admin page redesign (full design system alignment)
 - [x] Design system polish pass (0.5px hairlines, CSS vars throughout, modal consistency)
-- [x] Backend deployed to Cloud Run (Alembic migrations, Cloud SQL)
+- [x] Backend deployed to Cloud Run (Alembic migrations, Cloud SQL, auto-migrate on startup)
 - [x] Objective text formatting — inline markdown renderer (bold, italic, lists, paragraphs)
 - [x] Collapsible objective groups
+- [x] Platform-neutral game schema (TrophySet.platform, AchievementPlatformId, multi-platform sync)
+- [x] Game seeding — import 12 iconic titles from Steam public API, no ownership required
+- [x] Cloud Run cleanup (old revisions purged, min-instances 0)
 
 ---
 
-## Upcoming
+## v3
 
-### Catalogue Population 🔥
-The highest-leverage thing right now — the app experience is solid, but there's nothing to browse as a new user.
+### Guest Mode + Landing Page 🔥
+The highest-leverage thing for growth — new users should experience the product before they're asked to sign up.
 
-**Strategy:** Community seeding sprints. Contributors pick a game and fill objectives using the seeding tool (one sitting per game). Prioritise by request votes.
+**Entry point — Landing page**
+Inspired by Letterboxd: the product *is* the landing page. A hero that shows Pling in action — featured game card, achievement rows with objectives visible, a completion ring. Tagline: "Track every achievement. Master every game." Below the fold: featured games from the seeded catalogue so there's real content to browse immediately.
 
-**What makes a good catalogue game:**
-- Has a well-known trophy/achievement list (popular or notorious)
-- Has enough community documentation to write good objective methods
-- Requested by multiple users
+**Guest permissions**
+Guests can do everything that's purely consumption-based without an account:
+- Browse the full catalogue
+- Read objectives and guides
+- Manually check off achievements on any game (stored in localStorage)
+
+The account wall goes up only at meaningful persistence moments:
+- Adding a game to their library (saved across devices / sessions)
+- Syncing PSN / Xbox / Steam
+- Tracking progress across more than one game (localStorage gets unwieldy — natural nudge point)
+
+**The CTA**
+No banners, no nudges. One clean modal, triggered contextually when they hit a hard gate. Copy tied to what they just tried to do — e.g. "Create a free account to save your progress across devices and sync your platforms."
 
 ---
 
 ### Shareable Profile / Social
 Public profile URL (`pling.app/u/username`) showing completion stats, pinned achievements, recently played. Foundation for social graph — follow friends, see their activity.
-
----
-
-### Discovery / Home Page
-Landing experience for guests and new users. Show featured games, top-voted requests, recently seeded content. Right now first screen is an empty library with nothing to explore.
 
 ---
 
@@ -59,9 +67,3 @@ Landing experience for guests and new users. Show featured games, top-voted requ
 
 ### Notifications
 In-app or push notifications for: game added to catalogue (matching a request), friend completes a game, new objective added to a tracked game.
-
----
-
-### Cloud Run housekeeping
-- Delete old revisions (keep only active + 1 prior)
-- Set min-instances to 0 on non-prod (cost)
