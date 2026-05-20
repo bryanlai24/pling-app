@@ -25,6 +25,8 @@
 - [x] Platform-neutral game schema (TrophySet.platform, AchievementPlatformId, multi-platform sync)
 - [x] Game seeding — import 12 iconic titles from Steam public API, no ownership required
 - [x] Cloud Run cleanup (old revisions purged, min-instances 0)
+- [x] Tab titles — dynamic per-page titles via usePageTitle hook ("Page · Pling"), base title fixed
+- [x] Steam display name on profile (GetPlayerSummaries lookup, shown in place of steamID64)
 
 ---
 
@@ -70,8 +72,10 @@ In-app or push notifications for: game added to catalogue (matching a request), 
 
 ---
 
-### Tab Title / Page Titles
-Currently shows "pling-client" in the browser tab. Should be "Pling" by default, with dynamic per-page titles — e.g. "Elden Ring · Pling", "Your Library · Pling", "Dark Souls III — Persistence of Flame · Pling".
+### Social Sign-In (Apple ID + Google)
+Allow users to register and sign in with Apple ID and Google OAuth — zero friction onboarding, no password to forget. Works naturally alongside the guest mode CTA flow: guest hits a gate, taps "Sign up with Apple/Google", and they're in with one tap.
+
+Backend: OAuth callback endpoints for each provider, create-or-link user on first login, JWT issued the same way as email/password auth. Frontend: Apple and Google sign-in buttons on LoginPage and RegisterPage, plus the contextual CTA modal in guest mode.
 
 ---
 
