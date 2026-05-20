@@ -67,3 +67,13 @@ Public profile URL (`pling.app/u/username`) showing completion stats, pinned ach
 
 ### Notifications
 In-app or push notifications for: game added to catalogue (matching a request), friend completes a game, new objective added to a tracked game.
+
+---
+
+### Tab Title / Page Titles
+Currently shows "pling-client" in the browser tab. Should be "Pling" by default, with dynamic per-page titles — e.g. "Elden Ring · Pling", "Your Library · Pling", "Dark Souls III — Persistence of Flame · Pling".
+
+---
+
+### Privacy Policy
+Draft covering: data collected (account info, platform tokens, achievement progress), how it's used, third-party services (PSN/Xbox/Steam APIs, Google Cloud Run, Cloud SQL), user rights (deletion, export), cookie usage. Draft ready for legal review before publishing.
