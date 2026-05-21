@@ -20,6 +20,7 @@ export const useAuthStore = create((set) => ({
   clearAuth: () => {
     localStorage.removeItem('pling_token')
     localStorage.removeItem('pling_guest')
+    localStorage.removeItem('pling_guest_progress')
     set({ user: null, token: null, isGuest: false })
   },
 
