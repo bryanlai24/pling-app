@@ -166,7 +166,7 @@ class AchievementPlatformId(Base):
     """
     __tablename__ = "achievement_platform_ids"
     __table_args__ = (
-        UniqueConstraint("platform", "platform_achievement_id", name="uq_platform_achievement"),
+        UniqueConstraint("achievement_id", "platform", name="uq_achievement_platform"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
