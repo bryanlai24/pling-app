@@ -473,7 +473,10 @@ export default function GamePage() {
                   <div className="flex items-center justify-between mb-1.5">
                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{completed} / {total} {trophyLabel}</span>
                     <div className="flex items-center gap-2">
-                      <span style={{ fontSize: '0.65rem', fontWeight: 500, color: 'var(--text-primary)' }}>{percent}%</span>
+                      {game.platform === 'xbox' && game.gamerscore_total > 0
+                        ? <span style={{ fontSize: '0.65rem', fontWeight: 500, color: 'var(--text-primary)' }}>{game.gamerscore_earned ?? 0}G / {game.gamerscore_total}G</span>
+                        : <span style={{ fontSize: '0.65rem', fontWeight: 500, color: 'var(--text-primary)' }}>{percent}%</span>
+                      }
                       {!isGuest && game.platform === 'psn' && (
                         <button
                           onClick={() => { setSyncResult(null); syncMutation.mutate() }}

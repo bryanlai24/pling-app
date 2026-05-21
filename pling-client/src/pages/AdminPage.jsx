@@ -859,9 +859,9 @@ export default function AdminPage() {
                           title_id: selectedXboxGame.title_id,
                           game_title: selectedXboxGame.title,
                           trophy_set_name: xboxImportForm.trophy_set_name,
+                          cover_image_url: xboxImportForm.cover_image_url || selectedXboxGame.cover_url || undefined,
                         }
                         if (xboxImportForm.genre) payload.genre = xboxImportForm.genre
-                        if (xboxImportForm.cover_image_url) payload.cover_image_url = xboxImportForm.cover_image_url
                         if (xboxImportForm.existing_game_id) payload.existing_game_id = xboxImportForm.existing_game_id
                         const res = await importXboxGame(payload)
                         setXboxImportResult(res.data)
