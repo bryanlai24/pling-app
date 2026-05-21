@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { login } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
@@ -38,6 +38,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
+
+        {/* Back to landing */}
+        <div className="mb-6">
+          <Link to="/" className="flex items-center gap-1.5 text-sm transition" style={{ color: 'var(--text-muted)' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+          >
+            ← Pling
+          </Link>
+        </div>
 
         {/* Logo */}
         <div className="text-center mb-8">

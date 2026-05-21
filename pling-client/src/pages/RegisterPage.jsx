@@ -33,6 +33,16 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
 
+        {/* Back to landing */}
+        <div className="mb-6">
+          <Link to="/" className="flex items-center gap-1.5 text-sm transition" style={{ color: 'var(--text-muted)' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+          >
+            ← Pling
+          </Link>
+        </div>
+
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white tracking-tight">
