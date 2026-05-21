@@ -9,6 +9,7 @@ import AddAchievementModal from '../components/achievements/AddAchievementModal'
 import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { useGuestProgress } from '../hooks/useGuestProgress'
 import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
 import client from '../api/client'
 
@@ -133,6 +134,7 @@ export default function GamePage() {
   const { achievementFilter: filter, setAchievementFilter: setFilter } = useUIStore()
   const { isGuest, token } = useAuthStore()
   const isPublicView = isGuest || !token  // guests AND unauthenticated visitors
+  const { getProgress, claimedGameId, claimedGameTitle } = useGuestProgress()
   const [showGuestPrompt, setShowGuestPrompt] = useState(false)
   const [toast, setToast] = useState(null) // { message, type: 'earned' | 'unearned' }
   const toastTimer = useRef(null)
@@ -296,7 +298,10 @@ export default function GamePage() {
 
   const filtered = sorted // keep alias for length checks below
 
-  const completed = achievements.filter((a) => a.is_completed).length
+  const guestProgress = isPublicView ? getProgress(gameId) : {}
+  const completed = isPublicView
+    ? Object.values(guestProgress).filter((p) => p.is_completed).length
+    : achievements.filter((a) => a.is_completed).length
   const total = achievements.length
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0
   const hasMultipleSets = Object.keys(groupedAchievements).length > 1
@@ -457,13 +462,11 @@ export default function GamePage() {
                     </>
                   )}
                   {isPublicView && (
-                    <button
-                      onClick={() => setShowGuestPrompt(true)}
-                      className="text-sm px-4 py-1.5 rounded-lg border transition"
-                      style={{ background: 'rgba(167,139,250,0.08)', borderColor: 'rgba(167,139,250,0.25)', color: 'var(--accent)' }}
-                    >
-                      Track this game →
-                    </button>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {claimedGameId === gameId
+                        ? `${completed} / ${total} tracked`
+                        : 'Tick an achievement to start tracking'}
+                    </span>
                   )}
                 </div>
               </div>

@@ -7,11 +7,13 @@ import { ChevronLeft, ChevronDown, ChevronUp, Plus, Trophy, CheckCircle2, Circle
 import { useContributorCheck } from '../hooks/useContributorCheck'
 import { useAuthStore } from '../store/authStore'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { useGuestProgress } from '../hooks/useGuestProgress'
 import AddObjectiveModal from '../components/objectives/AddObjectiveModal'
 import SeedObjectivesModal from '../components/objectives/SeedObjectivesModal'
 import ObjectiveItem from '../components/objectives/ObjectiveItem'
 import ContributorPrompt from '../components/ui/ContributorPrompt'
 import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
+import GuestGameCTA from '../components/ui/GuestGameCTA'
 
 const TROPHY_COLORS = {
   bronze:  { text: '#d97706', bg: 'rgba(217,119,6,0.08)',   border: 'rgba(217,119,6,0.2)'   },
@@ -39,14 +41,17 @@ export default function AchievementPage() {
   const { isGuest, token } = useAuthStore()
   const isPublicView = isGuest || !token
   const [showGuestPrompt, setShowGuestPrompt] = useState(false)
+  const [showGameCTA, setShowGameCTA] = useState(false)
 
-  usePageTitle(achievement?.title || null)
+  const { toggleAchievement: guestToggle, claimedGameId, claimedGameTitle, getProgress } = useGuestProgress()
 
   const { data: achievement, isLoading } = useQuery({
     queryKey: ['achievement', achievementId],
     queryFn: () => getAchievement(achievementId).then((r) => r.data),
     staleTime: 0,
   })
+
+  usePageTitle(achievement?.title || null)
 
   const progressMutation = useMutation({
     mutationFn: (data) => updateAchievementProgress(achievementId, data),
@@ -82,9 +87,24 @@ export default function AchievementPage() {
   }
 
   const handleToggleAchievement = () => {
-    if (isPublicView) { setShowGuestPrompt(true); return }
-    const isCompleted = achievement?.user_progress?.is_completed ?? false
-    progressMutation.mutate({ is_completed: !isCompleted })
+    if (!isPublicView) {
+      // Authenticated user — write to backend as before
+      const isCompleted = achievement?.user_progress?.is_completed ?? false
+      progressMutation.mutate({ is_completed: !isCompleted })
+      return
+    }
+
+    // Public view — write to localStorage
+    const gameId = achievement?.game_id
+    const gameTitle = achievement?.game_title || claimedGameTitle || 'this game'
+    if (!gameId) return
+
+    // Check for game conflict
+    const result = guestToggle(gameId, gameTitle, achievementId)
+    if (result.conflict) {
+      setShowGameCTA(true)
+    }
+    // success — state re-renders via useGuestProgress version bump
   }
 
   if (isLoading) {
@@ -99,7 +119,12 @@ export default function AchievementPage() {
     return <div className="text-center py-24" style={{ color: 'var(--text-muted)' }}>Achievement not found.</div>
   }
 
-  const isCompleted = achievement.user_progress?.is_completed ?? false
+  // For public view, read completion from localStorage; for authed, from backend
+  const guestAchProgress = isPublicView ? getProgress(achievement.game_id) : {}
+  const isCompleted = isPublicView
+    ? (guestAchProgress[achievementId]?.is_completed ?? false)
+    : (achievement.user_progress?.is_completed ?? false)
+
   const allObjectives = achievement.objectives.flatMap(o =>
     o.children?.length > 0 ? o.children : [o]
   )
@@ -218,7 +243,7 @@ export default function AchievementPage() {
             </div>
           </div>
 
-          {/* Progress bar */}
+          {/* Progress bar (objectives) */}
           {totalCount > 0 && (
             <div className="mt-5">
               <div className="flex justify-between mb-1.5" style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
@@ -236,34 +261,25 @@ export default function AchievementPage() {
         </div>
       </div>
 
-      {/* Mark earned / unmark button — full width below hero */}
-      {!isPublicView ? (
-        <button
-          onClick={handleToggleAchievement}
-          disabled={progressMutation.isPending}
-          className="w-full text-sm font-medium py-2.5 rounded-xl transition mb-4"
-          style={isCompleted
-            ? { background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)', color: 'var(--accent-soft)' }
-            : { background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)', color: 'var(--accent-soft)' }
-          }
-          onMouseEnter={e => e.currentTarget.style.background = '#a78bfa28'}
-          onMouseLeave={e => e.currentTarget.style.background = 'var(--accent-dim)'}
-        >
-          {isCompleted ? <><CheckCircle2 size={14} className="inline mr-1.5 -mt-0.5" />Earned</> : 'Mark as earned'}
-        </button>
-      ) : (
-        <button
-          onClick={() => setShowGuestPrompt(true)}
-          className="w-full text-sm font-medium py-2.5 rounded-xl transition mb-4"
-          style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)', color: 'var(--text-muted)' }}
-        >
-          <UserPlus size={14} className="inline mr-1.5 -mt-0.5" />
-          Sign up to track
-        </button>
-      )}
+      {/* Mark earned / unmark button */}
+      <button
+        onClick={handleToggleAchievement}
+        disabled={!isPublicView && progressMutation.isPending}
+        className="w-full text-sm font-medium py-2.5 rounded-xl transition mb-4"
+        style={isCompleted
+          ? { background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)', color: 'var(--accent-soft)' }
+          : { background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)', color: 'var(--accent-soft)' }
+        }
+        onMouseEnter={e => e.currentTarget.style.background = '#a78bfa28'}
+        onMouseLeave={e => e.currentTarget.style.background = 'var(--accent-dim)'}
+      >
+        {isCompleted
+          ? <><CheckCircle2 size={14} className="inline mr-1.5 -mt-0.5" />Earned</>
+          : 'Mark as earned'}
+      </button>
 
-      {/* All-done banner */}
-      {allObjectivesDone && !isCompleted && (
+      {/* All-done banner (authed only — objectives don't track for guests yet) */}
+      {!isPublicView && allObjectivesDone && !isCompleted && (
         <div
           className="rounded-xl p-4 flex items-center justify-between mb-4"
           style={{ background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)' }}
@@ -292,24 +308,26 @@ export default function AchievementPage() {
             <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{totalCount}</span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => requireContributor(() => setShowSeedObjectives(true))}
-            className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition"
-            style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)', color: 'var(--text-muted)' }}
-          >
-            <Layers size={13} />
-            Seed
-          </button>
-          <button
-            onClick={() => requireContributor(() => setShowAddObjective(true))}
-            className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition"
-            style={{ background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)', color: 'var(--accent-soft)' }}
-          >
-            <Plus size={13} />
-            Add
-          </button>
-        </div>
+        {!isPublicView && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => requireContributor(() => setShowSeedObjectives(true))}
+              className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition"
+              style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)', color: 'var(--text-muted)' }}
+            >
+              <Layers size={13} />
+              Seed
+            </button>
+            <button
+              onClick={() => requireContributor(() => setShowAddObjective(true))}
+              className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition"
+              style={{ background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)', color: 'var(--accent-soft)' }}
+            >
+              <Plus size={13} />
+              Add
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Empty state */}
@@ -323,18 +341,20 @@ export default function AchievementPage() {
           <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
             Break this trophy down into steps with methods for each
           </p>
-          <button
-            onClick={() => requireContributor(() => setShowAddObjective(true))}
-            className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition mx-auto"
-            style={{ background: 'var(--accent)', color: '#fff' }}
-          >
-            <Plus size={16} />
-            Add first objective
-          </button>
+          {!isPublicView && (
+            <button
+              onClick={() => requireContributor(() => setShowAddObjective(true))}
+              className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition mx-auto"
+              style={{ background: 'var(--accent)', color: '#fff' }}
+            >
+              <Plus size={16} />
+              Add first objective
+            </button>
+          )}
         </div>
       )}
 
-      {/* Objectives list — flat rows, no individual cards */}
+      {/* Objectives list */}
       {totalCount > 0 && (
         <div>
           {achievement.objectives.map((objective) =>
@@ -412,6 +432,12 @@ export default function AchievementPage() {
       )}
       {showGuestPrompt && (
         <GuestTrackingPrompt onClose={() => setShowGuestPrompt(false)} />
+      )}
+      {showGameCTA && (
+        <GuestGameCTA
+          claimedGameTitle={claimedGameTitle}
+          onClose={() => setShowGameCTA(false)}
+        />
       )}
     </div>
   )

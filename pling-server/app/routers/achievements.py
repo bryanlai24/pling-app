@@ -115,6 +115,7 @@ async def get_achievement(
     return AchievementDetail(
         id=a.id,
         game_id=a.game_id,
+        game_title=a.game.title if a.game else None,
         title=a.title,
         description=a.description,
         platform_achievement_id=a.platform_achievement_id,

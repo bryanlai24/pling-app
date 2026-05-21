@@ -77,6 +77,7 @@ class UserAchievementResponse(PlingBase):
 class AchievementDetail(AchievementResponse):
     """Full achievement view with objectives and user progress embedded.
     This is the primary response for the hunt screen."""
+    game_title: str | None = None
     objectives: list[ObjectiveWithProgress] = []
     user_progress: UserAchievementResponse | None = None
 

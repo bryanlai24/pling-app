@@ -39,7 +39,8 @@ async def get_achievement(db: AsyncSession, achievement_id: uuid.UUID) -> Achiev
         select(Achievement)
         .where(Achievement.id == achievement_id)
         .options(
-            selectinload(Achievement.objectives).selectinload(Objective.children)
+            selectinload(Achievement.objectives).selectinload(Objective.children),
+            selectinload(Achievement.game),
         )
     )
     achievement = result.scalar_one_or_none()
