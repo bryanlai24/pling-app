@@ -284,6 +284,8 @@ export default function GamePage() {
     pinMutation.mutate({ achievementId, is_pinned: !currentlyPinned })
   }
 
+  const guestProgress = isPublicView ? getProgress(gameId) : {}
+
   // For public view, overlay localStorage completion state onto the server list
   const displayAchievements = isPublicView
     ? achievements.map((a) => ({
@@ -318,8 +320,6 @@ export default function GamePage() {
   }, {})
 
   const filtered = sorted // keep alias for length checks below
-
-  const guestProgress = isPublicView ? getProgress(gameId) : {}
   const completed = isPublicView
     ? Object.values(guestProgress).filter((p) => p.is_completed).length
     : achievements.filter((a) => a.is_completed).length
