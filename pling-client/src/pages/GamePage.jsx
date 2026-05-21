@@ -324,11 +324,11 @@ export default function GamePage() {
     <div>
       {/* Back button */}
       <button
-        onClick={() => navigate('/library')}
+        onClick={() => navigate(isPublicView ? '/' : '/library')}
         className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition mb-6"
       >
         <ChevronLeft size={16} />
-        Back to library
+        {isPublicView ? 'Back to catalogue' : 'Back to library'}
       </button>
 
       {/* Game header */}
