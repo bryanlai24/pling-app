@@ -4,6 +4,7 @@ import { useAuthStore } from './store/authStore'
 import { getMe } from './api/auth'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import LandingPage from './pages/LandingPage'
 import LibraryPage from './pages/LibraryPage'
 import GamePage from './pages/GamePage'
 import AchievementPage from './pages/AchievementPage'
@@ -18,6 +19,12 @@ function ProtectedRoute({ children }) {
   return (token || isGuest) ? children : <Navigate to="/login" replace />
 }
 
+/** Redirects logged-in users to /library; guests see the landing page. */
+function HomeRoute() {
+  const { token } = useAuthStore()
+  return token ? <Navigate to="/library" replace /> : <LandingPage />
+}
+
 export default function App() {
   const { token, setUser } = useAuthStore()
 
@@ -29,9 +36,23 @@ export default function App() {
 
   return (
     <Routes>
+      {/* Public landing — redirects to /library if already logged in */}
+      <Route path="/" element={<HomeRoute />} />
+
+      {/* Auth pages */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/auth/xbox/callback" element={<XboxCallbackPage />} />
+
+      {/* Public game + achievement browsing — no auth required */}
+      <Route path="/games/:gameId" element={<Layout />}>
+        <Route index element={<GamePage />} />
+      </Route>
+      <Route path="/achievements/:achievementId" element={<Layout />}>
+        <Route index element={<AchievementPage />} />
+      </Route>
+
+      {/* Authenticated app shell */}
       <Route
         path="/"
         element={
@@ -40,10 +61,7 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/library" replace />} />
         <Route path="library" element={<LibraryPage />} />
-        <Route path="games/:gameId" element={<GamePage />} />
-        <Route path="achievements/:achievementId" element={<AchievementPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="admin" element={<AdminPage />} />
         <Route path="requests" element={<RequestsPage />} />

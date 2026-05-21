@@ -1,5 +1,7 @@
 import client from './client'
 
+export const getFeaturedGame = () => client.get('/public/featured-game')
+
 export const listGames = (platform) =>
   client.get('/games', { params: { platform } })
 export const getGame = (id) => client.get(`/games/${id}`)

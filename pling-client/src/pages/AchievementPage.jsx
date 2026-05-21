@@ -36,7 +36,8 @@ export default function AchievementPage() {
     return next
   })
   const { showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
-  const { isGuest } = useAuthStore()
+  const { isGuest, token } = useAuthStore()
+  const isPublicView = isGuest || !token
   const [showGuestPrompt, setShowGuestPrompt] = useState(false)
 
   usePageTitle(achievement?.title || null)
@@ -67,7 +68,7 @@ export default function AchievementPage() {
   })
 
   const handleTickObjective = (objective, userProgress) => {
-    if (isGuest) { setShowGuestPrompt(true); return }
+    if (isPublicView) { setShowGuestPrompt(true); return }
     const isCurrentlyCompleted = userProgress?.is_completed ?? false
     const newCompleted = !isCurrentlyCompleted
     const leafObjectives = achievement.objectives.flatMap(o =>
@@ -81,7 +82,7 @@ export default function AchievementPage() {
   }
 
   const handleToggleAchievement = () => {
-    if (isGuest) { setShowGuestPrompt(true); return }
+    if (isPublicView) { setShowGuestPrompt(true); return }
     const isCompleted = achievement?.user_progress?.is_completed ?? false
     progressMutation.mutate({ is_completed: !isCompleted })
   }
@@ -236,7 +237,7 @@ export default function AchievementPage() {
       </div>
 
       {/* Mark earned / unmark button — full width below hero */}
-      {!isGuest ? (
+      {!isPublicView ? (
         <button
           onClick={handleToggleAchievement}
           disabled={progressMutation.isPending}

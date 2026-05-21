@@ -131,7 +131,8 @@ export default function GamePage() {
   const queryClient = useQueryClient()
   const [showAddAchievement, setShowAddAchievement] = useState(false)
   const { achievementFilter: filter, setAchievementFilter: setFilter } = useUIStore()
-  const { isGuest } = useAuthStore()
+  const { isGuest, token } = useAuthStore()
+  const isPublicView = isGuest || !token  // guests AND unauthenticated visitors
   const [showGuestPrompt, setShowGuestPrompt] = useState(false)
   const [toast, setToast] = useState(null) // { message, type: 'earned' | 'unearned' }
   const toastTimer = useRef(null)
@@ -150,17 +151,17 @@ export default function GamePage() {
   const { data: library = [] } = useQuery({
     queryKey: ['library'],
     queryFn: () => getLibrary().then((r) => r.data),
-    enabled: !isGuest,
+    enabled: !isPublicView,
   })
 
   const { data: catalogueGame } = useQuery({
     queryKey: ['game', gameId],
     queryFn: () => client.get(`/games/${gameId}`).then((r) => r.data),
-    enabled: isGuest && !!gameId,
+    enabled: isPublicView && !!gameId,
   })
 
-  const userGame = isGuest ? null : library.find((ug) => ug.game.id === gameId)
-  const game = isGuest ? catalogueGame : userGame?.game
+  const userGame = isPublicView ? null : library.find((ug) => ug.game.id === gameId)
+  const game = isPublicView ? catalogueGame : userGame?.game
   usePageTitle(game?.title || null)
 
   const { data: achievements = [], isLoading } = useQuery({
@@ -252,7 +253,7 @@ export default function GamePage() {
 
   const handleTick = (e, a) => {
     e.stopPropagation()
-    if (isGuest) { setShowGuestPrompt(true); return }
+    if (isPublicView) { setShowGuestPrompt(true); return }
     tickMutation.mutate({ achievementId: a.id, is_completed: !a.is_completed, title: a.title })
   }
 
@@ -264,7 +265,7 @@ export default function GamePage() {
 
   const handlePin = (e, achievementId, currentlyPinned) => {
     e.stopPropagation()
-    if (isGuest) { setShowGuestPrompt(true); return }
+    if (isPublicView) { setShowGuestPrompt(true); return }
     pinMutation.mutate({ achievementId, is_pinned: !currentlyPinned })
   }
 
@@ -309,7 +310,7 @@ export default function GamePage() {
   if (!game && !isLoading) {
     return (
       <div className="text-center py-24 text-gray-500">
-        {isGuest ? 'Game not found.' : 'Game not found in your library.'}
+        {isPublicView ? 'Game not found.' : 'Game not found in your library.'}
       </div>
     )
   }
@@ -426,7 +427,7 @@ export default function GamePage() {
 
                 {/* Status selector + remove */}
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  {!isGuest && (
+                  {!isPublicView && (
                     <>
                       <select
                         value={userGame?.status || 'not_started'}
@@ -455,7 +456,7 @@ export default function GamePage() {
                       </button>
                     </>
                   )}
-                  {isGuest && (
+                  {isPublicView && (
                     <button
                       onClick={() => setShowGuestPrompt(true)}
                       className="text-sm px-4 py-1.5 rounded-lg border transition"
@@ -477,7 +478,7 @@ export default function GamePage() {
                         ? <span style={{ fontSize: '0.65rem', fontWeight: 500, color: 'var(--text-primary)' }}>{game.gamerscore_earned ?? 0}G / {game.gamerscore_total}G</span>
                         : <span style={{ fontSize: '0.65rem', fontWeight: 500, color: 'var(--text-primary)' }}>{percent}%</span>
                       }
-                      {!isGuest && game.platform === 'psn' && (
+                      {!isPublicView && game.platform === 'psn' && (
                         <button
                           onClick={() => { setSyncResult(null); syncMutation.mutate() }}
                           disabled={syncMutation.isPending}
@@ -489,7 +490,7 @@ export default function GamePage() {
                           {syncMutation.isPending ? 'Syncing...' : 'Sync PSN'}
                         </button>
                       )}
-                      {!isGuest && game.platform === 'steam' && (
+                      {!isPublicView && game.platform === 'steam' && (
                         <button
                           onClick={() => { setSyncResult(null); steamSyncMutation.mutate() }}
                           disabled={steamSyncMutation.isPending}
@@ -501,7 +502,7 @@ export default function GamePage() {
                           {steamSyncMutation.isPending ? 'Syncing...' : 'Sync Steam'}
                         </button>
                       )}
-                      {!isGuest && game.platform === 'xbox' && (
+                      {!isPublicView && game.platform === 'xbox' && (
                         <button
                           onClick={() => { setSyncResult(null); xboxSyncMutation.mutate() }}
                           disabled={xboxSyncMutation.isPending}
@@ -579,7 +580,7 @@ export default function GamePage() {
               </button>
             ))}
           </div>
-          {!isGuest && (
+          {!isPublicView && (
             <button
               onClick={() => setShowAddAchievement(true)}
               className="flex items-center gap-1.5 font-medium px-3 py-1.5 rounded-lg transition"
