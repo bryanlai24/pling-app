@@ -11,6 +11,7 @@ import { useUIStore } from '../store/uiStore'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useGuestProgress } from '../hooks/useGuestProgress'
 import GuestTrackingPrompt from '../components/ui/GuestTrackingPrompt'
+import GuestGameCTA from '../components/ui/GuestGameCTA'
 import client from '../api/client'
 
 const TROPHY_COLORS = {
@@ -134,8 +135,9 @@ export default function GamePage() {
   const { achievementFilter: filter, setAchievementFilter: setFilter } = useUIStore()
   const { isGuest, token } = useAuthStore()
   const isPublicView = isGuest || !token  // guests AND unauthenticated visitors
-  const { getProgress, claimedGameId, claimedGameTitle } = useGuestProgress()
+  const { getProgress, toggleAchievement: guestToggle, claimedGameId, claimedGameTitle } = useGuestProgress()
   const [showGuestPrompt, setShowGuestPrompt] = useState(false)
+  const [showGameCTA, setShowGameCTA] = useState(false)
   const [toast, setToast] = useState(null) // { message, type: 'earned' | 'unearned' }
   const toastTimer = useRef(null)
 
@@ -255,7 +257,18 @@ export default function GamePage() {
 
   const handleTick = (e, a) => {
     e.stopPropagation()
-    if (isPublicView) { setShowGuestPrompt(true); return }
+    if (isPublicView) {
+      const result = guestToggle(gameId, game?.title || claimedGameTitle || 'this game', a.id)
+      if (result.conflict) {
+        setShowGameCTA(true)
+      } else if (result.success) {
+        showToast(
+          result.is_completed ? `Earned: ${a.title}` : `Unearned: ${a.title}`,
+          result.is_completed ? 'earned' : 'unearned'
+        )
+      }
+      return
+    }
     tickMutation.mutate({ achievementId: a.id, is_completed: !a.is_completed, title: a.title })
   }
 
@@ -271,7 +284,15 @@ export default function GamePage() {
     pinMutation.mutate({ achievementId, is_pinned: !currentlyPinned })
   }
 
-  const pinned = achievements.filter((a) => a.is_pinned)
+  // For public view, overlay localStorage completion state onto the server list
+  const displayAchievements = isPublicView
+    ? achievements.map((a) => ({
+        ...a,
+        is_completed: guestProgress[a.id]?.is_completed ?? false,
+      }))
+    : achievements
+
+  const pinned = displayAchievements.filter((a) => a.is_pinned)
 
   const matchesFilter = (a) => {
     if (filter === 'complete') return a.is_completed
@@ -280,7 +301,7 @@ export default function GamePage() {
   }
 
   // Sort: matching achievements first, non-matching pushed to bottom
-  const sorted = [...achievements]
+  const sorted = [...displayAchievements]
     .filter((a) => !a.is_pinned)
     .sort((a, b) => {
       const aMatch = matchesFilter(a)
@@ -694,6 +715,12 @@ export default function GamePage() {
 
       {showGuestPrompt && (
         <GuestTrackingPrompt onClose={() => setShowGuestPrompt(false)} />
+      )}
+      {showGameCTA && (
+        <GuestGameCTA
+          claimedGameTitle={claimedGameTitle}
+          onClose={() => setShowGameCTA(false)}
+        />
       )}
 
       {/* Toast */}
