@@ -81,3 +81,37 @@ class TokenResponse(PlingBase):
     access_token: str
     token_type: str = "bearer"
     user: UserPublic
+
+
+# ── Public profile schemas ─────────────────────────────────────────────────────
+
+class TrophyRoomGame(PlingBase):
+    id: uuid.UUID
+    title: str
+    cover_image_url: str | None
+    platform: str
+    gamerscore_total: int | None  # Xbox only — to render "1000G" badge
+
+
+class RecentGamePublic(PlingBase):
+    id: uuid.UUID
+    title: str
+    cover_image_url: str | None
+    platform: str
+    completion_percent: int
+    gamerscore_earned: int | None
+    gamerscore_total: int | None
+    updated_at: datetime
+
+
+class PublicProfileResponse(PlingBase):
+    username: str
+    psn_id: str | None
+    xbox_gamertag: str | None
+    steam_display_name: str | None
+    steam_id: str | None
+    member_since: datetime
+    legacy_score: int
+    stats: UserStats
+    trophy_room: list[TrophyRoomGame]
+    recently_played: list[RecentGamePublic]

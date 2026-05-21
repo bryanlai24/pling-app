@@ -13,6 +13,7 @@ import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
 import RequestsPage from './pages/RequestsPage'
 import XboxCallbackPage from './pages/XboxCallbackPage'
+import PublicProfilePage from './pages/PublicProfilePage'
 
 function ProtectedRoute({ children }) {
   const { token, isGuest } = useAuthStore()
@@ -50,6 +51,11 @@ export default function App() {
       </Route>
       <Route path="/achievements/:achievementId" element={<Layout />}>
         <Route index element={<AchievementPage />} />
+      </Route>
+
+      {/* Public user profiles — no auth required */}
+      <Route path="/u/:username" element={<Layout />}>
+        <Route index element={<PublicProfilePage />} />
       </Route>
 
       {/* Authenticated app shell */}

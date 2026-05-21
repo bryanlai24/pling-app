@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Link as RouterLink } from 'react-router-dom'
 import { getMe, updateMe, getMyStats } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
 import { User, Link, Unlink, Eye, EyeOff, Type, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
@@ -241,6 +242,18 @@ export default function ProfilePage() {
               )}
             </div>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 1 }}>{me?.email}</p>
+            {me?.username && (
+              <RouterLink
+                to={`/u/${me.username}`}
+                className="inline-flex items-center gap-1 transition mt-2"
+                style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textDecoration: 'none' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+              >
+                <ExternalLink size={10} />
+                pling.app/u/{me.username}
+              </RouterLink>
+            )}
           </div>
         </div>
 

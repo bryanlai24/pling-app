@@ -27,32 +27,13 @@
 - [x] Cloud Run cleanup (old revisions purged, min-instances 0)
 - [x] Tab titles — dynamic per-page titles via usePageTitle hook ("Page · Pling"), base title fixed
 - [x] Steam display name on profile (GetPlayerSummaries lookup, shown in place of steamID64)
+- [x] Guest Mode + Landing Page — browse full catalogue, track one game via localStorage, contextual CTA modal on second game; landing page with rotating featured game hero (real-time activity), catalogue grid, no-auth public routes for /games/:id and /achievements/:id
+- [x] Xbox cover art on import, gamerscore (xG / yG) display on game page
+- [x] Xbox unique constraint fix — scoped AchievementPlatformId uniqueness to per-game (achievement_id, platform)
 
 ---
 
 ## v3
-
-### Guest Mode + Landing Page 🔥
-The highest-leverage thing for growth — new users should experience the product before they're asked to sign up.
-
-**Entry point — Landing page**
-Inspired by Letterboxd: the product *is* the landing page. A hero that shows Pling in action — featured game card, achievement rows with objectives visible, a completion ring. Tagline: "Track every achievement. Master every game." Below the fold: featured games from the seeded catalogue so there's real content to browse immediately.
-
-**Guest permissions**
-Guests can do everything that's purely consumption-based without an account:
-- Browse the full catalogue
-- Read objectives and guides
-- Manually check off achievements on any game (stored in localStorage)
-
-The account wall goes up only at meaningful persistence moments:
-- Adding a game to their library (saved across devices / sessions)
-- Syncing PSN / Xbox / Steam
-- Tracking progress across more than one game (localStorage gets unwieldy — natural nudge point)
-
-**The CTA**
-No banners, no nudges. One clean modal, triggered contextually when they hit a hard gate. Copy tied to what they just tried to do — e.g. "Create a free account to save your progress across devices and sync your platforms."
-
----
 
 ### Shareable Profile / Social
 Public profile URL (`pling.app/u/username`) showing completion stats, pinned achievements, recently played. Foundation for social graph — follow friends, see their activity.
