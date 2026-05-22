@@ -1,9 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAchievement, updateAchievementProgress } from '../api/achievements'
-import { updateObjectiveProgress } from '../api/objectives'
-import { ChevronLeft, ChevronDown, ChevronUp, Plus, Trophy, CheckCircle2, Circle, Loader2, UserPlus, Layers, Crown } from 'lucide-react'
+import { updateObjectiveProgress, reorderObjectives } from '../api/objectives'
+import {
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
+  DragOverlay,
+} from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
+import { ChevronLeft, ChevronDown, ChevronUp, Plus, Trophy, CheckCircle2, Circle, Loader2, Layers, Crown, Search, X } from 'lucide-react'
 import { useContributorCheck } from '../hooks/useContributorCheck'
 import { useAuthStore } from '../store/authStore'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -31,12 +36,36 @@ export default function AchievementPage() {
   const [showAddObjective, setShowAddObjective] = useState(false)
   const [showSeedObjectives, setShowSeedObjectives] = useState(false)
   const [collapsedGroups, setCollapsedGroups] = useState(new Set())
+  const [filterQuery, setFilterQuery] = useState('')
+  const [localObjectives, setLocalObjectives] = useState(null) // optimistic reorder state
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const toggleGroup = (id) => setCollapsedGroups(prev => {
     const next = new Set(prev)
     next.has(id) ? next.delete(id) : next.add(id)
     return next
   })
+
+  // Keep localObjectives in sync with server data
+  useEffect(() => {
+    if (achievement?.objectives) setLocalObjectives(achievement.objectives)
+  }, [achievement])
+
+  // Auto-collapse groups when all their children are completed
+  useEffect(() => {
+    if (!achievement?.objectives) return
+    const groups = achievement.objectives.filter(o => o.children?.length > 0)
+    const fullyDone = groups
+      .filter(g => g.children.every(c => c.user_progress?.is_completed))
+      .map(g => g.id)
+    if (fullyDone.length === 0) return
+    setCollapsedGroups(prev => {
+      const next = new Set(prev)
+      fullyDone.forEach(id => next.add(id))
+      return next
+    })
+  }, [achievement])
   const { showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
   const { isGuest, token } = useAuthStore()
   const isPublicView = isGuest || !token
@@ -71,6 +100,44 @@ export default function AchievementPage() {
       }
     },
   })
+
+  const reorderMutation = useMutation({
+    mutationFn: ({ achievementId, orderedIds }) => reorderObjectives(achievementId, orderedIds),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['achievement', achievementId] }),
+    onError: () => {
+      // Revert optimistic update on failure
+      if (achievement?.objectives) setLocalObjectives(achievement.objectives)
+    },
+  })
+
+  const handleDragEnd = (event, parentGroupId = null) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    setLocalObjectives(prev => {
+      if (!prev) return prev
+      if (parentGroupId) {
+        // Reordering within a group
+        return prev.map(obj => {
+          if (obj.id !== parentGroupId) return obj
+          const oldIdx = obj.children.findIndex(c => c.id === active.id)
+          const newIdx = obj.children.findIndex(c => c.id === over.id)
+          if (oldIdx === -1 || newIdx === -1) return obj
+          const newChildren = arrayMove(obj.children, oldIdx, newIdx)
+          reorderMutation.mutate({ achievementId, orderedIds: newChildren.map(c => c.id) })
+          return { ...obj, children: newChildren }
+        })
+      } else {
+        // Reordering top-level objectives
+        const oldIdx = prev.findIndex(o => o.id === active.id)
+        const newIdx = prev.findIndex(o => o.id === over.id)
+        if (oldIdx === -1 || newIdx === -1) return prev
+        const newOrder = arrayMove(prev, oldIdx, newIdx)
+        reorderMutation.mutate({ achievementId, orderedIds: newOrder.map(o => o.id) })
+        return newOrder
+      }
+    })
+  }
 
   const handleTickObjective = (objective, userProgress) => {
     if (isPublicView) { setShowGuestPrompt(true); return }
@@ -330,6 +397,36 @@ export default function AchievementPage() {
         )}
       </div>
 
+      {/* Search/filter — only shown when there are objectives */}
+      {totalCount > 0 && (
+        <div className="relative mt-2 mb-1">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+            style={{ color: 'var(--text-muted)' }} />
+          <input
+            type="text"
+            value={filterQuery}
+            onChange={e => setFilterQuery(e.target.value)}
+            placeholder="Filter objectives…"
+            className="w-full text-sm pl-8 pr-8 py-2 rounded-lg focus:outline-none transition"
+            style={{
+              background: 'var(--bg-elevated)',
+              border: '0.5px solid var(--border-default)',
+              color: 'var(--text-primary)',
+              fontSize: '0.8rem',
+            }}
+          />
+          {filterQuery && (
+            <button
+              onClick={() => setFilterQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded transition"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Empty state */}
       {totalCount === 0 && (
         <div
@@ -355,56 +452,92 @@ export default function AchievementPage() {
       )}
 
       {/* Objectives list */}
-      {totalCount > 0 && (
-        <div>
-          {achievement.objectives.map((objective) =>
-            objective.children?.length > 0 ? (
-              <div key={objective.id}>
-                {/* Group header — clickable to collapse */}
-                <button
-                  onClick={() => toggleGroup(objective.id)}
-                  className="w-full flex items-center justify-between py-3 mt-2 transition"
-                  style={{ borderBottom: '0.5px solid var(--border-subtle)' }}
-                >
-                  <div className="flex items-center gap-2">
-                    {collapsedGroups.has(objective.id)
-                      ? <ChevronDown size={13} style={{ color: 'var(--text-muted)' }} />
-                      : <ChevronUp size={13} style={{ color: 'var(--text-muted)' }} />
-                    }
-                    <span
-                      className="text-xs font-medium uppercase"
-                      style={{ color: 'var(--text-muted)', letterSpacing: '0.06em' }}
-                    >
-                      {objective.title}
-                    </span>
-                  </div>
-                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {objective.children.filter(c => c.user_progress?.is_completed).length}/{objective.children.length}
-                  </span>
-                </button>
-                {!collapsedGroups.has(objective.id) && objective.children.map((child) => (
-                  <ObjectiveItem
-                    key={child.id}
-                    objective={child}
-                    userProgress={child.user_progress}
-                    onTick={() => handleTickObjective(child, child.user_progress)}
-                    onUpdated={() => queryClient.invalidateQueries({ queryKey: ['achievement', achievementId] })}
-                    isPending={objectiveProgressMutation.isPending}
-                  />
-                ))}
-              </div>
-            ) : (
-              <ObjectiveItem
-                key={objective.id}
-                objective={objective}
-                userProgress={objective.user_progress}
-                onTick={() => handleTickObjective(objective, objective.user_progress)}
-                onUpdated={() => queryClient.invalidateQueries({ queryKey: ['achievement', achievementId] })}
-                isPending={objectiveProgressMutation.isPending}
-              />
-            )
-          )}
-        </div>
+      {totalCount > 0 && localObjectives && (
+        <DndContext sensors={sensors} collisionDetection={closestCenter}
+          onDragEnd={(e) => handleDragEnd(e, null)}>
+          <SortableContext
+            items={localObjectives.map(o => o.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div>
+              {(() => {
+                const q = filterQuery.trim().toLowerCase()
+                const invalidate = () => queryClient.invalidateQueries({ queryKey: ['achievement', achievementId] })
+                const canReorder = !isPublicView && !q
+
+                return localObjectives.map((objective) => {
+                  if (objective.children?.length > 0) {
+                    const visibleChildren = q
+                      ? objective.children.filter(c => c.title.toLowerCase().includes(q))
+                      : objective.children
+                    if (q && visibleChildren.length === 0) return null
+
+                    const doneCount = objective.children.filter(c => c.user_progress?.is_completed).length
+                    const isCollapsed = collapsedGroups.has(objective.id) && !q
+
+                    return (
+                      <div key={objective.id}>
+                        <button
+                          onClick={() => toggleGroup(objective.id)}
+                          className="w-full flex items-center justify-between py-3 mt-2 transition"
+                          style={{ borderBottom: '0.5px solid var(--border-subtle)' }}
+                        >
+                          <div className="flex items-center gap-2">
+                            {isCollapsed
+                              ? <ChevronDown size={13} style={{ color: 'var(--text-muted)' }} />
+                              : <ChevronUp size={13} style={{ color: 'var(--text-muted)' }} />
+                            }
+                            <span className="text-xs font-medium uppercase"
+                              style={{ color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+                              {objective.title}
+                            </span>
+                          </div>
+                          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                            {doneCount}/{objective.children.length}
+                          </span>
+                        </button>
+                        {!isCollapsed && (
+                          <DndContext sensors={sensors} collisionDetection={closestCenter}
+                            onDragEnd={(e) => handleDragEnd(e, objective.id)}>
+                            <SortableContext
+                              items={visibleChildren.map(c => c.id)}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              {visibleChildren.map((child) => (
+                                <ObjectiveItem
+                                  key={child.id}
+                                  objective={child}
+                                  userProgress={child.user_progress}
+                                  onTick={() => handleTickObjective(child, child.user_progress)}
+                                  onUpdated={invalidate}
+                                  isPending={objectiveProgressMutation.isPending}
+                                  canReorder={canReorder}
+                                />
+                              ))}
+                            </SortableContext>
+                          </DndContext>
+                        )}
+                      </div>
+                    )
+                  } else {
+                    if (q && !objective.title.toLowerCase().includes(q)) return null
+                    return (
+                      <ObjectiveItem
+                        key={objective.id}
+                        objective={objective}
+                        userProgress={objective.user_progress}
+                        onTick={() => handleTickObjective(objective, objective.user_progress)}
+                        onUpdated={invalidate}
+                        isPending={objectiveProgressMutation.isPending}
+                        canReorder={canReorder}
+                      />
+                    )
+                  }
+                })
+              })()}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Modals */}

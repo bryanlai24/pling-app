@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { updateObjective, deleteObjective, updateObjectiveProgress } from '../../api/objectives'
-import { CheckCircle2, Circle, ChevronDown, ChevronUp, Pencil, Trash2, X, Check, Plus, Minus } from 'lucide-react'
+import { CheckCircle2, Circle, ChevronDown, ChevronUp, Pencil, Trash2, X, Check, Plus, Minus, GripVertical } from 'lucide-react'
 import { useContributorCheck } from '../../hooks/useContributorCheck'
 import { useAuthStore } from '../../store/authStore'
 import ContributorPrompt from '../ui/ContributorPrompt'
 import GuestTrackingPrompt from '../ui/GuestTrackingPrompt'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 // Lightweight markdown renderer — supports **bold**, *italic*, `code`,
 // - bullet lists, 1. numbered lists, and blank-line paragraph breaks.
 function MethodMarkdown({ text }) {
@@ -116,7 +118,8 @@ function stripMarkdown(text) {
     .trim()
 }
 
-export default function ObjectiveItem({ objective, index, userProgress, onTick, onUpdated, isPending }) {
+export default function ObjectiveItem({ objective, index, userProgress, onTick, onUpdated, isPending, canReorder = false }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: objective.id })
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({
@@ -204,8 +207,15 @@ export default function ObjectiveItem({ objective, index, userProgress, onTick, 
     outline: 'none',
   }
 
+  const dragStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 10 : 'auto',
+  }
+
   return (
-    <div>
+    <div ref={setNodeRef} style={dragStyle}>
       {/* Edit form — shown above the row when editing */}
       {editing ? (
         <form onSubmit={handleSaveEdit} style={{ padding: '12px 0', borderBottom: '0.5px solid var(--border-deep)' }} className="space-y-3">
@@ -255,6 +265,25 @@ export default function ObjectiveItem({ objective, index, userProgress, onTick, 
         </form>
       ) : (
         <div style={rowStyle}>
+          {/* Drag handle — contributor only, hidden when filtering */}
+          {canReorder && (
+            <button
+              {...attributes}
+              {...listeners}
+              className="flex-shrink-0 flex items-center justify-center rounded transition cursor-grab active:cursor-grabbing"
+              style={{
+                width: 20, height: 20, marginTop: 2,
+                color: 'var(--border-default)',
+                background: 'none', border: 'none', padding: 0,
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--text-muted)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--border-default)'}
+              tabIndex={-1}
+            >
+              <GripVertical size={14} />
+            </button>
+          )}
+
           {/* Checkbox / counter icon */}
           {!isCounter ? (
             <button onClick={handleTick} disabled={isPending}
