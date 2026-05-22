@@ -47,6 +47,20 @@ export default function AchievementPage() {
     return next
   })
 
+  const { showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
+  const { isGuest, token } = useAuthStore()
+  const isPublicView = isGuest || !token
+  const [showGuestPrompt, setShowGuestPrompt] = useState(false)
+  const [showGameCTA, setShowGameCTA] = useState(false)
+
+  const { toggleAchievement: guestToggle, claimedGameId, claimedGameTitle, getProgress } = useGuestProgress()
+
+  const { data: achievement, isLoading } = useQuery({
+    queryKey: ['achievement', achievementId],
+    queryFn: () => getAchievement(achievementId).then((r) => r.data),
+    staleTime: 0,
+  })
+
   // Keep localObjectives in sync with server data
   useEffect(() => {
     if (achievement?.objectives) setLocalObjectives(achievement.objectives)
@@ -66,19 +80,6 @@ export default function AchievementPage() {
       return next
     })
   }, [achievement])
-  const { showPrompt, setShowPrompt, requireContributor } = useContributorCheck()
-  const { isGuest, token } = useAuthStore()
-  const isPublicView = isGuest || !token
-  const [showGuestPrompt, setShowGuestPrompt] = useState(false)
-  const [showGameCTA, setShowGameCTA] = useState(false)
-
-  const { toggleAchievement: guestToggle, claimedGameId, claimedGameTitle, getProgress } = useGuestProgress()
-
-  const { data: achievement, isLoading } = useQuery({
-    queryKey: ['achievement', achievementId],
-    queryFn: () => getAchievement(achievementId).then((r) => r.data),
-    staleTime: 0,
-  })
 
   usePageTitle(achievement?.title || null)
 
