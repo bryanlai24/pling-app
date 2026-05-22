@@ -275,7 +275,7 @@ function LegacyHero({ score = 0, stats }) {
             <div style={{ width: 6, height: 6, borderRadius: 2, background: '#60a5fa' }} />
             <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>PSN</span>
             <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>
-              {stats.psn.platinums > 0 && `🏆 ${stats.psn.platinums}  `}{stats.psn.trophies_earned.toLocaleString()} trophies
+              {stats.psn.trophies_earned.toLocaleString()} trophies{stats.psn.platinums > 0 && ` · ${stats.psn.platinums} 🏆`}
             </span>
           </div>
         )}
@@ -515,7 +515,7 @@ export default function PublicProfilePage() {
           <div className="flex flex-wrap gap-2">
             <PlatformBadge platform="psn"   value={profile.psn_id} />
             <PlatformBadge platform="xbox"  value={profile.xbox_gamertag} />
-            <PlatformBadge platform="steam" value={profile.steam_display_name || profile.steam_id} />
+            <PlatformBadge platform="steam" value={profile.steam_display_name} />
           </div>
         </div>
       </div>
