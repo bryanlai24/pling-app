@@ -107,16 +107,16 @@ export default function LoginPage() {
           <Link to="/register" className="text-violet-400 hover:text-violet-300 transition">
             Create one
           </Link>
-          <div className="text-center mt-4">
-            <button
-              onClick={handleGuest}
-              className="text-sm transition"
-              style={{color:'var(--text-muted)'}}
-            >
-              Browse as guest →
-            </button>
-          </div>
         </p>
+        <div className="text-center mt-4">
+          <button
+            onClick={handleGuest}
+            className="text-sm transition"
+            style={{color:'var(--text-muted)'}}
+          >
+            Browse as guest →
+          </button>
+        </div>
       </div>
     </div>
   )

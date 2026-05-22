@@ -18,6 +18,9 @@ export const updateLibraryEntry = (gameId, data) =>
 export const removeFromLibrary = (gameId) =>
   client.delete(`/games/library/${gameId}`)
 
+export const resetGameProgress = (gameId) =>
+  client.post(`/games/library/${gameId}/reset-progress`)
+
 export const syncPsnGame = (gameId) =>
   client.post(`/users/me/psn/sync/${gameId}`)
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getLibrary, updateLibraryEntry, removeFromLibrary, syncPsnGame, syncSteamGame, syncXboxGame } from '../api/games'
+import { getLibrary, updateLibraryEntry, removeFromLibrary, syncPsnGame, syncSteamGame, syncXboxGame, resetGameProgress } from '../api/games'
 import { listAchievements, updateAchievementProgress } from '../api/achievements'
 import { listGenres, updateGameGenres } from '../api/genres'
 import { Trophy, Plus, ChevronRight, ChevronLeft, CheckCircle2, Circle, Loader2, Trash2, Pencil, X, Check, RefreshCw, Pin, PinOff } from 'lucide-react'
@@ -201,6 +201,16 @@ export default function GamePage() {
   }
 
   const [syncResult, setSyncResult] = useState(null)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+
+  const resetMutation = useMutation({
+    mutationFn: () => resetGameProgress(gameId),
+    onSuccess: () => {
+      setShowResetConfirm(false)
+      queryClient.invalidateQueries({ queryKey: ['achievements', gameId] })
+      queryClient.invalidateQueries({ queryKey: ['library'] })
+    },
+  })
 
   const syncMutation = useMutation({
     mutationFn: () => syncPsnGame(gameId),
@@ -538,6 +548,19 @@ export default function GamePage() {
                           {xboxSyncMutation.isPending ? 'Syncing...' : 'Sync Xbox'}
                         </button>
                       )}
+                      {!isPublicView && (
+                        <button
+                          onClick={() => setShowResetConfirm(true)}
+                          title="Reset all progress for this game"
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-full border transition"
+                          style={{ fontSize: '0.65rem', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+                          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                        >
+                          <Trash2 size={10} />
+                          Reset
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="w-full rounded-full" style={{ height: 3, background: 'var(--bg-elevated)' }}>
@@ -721,6 +744,49 @@ export default function GamePage() {
           claimedGameTitle={claimedGameTitle}
           onClose={() => setShowGameCTA(false)}
         />
+      )}
+
+      {/* Reset progress confirmation modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setShowResetConfirm(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6"
+            style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border-default)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
+              Reset progress?
+            </h2>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.5 }}>
+              This will clear all completed achievements for <strong style={{ color: 'var(--text-secondary)' }}>{game?.title}</strong>. Re-sync from your platform afterwards to repopulate correctly.
+            </p>
+            {resetMutation.isError && (
+              <p style={{ fontSize: '0.75rem', color: '#f87171', marginBottom: 12 }}>
+                {resetMutation.error?.response?.data?.detail || 'Reset failed — please try again.'}
+              </p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl transition"
+                style={{ fontSize: '0.85rem', background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)', color: 'var(--text-muted)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => resetMutation.mutate()}
+                disabled={resetMutation.isPending}
+                className="flex-1 py-2.5 rounded-xl font-medium transition disabled:opacity-50"
+                style={{ fontSize: '0.85rem', background: 'rgba(248,113,113,0.15)', border: '0.5px solid rgba(248,113,113,0.3)', color: '#f87171' }}
+              >
+                {resetMutation.isPending ? 'Resetting...' : 'Reset progress'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Toast */}

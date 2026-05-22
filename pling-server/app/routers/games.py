@@ -1,11 +1,14 @@
 import uuid
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete
 from typing import Optional
 
 from app.database import get_db
 from app.auth.dependencies import get_current_user, get_optional_user, require_contributor
 from app.models.user import User
+from app.models.achievement import Achievement, UserAchievement
+from app.models.progress import UserGame, GameStatus
 from app.schemas.game import (
     GameCreate, GameUpdate, GameResponse,
     UserGameCreate, UserGameUpdate, UserGameResponse,
@@ -118,6 +121,51 @@ async def remove_from_library(
     current_user: User = Depends(get_current_user),
 ):
     await game_service.remove_game_from_library(db, current_user.id, game_id)
+
+
+@router.post("/library/{game_id}/reset-progress", status_code=status.HTTP_200_OK)
+async def reset_game_progress(
+    game_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Reset all achievement progress for the current user on a specific game.
+    Clears UserAchievement rows and resets UserGame status/completion.
+    The user can then re-sync from their platform to repopulate correctly.
+    """
+    # Find all achievement IDs for this game
+    ach_result = await db.execute(
+        select(Achievement.id).where(Achievement.game_id == game_id)
+    )
+    ach_ids = [row[0] for row in ach_result.all()]
+
+    cleared = 0
+    if ach_ids:
+        del_result = await db.execute(
+            delete(UserAchievement).where(
+                UserAchievement.user_id == current_user.id,
+                UserAchievement.achievement_id.in_(ach_ids),
+            )
+        )
+        cleared = del_result.rowcount
+
+    # Reset UserGame entry
+    ug_result = await db.execute(
+        select(UserGame).where(
+            UserGame.user_id == current_user.id,
+            UserGame.game_id == game_id,
+        )
+    )
+    ug = ug_result.scalar_one_or_none()
+    if ug:
+        ug.status = GameStatus.not_started
+        ug.completion_percent = 0
+        ug.gamerscore_earned = 0 if ug.gamerscore_total else None
+        ug.started_at = None
+        ug.completed_at = None
+
+    await db.flush()
+    return {"cleared_achievements": cleared, "game_id": str(game_id)}
 
 
 # ── Genres ──────────────────────────────────────────────────────────────────────

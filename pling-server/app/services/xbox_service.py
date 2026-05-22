@@ -330,14 +330,27 @@ async def fetch_user_xbox_achievements(db: AsyncSession, user_id: uuid.UUID, tit
             xuid=token_record.xuid,
             title_id=title_id,
         )
+        XBOX_ZERO_DATE = "0001-01-01"  # .NET epoch — means "not unlocked"
+
         earned = []
         for a in (response.achievements or []):
-            if getattr(a, 'progression', None) and getattr(a.progression, 'time_unlocked', None):
-                unlock_time = a.progression.time_unlocked
-                earned.append({
-                    "platform_achievement_id": str(a.id),
-                    "time_unlocked": unlock_time,
-                })
+            # progress_state is the authoritative earned signal.
+            # "Achieved" = earned; "NotStarted" / "InProgress" = not earned.
+            if getattr(a, 'progress_state', None) != "Achieved":
+                continue
+
+            # Grab unlock time from progression, guard against .NET zero datetime
+            unlock_time = None
+            prog = getattr(a, 'progression', None)
+            if prog:
+                t = getattr(prog, 'time_unlocked', None)
+                if t and str(t)[:10] != XBOX_ZERO_DATE:
+                    unlock_time = t
+
+            earned.append({
+                "platform_achievement_id": str(a.id),
+                "time_unlocked": unlock_time or datetime.now(timezone.utc),
+            })
         return earned
     finally:
         await session.__aexit__(None, None, None)
@@ -387,11 +400,14 @@ async def search_xbox_titles(db: AsyncSession, query: str) -> list[dict]:
                 played_info = None
 
                 if product_name_normalized in played_map:
+                    # Exact normalized match — most reliable
                     played_info = played_map[product_name_normalized]
                 else:
-                    # Try substring match both ways
+                    # Strict substring match: only use if the full played title
+                    # is contained within the product name (not just the query).
+                    # This avoids cross-franchise collisions (e.g. Gears 2 vs Gears 4).
                     for played_name, info in played_map.items():
-                        if normalized_query in played_name or played_name in product_name_normalized:
+                        if played_name in product_name_normalized and len(played_name) > 5:
                             played_info = info
                             break
 
