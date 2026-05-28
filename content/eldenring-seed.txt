@@ -1,0 +1,227 @@
+BOSSES
+
+Shardbearer Godrick
+    Beat Godrick the Grafted | Boss of Stormveil Castle in Limgrave
+
+Margit the Fell Omen
+    Beat Margit the Fell Omen | Found at Stormhill, on the road leading up to Stormveil Castle
+
+Shardbearer Rennala
+    Beat Rennala, Queen of the Full Moon | Boss of Raya Lucaria Academy in Liurnia
+
+Red Wolf of Radagon
+    Beat the Red Wolf of Radagon | Found in Raya Lucaria Academy, before Rennala. Enter the Academy via the glintstone key found on a body near the main gate, guarded by a large dragon outside
+
+Shardbearer Radahn
+    Beat Starscourge Radahn | Boss of Redmane Castle in Caelid. The Radahn Festival must be active — triggers automatically once you reach Altus Plateau or begin Ranni's questline. All summoning signs on the battlefield are free to use
+
+Regal Ancestor Spirit
+    Beat the Regal Ancestor Spirit | Found in Nokron, Eternal City, accessed after defeating Radahn — a meteor opens a crater in southern Limgrave. **Activate all six skull flames in Nokron before approaching the fog gate** or the boss will not spawn
+
+Morgott the Omen King
+    Beat Morgott, the Omen King | Boss of the Erdtree Sanctuary in Leyndell, Royal Capital. Requires defeating two shardbearers to enter Leyndell — Godrick and Rennala are the most accessible pair
+
+Shardbearer Mohg
+    Beat Mohg, Lord of Blood | Boss of Mohgwyn Palace. Reach via Varre's questline (earliest route) or the waygate in the Consecrated Snowfield (late game). **Mohg the Omen in the Capital sewers is a different boss and does not count**
+
+Fire Giant
+    Beat the Fire Giant | Boss of Flame Peak in the Mountaintops of the Giants
+
+Godfrey the First Elden Lord
+    Beat Godfrey / Hoarah Loux | Boss of the Erdtree Sanctuary in Leyndell, Ashen Capital. This version of Leyndell is only accessible after defeating Maliketh — the area changes permanently at that point
+
+Maliketh the Black Blade
+    Beat Maliketh, the Black Blade | Boss of Crumbling Farum Azula
+
+Elden Beast
+    Beat Radagon and the Elden Beast | A single two-phase fight at the foot of the Erdtree. **Before entering, make sure you have committed to your intended ending** — several endings require quest steps that must be completed before this fog gate
+
+Lichdragon Fortissax
+    Beat Lichdragon Fortissax | Found in the Deeproot Depths, accessed via Fia's questline — enter her dream after giving her the Cursemark of Death. **Do not give Fia the Weathered Dagger until after you have defeated Fortissax**
+
+Dragonlord Placidusax
+    Beat Dragonlord Placidusax | Hidden in Crumbling Farum Azula — in the area with the slowing time effect before the Maliketh fog gate, find the collapsed platform with three skeleton soldiers and use the "Lie Down" prompt at its edge. **Missable: must be done before defeating Maliketh**
+
+Astel, Naturalborn of the Void
+    Beat Astel, Naturalborn of the Void | Found in the Lake of Rot underground area, accessed via Nokstella, Eternal City. Required for completing Ranni's questline
+
+God-Devouring Serpent / Rykard
+    Beat God-Devouring Serpent / Rykard, Lord of Blasphemy | Boss of Volcano Manor. Pick up the Serpent-Hunter spear from the ground inside the fog gate — it is essential for this fight and easy to miss if you run straight at the boss
+
+
+MILESTONES
+
+Roundtable Hold
+    Reach the Roundtable Hold | You'll receive an invitation from Melina after encountering Margit or resting at certain sites of grace. Unmissable in any normal playthrough
+
+Finger Reader Enia
+    Talk to Enia the Finger Reader | Enia appears at the Roundtable Hold automatically after you defeat your first shardbearer and obtain their Great Rune. Simply exhaust her dialogue
+
+
+NPC QUESTLINES
+
+Ranni the Witch
+    Meet Ranni at Ranni's Rise | Travel to Ranni's Rise in the Three Sisters area, northwest of Caria Manor. Clear Caria Manor first (boss: Royal Knight Loretta), then exhaust Ranni's dialogue at the top of the rise and agree to serve her
+    Speak to Ranni's three servants | Descend the tower and speak to Blaidd, Iji the War Counselor, and Seluvis in the nearby rises — exhaust all their dialogue
+    Defeat Starscourge Radahn | Ranni asks you to find Nokron — this requires defeating Radahn first, whose death causes a meteor to open a crater in southern Limgrave near Fort Haight
+    Retrieve the Fingerslayer Blade | Drop through the crater to reach Nokron. Navigate through the city to Night's Sacred Ground and take the Fingerslayer Blade from the chest inside
+    Give the Fingerslayer Blade to Ranni | Return to Ranni's Rise. She gives you the Carian Inverted Statue in return
+    Invert the Carian Study Hall | Use the Carian Inverted Statue on the desk inside the Carian Study Hall in eastern Liurnia. Navigate the inverted hall to the Divine Tower of Liurnia and obtain the Cursemark of Death
+    Travel to Ainsel River Main | Use the coffin in the Ainsel River Well (northwest Liurnia) to reach Ainsel River Main. Pick up the Miniature Ranni doll near the first grace
+    Wake the Miniature Ranni | At any grace in Ainsel River, select "Talk to miniature Ranni" repeatedly — rest and retry if she doesn't respond — until she speaks and asks you to kill the Baleful Shadow
+    Defeat the Baleful Shadow | Progress through Ainsel River Main to Nokstella, then continue past to find the Baleful Shadow near the Lake of Rot entrance. Defeat it
+    Cross the Lake of Rot and defeat Astel | Navigate the Lake of Rot (use Preserving Boluses or Flame, Cleanse Me to manage rot buildup). Take the coffin at the far end to the Grand Cloister, then defeat Astel, Naturalborn of the Void
+    Take the elevator to the Moonlight Altar | After Astel, ride the elevator up to the Moonlight Altar plateau in southwest Liurnia
+    Give Ranni the Dark Moon Ring | Find the Dark Moon Ring in a chest at the Cathedral of Manus Celes on the Moonlight Altar. Place it on Ranni's finger to complete the quest and unlock the Age of Stars ending
+
+Fia, Deathbed Companion
+    Embrace Fia at the Roundtable Hold | Speak to Fia and allow her to hold you. She gives you the Baldachin's Blessing. Exhaust her dialogue across multiple visits until she asks you to hold a Weathered Dagger
+    Give the Weathered Dagger to D | D is seated near the Twin Maiden Husks at the Roundtable Hold. Give him the dagger
+    Find Fia in the Deeproot Depths | After D's fate is settled, find Fia near the Prince of Death's Throne grace in the Deeproot Depths (accessed past the Valiant Gargoyles — take the coffin at the waterfall)
+    Give Fia the Cursemark of Death | The Cursemark of Death is obtained from the Divine Tower of Liurnia via Ranni's questline. Give it to Fia
+    Defeat Lichdragon Fortissax | Reload the area and speak to the dreaming Fia — interact to enter her dream and fight Lichdragon Fortissax. **Do this before giving Fia the Weathered Dagger, which locks out the fight**
+    Receive the Mending Rune of the Death-Prince | Speak to Fia after the fight to receive the rune, which unlocks the Age of Duskborn ending
+
+Dung Eater
+    Find the Dung Eater at the Roundtable Hold | After obtaining your first Finger Remedy, the Dung Eater appears as a red phantom in the locked room past the smith at the Roundtable Hold. Exhaust his dialogue
+    Free the Dung Eater's body | His real body is imprisoned in the Subterranean Shunning-Grounds beneath Leyndell. Buy the Sewer-Gaol Key from Blackguard Big Boggart (found at the Outer Moat in Leyndell) and open his cell
+    Give him five Seedbed Curses | Seedbed Curses are found on corpses throughout the game — Roundtable Hold, Volcano Manor, Leyndell, and elsewhere. Give them one at a time until the quest advances
+    Receive the Mending Rune of the Fell Curse | After the fifth Seedbed Curse, the Dung Eater gives you the rune, which unlocks the Blessing of Despair ending
+
+Brother Corhyn and Goldmask
+    Find Goldmask on the Altus Plateau | After exhausting Corhyn's dialogue at the Roundtable Hold, find Goldmask standing on a broken bridge segment northeast of the Erdtree's outer wall in the Altus Plateau. Tell Corhyn his location
+    Find them at Stargazers' Ruins | Both NPCs move to the Stargazers' Ruins in the Mountaintops of the Giants once that area is accessible. Exhaust all dialogue
+    Solve Goldmask's riddle with Law of Regression | Cast the sorcery Law of Regression (requires 37 Intelligence) while standing in front of the Two Fingers in Leyndell — the chamber near the Erdtree Sanctuary. A cutscene reveals Radagon's secret. Report back to Goldmask
+    Find them in Leyndell, Ashen Capital | After defeating Maliketh, find Corhyn and Goldmask near the colosseum in the Ashen Capital. Exhaust all dialogue
+    Receive the Mending Rune of Perfect Order | Goldmask gives you the rune, which unlocks the Perfect Order ending
+
+Hyetta
+    Give Hyetta a Shabriri Grape at Purified Ruins | Hyetta first appears at Purified Ruins in west Liurnia. Bring her a Shabriri Grape (obtained from Edgar at Castle Morne, or from Frenzied Flame enemies)
+    Give her a second Shabriri Grape at Gate Town North | She relocates to the Liurnia Lake Shore near the Gate Town North grace
+    Give her a third Shabriri Grape at Bellum Church | She next appears at Bellum Church in northeast Liurnia
+    Give her a Fingerprint Grape at Frenzied Flame Village | She moves to the outskirts of Frenzied Flame Village in northeast Liurnia. The Fingerprint Grape is dropped by Festering Fingerprint Vyke, who invades you at the village outskirts
+    Embrace the Three Fingers and meet Hyetta at the Cathedral of the Forsaken | Reach the Cathedral of the Forsaken at the deepest point of the Subterranean Shunning-Grounds. **Remove all armor and equipment** to open the door to the Three Fingers and be branded. **This locks you into the Frenzied Flame ending unless reversed with Miquella's Needle** (see Millicent's questline). Hyetta appears at the grace here — exhaust her dialogue to complete the quest
+
+Millicent
+    Defeat Commander O'Neil and obtain the Unalloyed Gold Needle | Commander O'Neil is the field boss of the Swamp of Aeonia in Caelid. Defeat him to obtain the needle
+    Give the needle to Gowry and unlock Sellia's seals | Gowry is in a shack on the outskirts of Sellia, Town of Sorcery. Give him the needle, then light the three flame pillars on rooftops throughout Sellia to open the gates. Return to Gowry to collect the repaired needle
+    Give the repaired needle to Millicent at the Church of the Plague | The Church of the Plague is atop the hill east of Sellia. Give Millicent the needle and exhaust her dialogue
+    Find Millicent at Erdtree-Gazing Hill in the Altus Plateau | After reaching the Altus Plateau, find and exhaust Millicent's dialogue at the Erdtree-Gazing Hill grace
+    Obtain the Valkyrie's Prosthesis from the Shaded Castle | The Shaded Castle is in northern Altus Plateau. Find the Valkyrie's Prosthesis in a chest inside and give it to Millicent. Exhaust her dialogue again after giving it
+    Find Millicent at the Ancient Snow Valley Ruins in the Mountaintops of the Giants | After reaching the Mountaintops of the Giants, find and exhaust Millicent's dialogue near the Ancient Snow Valley Ruins grace
+    Find Millicent at the Drainage Channel in Elphael, Brace of the Haligtree | To reach Elphael: obtain both halves of the Haligtree Secret Medallion (left from Albus in Village of the Albinaurics; right from Commander Niall at Castle Sol), use it at the Grand Lift of Rold, then navigate through the Consecrated Snowfield and Miquella's Haligtree to Elphael
+    Complete Millicent's final quest | A golden summon sign (assist) and red sign (invade) appear near Millicent at the Drainage Channel. Assist: fight off four invaders, then exhaust Millicent's final dialogue — she gives you the Unalloyed Gold Needle and dies peacefully. Invade: kill Millicent and she drops the needle. Either path completes the quest
+    (Optional) Use the Needle to undo the Frenzied Flame | Take the Unalloyed Gold Needle to Malenia's arena after defeating her and use it where she fell — it becomes Miquella's Needle. Use Miquella's Needle at the Dragonlord Placidusax arena in Crumbling Farum Azula to remove the Frenzied Flame branding
+
+Nepheli Loux
+    Meet Nepheli below Stormveil Castle | Nepheli is found as an NPC in a room below the Roundtable Hold (back staircase past the twin maidens). Exhaust her dialogue
+    Give Nepheli the Stormhawk King ashes | The Stormhawk King ashes are in a chest on the upper ramparts of Stormveil Castle near the chapel grace. **Do not send these to the Twin Maiden Husks before giving them to Nepheli**
+    Find Nepheli at the Village of the Albinaurics | After story progression, Nepheli moves to the Village of the Albinaurics in southwest Liurnia. Exhaust her dialogue
+    Find Nepheli and Kenneth at the Godrick throne room | After all dialogue is exhausted, both Nepheli and Kenneth Haight appear at the throne room in Stormveil Castle. Exhaust both their dialogues — completing Kenneth's questline (clearing Fort Haight) resolves both quests together
+
+Iron Fist Alexander
+    Free Alexander from the ground at Saintsbridge | Alexander is stuck in the ground near the Saintsbridge grace in northern Limgrave. Strike him from behind several times with any weapon to free him
+    Find Alexander at the Radahn Festival | Alexander travels to Caelid to fight Radahn. Find him in the warrior camps outside Redmane Castle and exhaust his dialogue before the fight — he is also summonable for the Radahn boss fight
+    Free Alexander again in Liurnia | After Radahn, Alexander gets stuck again — find him submerged in the lake in eastern Liurnia, north of Academy Gate Town. Use an Oil Pot on him then strike him from behind to free him
+    Find Alexander at Gael Tunnel | He relocates to outside the Gael Tunnel entrance on the Caelid/Limgrave border. Exhaust his dialogue
+    Find Alexander at Volcano Manor | He appears briefly outside Volcano Manor in Mt. Gelmir. Exhaust his dialogue
+    Defeat Alexander in his final duel in Crumbling Farum Azula | Alexander's final location is on a cliff near the Dragon Temple Lift grace in Crumbling Farum Azula. Defeat him in a duel — he gives you the Shard of Alexander talisman
+
+Sorceress Sellen
+    Meet Sellen at the Waypoint Ruins | Sellen is in a basement room behind the Mad Pumpkin Head boss room at the Waypoint Ruins, west Limgrave. Exhaust her dialogue until she mentions her past
+    Find Master Azur and receive Comet Azur | Azur sits in a hidden alcove on the cliffs of Mt. Gelmir, northeast of Volcano Manor. Exhaust his dialogue to receive Comet Azur. Return to Sellen and show it to her — she gives you her Primal Glintstone
+    Use the Primal Glintstone on Sellen's real body | Sellen's true body is imprisoned in Witchbane Ruins in the Weeping Peninsula. **Do not kill this body.** Interact with it and use the Primal Glintstone
+    Find Lusat in Sellia Hideaway | Sellia Hideaway is a cave behind an illusory wall on the cliffs north of Sellia in Caelid. Navigate through it to find Master Lusat and exhaust his dialogue — he also gives you Stars of Ruin
+    Choose your side at the Grand Library | Two summon signs appear at Rennala's boss room in the Raya Lucaria Grand Library. Help Sellen (fight Jerren) or help Jerren (fight Sellen) — the quest completes either way
+
+Diallos
+    Meet Diallos at the Roundtable Hold | Find Diallos near the main fireplace and exhaust his dialogue — he mentions searching for his servant Lanya
+    Find Lanya's body in Liurnia | Lanya's body is on the road north of the Main Academy Gate grace in Liurnia. Exhaust Diallos's dialogue nearby
+    Find Diallos at Volcano Manor | Diallos joins Volcano Manor at some point. Find him there and exhaust his dialogue
+    Find Diallos at Jarburg | Jarburg is a village of living jars at the bottom of a cliff in eastern Liurnia, past the Artist's Shack — drop down the cliff to reach it. Exhaust Diallos's dialogue across multiple visits
+    Speak to Jar-Bairn | Exhaust Jar-Bairn's dialogue in Jarburg. On a later visit Diallos will be found injured, then gone. Speak to Jar-Bairn one final time to receive Diallos's Mask and complete the quest
+
+Kenneth Haight
+    Find Kenneth on the road in Limgrave | Kenneth is standing on a ruined arch south of the Third Church of Marika in eastern Limgrave. Speak to him
+    Clear Fort Haight and report back | Fort Haight is to the southeast — clear all enemies inside and return to Kenneth
+    Find Kenneth at Fort Haight | Kenneth relocates to Fort Haight itself. Speak to him — he'll express dissatisfaction and wait for a proper Elden Lord to serve
+    Complete the quest at the Godrick throne room | Kenneth's quest resolves alongside Nepheli Loux's — once Nepheli is set up as ruler of Limgrave, both NPCs appear at the throne room in Stormveil Castle. Exhaust their dialogue to complete both quests
+
+Latenna the Albinauric
+    Find Latenna at the Slumbering Wolf's Shack | The shack is at the exit of Lakeside Crystal Cave in southwest Liurnia. Show Latenna the right half of the Haligtree Secret Medallion (from Albus the old man disguised as a pot in the Village of the Albinaurics) — she calms down and joins as a spirit ash
+    Obtain the left half of the Haligtree Secret Medallion | The left half is in a chest behind Commander Niall at Castle Sol in the Mountaintops of the Giants
+    Reach the Apostate Derelict | Combine both medallion halves and use the completed Haligtree Medallion at the Grand Lift of Rold to reach the Consecrated Snowfield. The Apostate Derelict is a ruined church in the northwest of the Snowfield
+    Summon Latenna at the Apostate Derelict | Summon Latenna inside the church near the giant Albinauric woman. Latenna speaks with her kin — the giant Albinauric gives you a Somber Ancient Dragon Smithing Stone as a reward
+
+
+MISCELLANEOUS
+
+Leonine Misbegotten
+    Beat Leonine Misbegotten | Boss of Castle Morne in the Weeping Peninsula
+
+Royal Knight Loretta
+    Beat Royal Knight Loretta | Boss of Caria Manor in Liurnia
+
+Great Rune
+    Activate a Great Rune at a Divine Tower | After defeating a shardbearer, their Great Rune is inert and must be activated at its corresponding Divine Tower. Godrick's tower is the most accessible — the Divine Tower of Limgrave is the tall spire east of Stormveil Castle, reached via the Stormgate road. Cross the long bridge and take the elevator to the top
+
+Magma Wyrm Makar
+    Beat Magma Wyrm Makar | Boss of the Ruin-Strewn Precipice, a mine dungeon at the northern end of the Liurnia lake. Follow the ravine north from the Academy Gate Town area — Makar guards the passage to the Altus Plateau
+
+Erdtree Aflame
+    Set the Erdtree aflame at the Forge of the Giants | Story milestone — triggers automatically when you interact with the Erdtree at the Forge of the Giants in the Mountaintops of the Giants. Unmissable in any ending
+
+Commander Niall
+    Beat Commander Niall | Boss of Castle Sol in the Mountaintops of the Giants. Prioritize killing both summoned spirit knights before focusing on Niall — they deal significant damage and can interrupt you during his phase two lightning attacks. **The chest behind Niall contains the left half of the Haligtree Secret Medallion**
+
+Godskin Noble
+    Beat the Godskin Noble | Found at the Temple of Eiglay inside Volcano Manor
+
+Godskin Duo
+    Beat the Godskin Duo | Found in Crumbling Farum Azula. The two bosses share a stagger meter but have separate health bars — when one dies it respawns after a delay. Sleep pots or Sleepbone Arrows are highly effective: put one to sleep and burn down the other
+
+Mimic Tear
+    Beat the Mimic Tear | Found in Nokron, Eternal City. **Unequip all weapons and armor before entering the fog gate** — the Mimic copies your exact loadout at that moment, and will be unarmed and trivial to kill. Re-equip after the gate shuts
+
+Valiant Gargoyles
+    Beat the Valiant Gargoyles | Found in the Siofra Aqueduct. A second gargoyle joins partway through the first's health bar — focus the first down as fast as possible. Bleed and frost are both effective
+
+Loretta, Knight of the Haligtree
+    Beat Loretta, Knight of the Haligtree | Boss of Miquella's Haligtree, before Elphael
+
+Elemer of the Briar
+    Beat Elemer of the Briar | Boss of the Shaded Castle in the Altus Plateau
+
+Dragonkin Soldier of Nokstella
+    Beat the Dragonkin Soldier of Nokstella | Found in Ainsel River, in a large flooded chamber beneath Nokstella, Eternal City
+
+Shardbearer Malenia
+    Beat Malenia, Blade of Miquella | Boss of Elphael, Brace of the Haligtree — the hardest boss in the game. She heals on every hit she lands (including blocked hits), and her phase two opens with a dive bomb that leaves a deadly rot flower. Dodge into her attacks rather than away, and avoid trading hits. **She is entirely optional** — no ending or other achievement requires her death
+
+Mohg, the Omen
+    Beat Mohg, the Omen | Found at the bottom of the Subterranean Shunning-Grounds beneath Leyndell. **This is a different boss from Mohg, Lord of Blood and does not count toward the Shardbearer Mohg achievement.** His arena contains the Sewer-Gaol Key needed for the Dung Eater questline
+
+God-Slaying Armament
+    Upgrade any armament to its maximum level | Standard weapons upgrade to +25; somber weapons upgrade to +10. The somber path is significantly easier — a Somber Ancient Dragon Smithing Stone is available as a quest reward from Millicent or Latenna relatively early. Buy Somber Smithing Stones 1–8 from the Twin Maiden Husks via a Somberstone Miner's Bell Bearing, then find a Somber Ancient Dragon Stone for the final upgrade
+
+
+ENDINGS
+
+Elden Lord
+    Mend the Elden Ring | After defeating the Elden Beast, approach the fractured Marika and select "Mend the Elden Ring." No prior quest steps required — this is the default ending
+
+Age of the Stars
+    Follow Ranni's summon sign | Requires completing Ranni's questline in full, including giving her the Dark Moon Ring at the Cathedral of Manus Celes. **This must be done before entering the Elden Beast fog gate.** After the Elden Beast is defeated, Ranni's summon sign appears on the ground near Marika — interact with it to trigger the Age of Stars ending
+
+Lord of Frenzied Flame
+    Reach the Three Fingers in the Subterranean Shunning-Grounds | Enter the Shunning-Grounds via the well at Leyndell's Avenue Balcony. Navigate to the bottom of the sewers past the Mohg the Omen boss room, then drop through the wooden platforms in the collapsing tunnel — this looks like a dead end but isn't. **Remove all armor and equipment** at the bottom to open the door to the Three Fingers and be branded with the flame
+    Trigger the Lord of Frenzied Flame ending | After being branded, this ending triggers automatically at the conclusion of the game — approach Marika and it fires without a choice. **This locks you out of all other endings** unless you use Miquella's Needle to reverse it (see Millicent's questline)
+
+Age of Duskborn
+    Use the Mending Rune of the Death-Prince | Requires completing Fia's questline and defeating Lichdragon Fortissax — Fia gives you the rune upon completion. After defeating the Elden Beast, approach Marika and select "Use Mending Rune of the Death-Prince." **The rune must be in your inventory before entering the final fog gate**
+
+Blessing of Despair
+    Use the Mending Rune of the Fell Curse | Requires completing the Dung Eater's questline by giving him five Seedbed Curses — he gives you the rune upon completion. After defeating the Elden Beast, approach Marika and select "Use Mending Rune of the Fell Curse." **The rune must be in your inventory before entering the final fog gate**
+
+Perfect Order
+    Use the Mending Rune of Perfect Order | Requires completing Goldmask's questline — Goldmask gives you the rune at his final location in Leyndell, Ashen Capital. After defeating the Elden Beast, approach Marika and select "Use Mending Rune of Perfect Order." **The rune must be in your inventory before entering the final fog gate.** Note: the questline requires casting Law of Regression with 37 Intelligence — temporarily boost INT with the Stargazer Heirloom talisman or a respec if needed

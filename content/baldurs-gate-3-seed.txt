@@ -1,0 +1,216 @@
+STORY MILESTONES
+
+Descent From Avernus
+    Escape the Nautiloid and reach Faerûn | Complete the prologue aboard the mind flayer ship
+
+Expand Your Mind
+    Consume a mind flayer parasite to gain a new power | Open the Illithid Powers menu and spend a point on any tadpole ability. Points are earned by examining tadpole-related objects throughout the game — the first opportunities are in Act 1 near Auntie Ethel and in the Underdark
+
+The Plot Thickens
+    Find your way into Baldur's Gate | Story milestone at the end of Act 2 — unmissable
+
+Repairing the Weave
+    Invite Elminster to your camp | Triggered automatically through Gale's questline. Feed him magical artifacts when he asks (roughly 3 in Act 1) and maintain medium approval by making heroic choices. Elminster appears at camp during a long rest in Act 2. Gale does not need to be in your active party for this to trigger
+
+The City Awaits
+    Survive Act 2 and enter Baldur's Gate | Story milestone — unmissable
+
+Forged in Blood and Fire
+    Complete the Adamantine Forge in the Grymforge | The Adamantine Forge is in the Grymforge area of the Underdark. Bring a Mould and Mithral Ore, insert both into the forge, pull the lever, then defeat Grym using the overhead hammer while he is superheated (glowing orange). **You can only forge two items per playthrough** — one per Mithral Ore vein — so choose your moulds carefully
+
+The Lich-Queen's Wrath
+    Become an enemy of Vlaakith and ally with Prince Voss | At the Githyanki Creche in Act 2, defy Vlaakith's command to kill your Guardian in the Astral Prism. When Prince Voss visits camp afterward and offers an alliance, accept it. **Do not attack or antagonize Voss when he appears on the Mountain Pass road earlier in Act 2**
+
+Hero of the Forgotten Realms
+    Complete the game with a good ending | At the final confrontation, destroy the Netherbrain without claiming its power for yourself. Do not elect to become a mind flayer, do not claim the brain in Bhaal's name, and do not dominate it with the Netherstones — just destroy it
+
+All's Well That Ends Well
+    Complete the game | Finish any ending — heroic, evil, or otherwise. Triggers on completion of the epilogue regardless of choices
+
+First Blood
+    Become the champion of the Undercity Rumble | In Act 3, enter the Undercity via the sewers beneath Baldur's Gate. Find the fighting ring in the Undercity Ruins, speak to the organizer, and win all three fights
+
+
+COMPANION QUESTLINES
+
+Just a Nibble (Astarion)
+    Allow Astarion to drink your blood at camp | Recruit Astarion from the Ravaged Beach in Act 1. During a long rest he will reveal himself as a vampire and ask to feed — allow him. When he goes too far, pass a DC 5 Persuasion or DC 7 Strength check to stop him. **Do not attack him when he reveals himself or the moment is lost**
+
+Taking Blood (Astarion)
+    Build approval with Astarion throughout Acts 1 and 2 | He approves of cunning, self-serving, and morally flexible choices. Let him feed on enemies and support his autonomy
+    Learn about Cazador | Through camp conversations and Act 1 discoveries — the Szarr family signet and notes in the Underdark — piece together Astarion's history with his master
+    Find and enter Cazador's Palace in Act 3 | The palace is in the northwestern part of the Lower City. Navigate through his vampiric servants to reach Cazador
+    Confront Cazador and resolve Astarion's fate | Cazador will attempt the Rite of Profane Ascension using Astarion and 7,000 vampire spawn. Stop the ritual and kill Cazador to free Astarion (he remains a vampire spawn but is free), or allow the ritual to complete for Astarion to ascend as a full vampire lord
+
+To Bloom in Darkest Night (Shadowheart)
+    Build approval with Shadowheart and learn about her past | Exhaust her camp dialogue throughout Act 1. Ask about her life beyond Shar to learn she cannot swim and loves night orchids
+    Find the night orchid for Shadowheart | On the ledge immediately in front of the Ruined Battlefield waypoint in Act 2's Shadow-Cursed Lands, there is a night orchid among ordinary alchemy ingredients — easy to walk past. Pick it up and speak to Shadowheart with it in your inventory. **This is the most commonly missed step in her questline**
+    Complete the Gauntlet of Shar | The Gauntlet is beneath the Thorm Mausoleum in the Shadow-Cursed Lands. Navigate its trials with Shadowheart in your party
+    Resolve the Nightsong | At the end of the Gauntlet, Shadowheart must choose to free the Nightsong (Dame Aylin), rejecting Shar, or kill her and become Shar's Dark Justiciar. Either path continues the questline
+    Confront Shadowheart's parents at the House of Grief | The House of Grief is in the Lower City in Act 3. Depending on her Act 2 choice, Shadowheart can save her parents or be forced to kill them — exhaust all dialogue to complete the quest
+
+No Free Lunches (Gale)
+    Feed Gale magical items throughout Act 1 | He needs to consume magical artifacts to suppress his Netherese orb — offer items when he asks, roughly 3 times. Items are consumed permanently so give him pieces you don't need. **Leaving him unfed causes his condition to worsen and can eventually kill him**
+    Meet Elminster at camp in Act 2 | Elminster arrives during a long rest and partially stabilizes Gale's condition. Exhaust all dialogue about Gale's past and his relationship with Mystra
+    Resolve Gale's fate at the final confrontation | Gale can detonate his orb to destroy the Netherbrain (he dies), use the Crown of Karsus to claim godhood, or survive with the party if you destroy the brain together. All paths complete the quest
+
+The Lich-Queen's Wrath (Lae'zel)
+    Recruit Lae'zel from the cage in Act 1 | Convince her Tiefling captors to free her, or break her out yourself
+    Complete the Githyanki Creche Y'llek | Navigate the Creche in the Mountain Pass with Lae'zel in your party and defeat the Inquisitor
+    Defy Vlaakith in the Astral Prism | When Vlaakith orders you to kill your Guardian, refuse. Do not harm your Guardian
+    Accept Voss's alliance at camp | Prince Voss visits camp after the Creche confrontation — accept his offer of alliance against Vlaakith to trigger the achievement
+
+You Have Two Hands for a Reason (Karlach)
+    Recruit Karlach near the Risen Road in Act 1 | Side with Karlach against Wyll's accusations
+    Bring Infernal Iron to Dammon at the Emerald Grove | Infernal Irons are found in Act 1 — the Shattered Sanctum goblin camp and Blighted Village basement are reliable locations. **Dammon must survive Act 1 — if the Grove falls to the goblins, he dies and Karlach's quest cannot be completed**
+    Bring a second Infernal Iron to Dammon at the Last Light Inn | Find Dammon again in Act 2 at the Last Light Inn for a second repair, enabling full physical contact. Exhaust Karlach's camp dialogue after each repair
+    Confront Gortash in Act 3 | Lord Enver Gortash is one of the Absolute's three Chosen and Karlach's former master — his defeat is part of the main story
+    Resolve Karlach's ending | Her engine cannot be permanently fixed without returning to Avernus. At the end of the game she can return to Avernus, die in Faerûn, or become a mind flayer to survive
+
+Rude, Crude, and Full of Attitude (Wyll)
+    Recruit Wyll at the Emerald Grove and meet Mizora at camp | Wyll is training Tiefling refugees. After recruiting him, Mizora appears at camp during a long rest — exhaust all dialogue about his pact
+    Free Mizora from the Last Light Inn in Act 2 | Mizora is imprisoned at the inn. Free her — allowing her to die triggers his father's death, locking out the good resolution
+    Rescue Grand Duke Ravengard from the Iron Throne in Act 3 | The Iron Throne is an underwater prison. The rescue is time-pressured — you have a limited number of turns before prisoners drown. Bring high-movement characters and crowd control. Reach Wyll's father and free him
+    Break Wyll's pact with Mizora | After the Iron Throne rescue, Mizora offers Wyll a final choice. Break the pact rather than renew it — Wyll becomes the Blade of Frontiers unbound and the achievement triggers
+
+Loophole (Wyll)
+    Break Wyll's pact with Mizora at the final pact decision | Requires completing Wyll's full questline including rescuing Grand Duke Ravengard from the Iron Throne. At the final choice, select to break the pact. If Ravengard is dead, Wyll has no leverage and this path costs significantly more
+
+Hot Date (Karlach)
+    Go on a date with Karlach in the Lower City | Requires both heart repairs via Dammon and pursuing Karlach's romance. After reaching the Lower City in Act 3, speak to Karlach and say "It's been a long time since we last connected." She will suggest a date — the scene plays out during the next long rest
+
+
+ENDINGS
+
+Mind Blown
+    Dominate the Netherbrain using the Netherstones | At the final confrontation, use the Netherstones to dominate the Netherbrain rather than destroying it. Requires having all three Netherstones (obtained by defeating Ketheric Thorm, Enver Gortash, and Orin the Red)
+
+Ceremorphosis
+    Transform into a mind flayer and complete the game | In Act 3, the Emperor offers you the option to consume a mind flayer parasite and transform in the Astral Prism. Accept. You must then complete the Upper City assault, the Netherbrain sequence, and the epilogue as a mind flayer. **This is a permanent in-playthrough transformation**
+
+Embrace Your Urge
+    Accept the Slayer form from Orin as the Dark Urge | Only available when playing as the Dark Urge origin. During the confrontation with Orin the Red in Act 3, accept her offer to embrace your nature and become the Slayer. Orin then fights you in human form rather than transforming
+
+Absolute Power Corrupts
+    Claim the Netherbrain for yourself | At the final confrontation, choose to take control of the Netherbrain and rule as its master. Requires having followed a sufficiently evil path to be presented with this option
+
+Sins of the Father
+    Claim the Netherbrain in Bhaal's name as the Dark Urge | Playing as the Dark Urge, fully embrace your bhaalspawn nature throughout the game. At the final confrontation, select the option to claim the Netherbrain in Bhaal's name. **Requires having unlocked the Slayer form** (through the Orin confrontation or by dueling her in Act 3) and not having rejected your Dark Urge nature at the Bhaal Temple
+
+
+MISSABLES & SPECIFIC ENCOUNTERS
+
+Leave No One Behind
+    Save the Emerald Grove — side with the Tieflings and defeat all three goblin leaders | Defeat Priestess Gut, Dror Razglin, and Minthara at the Shattered Sanctum. Do not let the Grove fall to the goblins
+    Stop Kagha's Rite of Thorns before it is finalized | Find the evidence of Kagha's Shadow Druid ties in the wooden chest in her room and confront her before the ritual completes
+    Free Lae'zel from her cage without killing her Tiefling captors | Pass the dialogue checks or use non-lethal means — killing the captors counts against the achievement
+    Convince Rolan and his siblings to stay with the refugees | Speak to Rolan and persuade him not to abandon Cal and Lia — they must travel with the Tiefling group
+    Defend the Last Light Inn and keep Isobel alive | When you speak with Isobel at the Last Light Inn in Act 2, an attack triggers immediately. Keep Isobel alive — if she falls, the inn's protection drops and Tieflings die
+    Rescue Rolan at the Ruined Battlefield | Find Rolan trapped in the Shadow-Cursed Lands (approximately X: -54, Y: -111) and rescue him before he is killed
+    Rescue Zevlor from the Illithid Colony | Zevlor is held in a mind flayer pod beneath Moonrise Towers. Free him from the colony
+    Dark Urge only — knock Alfira unconscious before each long rest after meeting her | The Dark Urge has a scripted murder of Alfira after long rests. Knocking her out beforehand causes a different NPC (Quil) to be the victim instead, preserving Alfira and the achievement
+
+She Cannot Be Caged!
+    Free Sazza from the Emerald Grove prison | Sazza is a goblin prisoner in the Grove — pick the lock or find the key, speak to her, and guide her out without her being killed by the Tieflings
+    Find Sazza at the Goblin Camp (Shattered Sanctum) | After escaping the Grove, Sazza returns to the Shattered Sanctum. Find and speak with her there
+    Free Sazza from Moonrise Towers in Act 2 | Sazza is imprisoned again at Moonrise Towers. Locate her cell and free her a third time to trigger the achievement. **Wiping out the goblin leaders in Act 1 makes reaching the Shattered Sanctum harder — plan your approach accordingly**
+
+Murder in Baldur's Gate
+    Become an Unholy Assassin of Bhaal in the Undercity | Visit the Bhaal Temple in the Undercity beneath Baldur's Gate in Act 3. Complete Bhaal's trial by killing the designated target as an act of devotion. Orin the Red presides over this. **Requires embracing rather than rejecting your murderous nature throughout the game**
+
+Pest Control
+    Wipe out the entire Githyanki Creche | After completing the Creche Y'llek questline, kill every Githyanki remaining in the Creche. This is a very difficult encounter — the Creche is full of high-level warriors and mages. **Complete this before advancing too far into Act 2 as the Creche becomes inaccessible after certain story triggers.** Recommended at level 6-7 with a fully equipped party
+
+Interfectorem Draconis
+    Kill the dragon Oh'nk in the Githyanki Creche | A young red dragon is in the upper area of the Creche. After the Inquisitor confrontation she becomes hostile — defeat her in combat. **Oh'nk is completely immune to fire damage — avoid fire spells entirely.** She is a challenging fight at the level you will typically be (5-6), so prepare consumables and position carefully before engaging
+
+A Grym Fate
+    Defeat Grym using the Adamantine Forge's overhead hammer | Lure Grym onto the central platform of the Adamantine Forge, activate the forge to superheat him with lava (he glows orange when ready), then pull the overhead hammer lever to smash him. Repeat until defeated. **Standard attacks and most spells deal minimal damage to Grym — the hammer is essential**
+
+Non-Invasive Procedure
+    Kill the Surgeon before she can perform surgery on you | The Surgeon (Lenore de Hurst) is a boss in Act 3's Lower City, connected to the Bhaalist murders investigation. She attempts surgery on a party member at the start of combat — kill her before she completes her first surgical action. Focus all burst damage on her on turn one; crowd control and high initiative are essential
+
+Penny Pincher
+    Defeat the Toll Collector without letting her use gold against you | The Toll Collector is a boss in the Counting House vault in Act 3. Destroy or move the coin piles in her room before initiating combat, or kill her fast enough on turn one that she never acts. High initiative and burst damage are the most reliable approach
+
+Crash Landing
+    Knock the dragon Ansur out of the sky mid-flight in the Wyrmway | The Wyrmway is accessed through Wyrm's Rock Prison in Act 3 — find two hidden switches behind paintings in the prison and press both to reveal the entrance. During the Ansur fight, **wait until the dragon is visibly mid-flight**, then knock him out of the sky with a forced movement ability — Eldritch Blast with Repelling Blast, Thunderwave, or Shove all work
+
+Fancy Footwork
+    Defeat Gortash at Wyrm's Rock without triggering any traps | Disarm every trap and pressure plate in the Wyrm's Rock Fortress before initiating the boss fight — use a high-Perception character to spot them and Thieves' Tools to disarm. Gortash can trigger traps during combat, so the room must be completely cleared before engaging
+
+Devil's in the Details
+    Defeat Commander Zhalk on the nautiloid before escaping | Zhalk is a high-level enemy in the prologue that most players run past. Assist the mind flayer (Us) who is already fighting him, use environmental explosives, and focus all damage on Zhalk before the escape sequence ends. **You have a very limited number of turns** — burst damage and ignoring all other enemies is essential
+
+Escapologist
+    Break out of prison after being arrested | Get arrested in Act 3 in Baldur's Gate (pick pocketing or being caught stealing are reliable triggers). Once in the cell, escape without a key — pick the lock with Thieves' Tools, break the door, or use Misty Step or Dimension Door to teleport out
+
+
+CHALLENGE / DIFFICULTY
+
+Critical Hit
+    Complete the game on Tactician difficulty | Select Tactician at the start or switch to it before finishing — the achievement checks your difficulty at completion
+    Use high ground consistently | Attacks from elevation get a significant bonus to hit. Always contest and hold the high ground in every major fight
+    Lean on crowd control | Sleep, Hold Person, and Web are extremely powerful on Tactician — disabled enemies are trivially killable. Invest in at least one dedicated crowd control character
+    Short rest between every major fight | You get two free short rests per long rest. Use both. Never go into a boss fight without full resources
+    Use consumables freely | Alchemical solutions, special arrows, and scrolls that feel wasteful on Normal are essential investments on Tactician — do not hoard them
+
+Foehammer
+    Complete a full Tactician or Custom playthrough first | Learn every act's major fights, story beats, and boss mechanics before risking an Honour Mode save. Play a practice run on Custom difficulty with all Honour Mode rules enabled to experience Legendary Actions without consequences
+    Read every boss's Legendary Actions before engaging | Use the Examine action on each boss at the start of combat to read their Legendary Action descriptions. Surprises in Honour Mode can be fatal — never go in blind
+    End every fight as fast as possible | Legendary Actions become more dangerous the longer a fight drags on. Build your party around burst damage and aim to eliminate bosses in one or two turns. Prolonged fights favour the enemy
+    Never enter a major fight without a full long rest | Regardless of remaining resources, take a long rest before every boss encounter. Attrition kills Honour Mode runs
+    Act 1 watch-outs — Auntie Ethel and the Phase Spider Matriarch | Ethel's Legendary Actions can teleport characters into hazards. The Phase Spider Matriarch can web and poison in rapid succession — bring poison resistance and free-action effects
+    Act 2 watch-outs — Ketheric Thorm and the Glabrezu | Ketheric's second phase in the Mind Flayer Colony is brutal with Legendary Actions. The Glabrezu in the Gauntlet of Shar is a surprise high-threat encounter many players are underprepared for
+    Act 3 watch-outs — Ansur, Gortash, and the Netherbrain | Ansur's lightning attacks can one-shot poorly positioned characters. Gortash's trap-filled arena is a major attrition risk — clear every trap before engaging. The Netherbrain's Legendary Actions target weak characters aggressively
+
+
+MISCELLANEOUS
+
+Bedrolls and Breakfast
+    Take four Long Rests in a single playthrough | Unmissable across any full playthrough — just sleep at camp
+
+No Penny Required
+    Use Detect Thoughts on an NPC during dialogue | Cast Detect Thoughts while speaking with any NPC who has hidden thoughts. Available to Wizards, Sorcerers, and Bards by default — Shadowheart can also cast it. Many Act 1 NPCs work: the Grove merchant, goblins at the Shattered Sanctum, or the Zhentarim at the Zhentarim Hideout
+
+Dig for Victory
+    Dig up five buried chests in a single playthrough | Buried chests appear as glowing dig spots detected automatically by your highest-Perception character. A shovel is required — found commonly throughout Act 1. Spots are plentiful around the Blighted Village, Druid Grove, and Underdark
+
+Roleplayer
+    Complete ten background goals in a single playthrough | Each character background has passive goals that trigger when you do relevant actions. Check your Journal for your background's associated activities and play into them naturally — ten goals across a full playthrough is very achievable without trying
+
+Action Surge
+    Perform five attacks in a single turn | Requires a Fighter with Extra Attack (level 5) and Action Surge (level 2). On your turn: attack twice with your Action (Extra Attack), use Action Surge to attack twice more, then use a Bonus Action attack if available. Easiest with a level 5+ Fighter
+
+Shove Off
+    Kill an enemy with falling damage | Shove an enemy off a ledge using the Shove bonus action (available to all characters). Any lethal drop counts — the Goblin Camp, the Underdark, and the Blighted Village all have easy opportunities. Weaken the enemy first to ensure the fall is fatal
+
+Fists of Fury
+    Kill an enemy with an Unarmed Strike | Unequip all weapons and land the killing blow bare-handed. Weaken an enemy with spells or weapons first, then finish with an unarmed attack. Monks deal the most unarmed damage but any class can do this against a weakened target
+
+Bookworm
+    Read 100 different books in a single playthrough | Open and read (not just loot) 100 unique books throughout the game. Make a habit of clicking every bookshelf you pass — the Arcane Tower in the Underdark and Sorcerous Sundries in Act 3 are particularly dense. 100 is very achievable across a full playthrough
+
+Fetch Quest
+    Play fetch with Scratch the dog | Find Scratch near the Blighted Village in Act 1, sitting by a dead body on the road. Pass the Animal Handling check or use Speak with Animals to befriend him and send him to camp. At camp, interact with Scratch and throw the ball to initiate fetch
+
+Bottoms Up
+    Take a Long Rest using only alcohol as supplies | Stock up on alcoholic drinks (wine, ale, spirits — found in taverns and the Shattered Sanctum). When setting up a Long Rest, remove all food from the camp supplies and replace entirely with alcohol, then rest
+
+Homebrewer
+    Create three unique alchemical solutions in a single playthrough | Open the Alchemy panel and combine ingredients to brew solutions — each unique formula crafted for the first time counts. Common early recipes: Antidote (Mugwort + any salt), Elixir of Arcane Cultivation (Vitriol of Shadow + any sublimate). Alchemy ingredients are abundant in the Underdark
+
+Outsourcing
+    Recruit a hireling from Withers | Withers is found in a tomb in the Dank Crypt near the Overgrown Ruins on the Ravaged Beach in Act 1. After discovering him, he appears at your camp. Pay him 100 gold to recruit a hireling of any class
+
+Kill Two Birds With One Gnome
+    Use one enemy as an improvised weapon against another | Pick up a Small-sized enemy (Gnomes, Goblins, Halflings) and use the Throw action to hurl them at another enemy. Easiest with a Barbarian (bonus throw damage) targeting goblins at the Shattered Sanctum in Act 1
+
+Jack-of-all-Trades
+    Multiclass into all 12 classes in one playthrough without using Withers to respec | Take at least one level in each of the 12 classes across a single playthrough, adding a new class every level-up. Never use Withers's respec service — it removes existing class levels and breaks the achievement. You will cap at roughly level 12 with one level in each class. Plan your progression from character creation and accept that this character will be extremely ineffective
+
+Punch Drunk
+    Defeat 20 enemies while drunk in a single playthrough | Consume any alcoholic item before or during combat to gain the Drunk condition, then get kills while it is active. Stack this gradually throughout the playthrough — alcohol is cheap and abundant. Do not try to grind it all in one session
+
+Busker
+    Earn 100 gold from busking in a single playthrough | Equip a musical instrument (Lute, Lyre, Drum — found throughout the world) and use the Perform action repeatedly in a busy public area. Each performance earns a small amount of gold from nearby NPCs. **This takes many repetitions** — the densely populated areas of Baldur's Gate in Act 3 are the most efficient spots. Accumulate gold gradually across the playthrough rather than grinding it in one sitting

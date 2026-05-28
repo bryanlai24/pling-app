@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link as RouterLink } from 'react-router-dom'
-import { getMe, updateMe, getMyStats } from '../api/auth'
+import { getMe, updateMe, getMyStats, sendVerification } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
-import { User, Link, Unlink, Eye, EyeOff, Type, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
+import { User, Link, Unlink, Eye, EyeOff, Type, ExternalLink, ChevronDown, ChevronUp, Mail, Pencil, Check, X } from 'lucide-react'
 import client from '../api/client'
 import { useUIStore } from '../store/uiStore'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -136,6 +136,13 @@ export default function ProfilePage() {
   const [xboxConnecting, setXboxConnecting] = useState(false)
   const xboxPopupRef = useRef(null)
 
+  const [verificationSent, setVerificationSent] = useState(false)
+  const [verificationError, setVerificationError] = useState(null)
+
+  const [editingUsername, setEditingUsername] = useState(false)
+  const [usernameInput, setUsernameInput] = useState('')
+  const [usernameError, setUsernameError] = useState(null)
+
   const { scale, scales, scaleLabels, setScale } = useUIStore()
 
   const { data: me } = useQuery({
@@ -168,6 +175,24 @@ export default function ProfilePage() {
   const disconnectSteamMutation = useMutation({
     mutationFn: () => client.delete('/users/me/steam/disconnect'),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
+  })
+
+  // Username change
+  const changeUsernameMutation = useMutation({
+    mutationFn: (username) => updateMe({ username }),
+    onSuccess: () => {
+      setEditingUsername(false)
+      setUsernameError(null)
+      queryClient.invalidateQueries({ queryKey: ['me'] })
+    },
+    onError: (err) => setUsernameError(err.response?.data?.detail || 'Could not update username'),
+  })
+
+  // Email verification
+  const resendVerificationMutation = useMutation({
+    mutationFn: sendVerification,
+    onSuccess: () => { setVerificationSent(true); setVerificationError(null) },
+    onError: (err) => setVerificationError(err.response?.data?.detail || 'Failed to send verification email'),
   })
 
   // Xbox — popup OAuth flow
@@ -224,6 +249,37 @@ export default function ProfilePage() {
     <div>
       <h1 className="font-bold mb-6" style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>Profile</h1>
 
+      {/* Email verification banner */}
+      {me && !me.email_verified && (
+        <div className="flex items-start gap-3 rounded-xl px-4 py-3 mb-5"
+          style={{ background: 'rgba(251,191,36,0.07)', border: '0.5px solid rgba(251,191,36,0.25)' }}>
+          <Mail size={15} className="mt-0.5 flex-shrink-0" style={{ color: '#fbbf24' }} />
+          <div className="flex-1 min-w-0">
+            <p style={{ fontSize: '0.8rem', color: '#fbbf24', fontWeight: 500 }}>Verify your email address</p>
+            {verificationSent ? (
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                Verification email sent — check your inbox.
+              </p>
+            ) : (
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                Your email hasn't been verified yet.{' '}
+                <button
+                  onClick={() => resendVerificationMutation.mutate()}
+                  disabled={resendVerificationMutation.isPending}
+                  className="transition"
+                  style={{ color: '#fbbf24', textDecoration: 'underline', cursor: 'pointer' }}
+                >
+                  {resendVerificationMutation.isPending ? 'Sending...' : 'Resend verification email'}
+                </button>
+              </p>
+            )}
+            {verificationError && (
+              <p style={{ fontSize: '0.7rem', color: '#f87171', marginTop: 2 }}>{verificationError}</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Account + stats */}
       <div style={sectionStyle}>
         {/* Identity */}
@@ -233,26 +289,77 @@ export default function ProfilePage() {
             <User size={18} style={{ color: 'var(--text-muted)' }} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{me?.username}</span>
-              {badge && (
-                <span className="px-2 py-0.5 rounded-full" style={{ ...badge.style, fontSize: '0.65rem' }}>
-                  {badge.label}
-                </span>
-              )}
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 1 }}>{me?.email}</p>
-            {me?.username && (
-              <RouterLink
-                to={`/u/${me.username}`}
-                className="inline-flex items-center gap-1 transition mt-2"
-                style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textDecoration: 'none' }}
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-              >
-                <ExternalLink size={10} />
-                pling.app/u/{me.username}
-              </RouterLink>
+            {editingUsername ? (
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <input
+                    autoFocus
+                    value={usernameInput}
+                    onChange={(e) => { setUsernameInput(e.target.value); setUsernameError(null) }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') changeUsernameMutation.mutate(usernameInput)
+                      if (e.key === 'Escape') { setEditingUsername(false); setUsernameError(null) }
+                    }}
+                    maxLength={30}
+                    style={{ ...inputStyle, padding: '4px 10px', fontSize: '0.9rem', fontWeight: 600, width: 'auto', minWidth: 0, flex: 1 }}
+                  />
+                  <button
+                    onClick={() => changeUsernameMutation.mutate(usernameInput)}
+                    disabled={changeUsernameMutation.isPending || !usernameInput.trim()}
+                    className="flex items-center justify-center rounded-lg transition"
+                    style={{ width: 28, height: 28, background: 'rgba(139,92,246,0.15)', color: 'var(--accent)', flexShrink: 0 }}
+                  >
+                    <Check size={13} />
+                  </button>
+                  <button
+                    onClick={() => { setEditingUsername(false); setUsernameError(null) }}
+                    className="flex items-center justify-center rounded-lg transition"
+                    style={{ width: 28, height: 28, background: 'var(--bg-elevated)', color: 'var(--text-muted)', flexShrink: 0 }}
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+                {usernameError && (
+                  <p style={{ fontSize: '0.7rem', color: '#f87171', marginTop: 2 }}>{usernameError}</p>
+                )}
+                <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  3–30 chars: letters, numbers, hyphens, underscores
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{me?.username}</span>
+                  {badge && (
+                    <span className="px-2 py-0.5 rounded-full" style={{ ...badge.style, fontSize: '0.65rem' }}>
+                      {badge.label}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => { setUsernameInput(me?.username || ''); setUsernameError(null); setEditingUsername(true) }}
+                    className="flex items-center justify-center rounded transition"
+                    style={{ color: 'var(--text-muted)', padding: 2 }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                    title="Change username"
+                  >
+                    <Pencil size={11} />
+                  </button>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 1 }}>{me?.email}</p>
+                {me?.username && (
+                  <RouterLink
+                    to={`/u/${me.username}`}
+                    className="inline-flex items-center gap-1 transition mt-2"
+                    style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textDecoration: 'none' }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                  >
+                    <ExternalLink size={10} />
+                    pling.app/u/{me.username}
+                  </RouterLink>
+                )}
+              </>
             )}
           </div>
         </div>

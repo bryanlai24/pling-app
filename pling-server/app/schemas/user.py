@@ -41,11 +41,14 @@ class UserPublic(PlingBase):
     username: str
     email: str
     role: UserRole
+    email_verified: bool
     psn_id: str | None
     psn_account_id: str | None
     xbox_gamertag: str | None
     steam_id: str | None
     steam_display_name: str | None
+    google_id: str | None = None
+    apple_id: str | None = None
     created_at: datetime
 
 

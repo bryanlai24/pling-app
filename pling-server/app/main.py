@@ -4,7 +4,8 @@ from contextlib import asynccontextmanager
 
 from app.config import get_settings
 from app.database import init_db
-from app.routers import users, games, achievements, objectives, admin, psn, genres, game_requests, steam, xbox, public
+from app.routers import users, games, achievements, objectives, admin, psn, genres, game_requests, steam, xbox, public, auth
+from app.routers import discord_auth
 
 settings = get_settings()
 
@@ -60,6 +61,8 @@ app.include_router(game_requests.router, prefix="/api/game-requests", tags=["gam
 app.include_router(steam.router, prefix="/api/users/me/steam", tags=["steam"])
 app.include_router(xbox.router, prefix="/api/users/me/xbox", tags=["xbox"])
 app.include_router(public.router, prefix="/api/public", tags=["public"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(discord_auth.router, prefix="/api/auth/discord", tags=["discord-auth"])
 
 
 @app.get("/", tags=["health"])

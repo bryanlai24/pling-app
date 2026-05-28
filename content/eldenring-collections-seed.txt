@@ -1,0 +1,37 @@
+LEGENDARY ARMAMENTS
+    Grafted Blade Greatsword | Dropped by Leonine Misbegotten, the boss of Castle Morne in the Weeping Peninsula
+    Ruins Greatsword | Dropped by the Misbegotten Warrior & Crucible Knight duo at Redmane Castle Plaza
+    Starscourge Greatsword | Purchased from Enia at the Roundtable Hold after defeating Radahn and obtaining his Great Rune
+    Golden Order Greatsword | Dropped by the Misbegotten Crusader in the Cave of the Forlorn, Consecrated Snowfield — requires two Stonesword Keys at the entrance fog gate
+    Sword of Night and Flame | Chest inside Caria Manor; from the Manor Lower Level grace, head south along the wall, drop to the roof below, and the chest is at the end of the room
+    Sword of Milos | Complete the Dung Eater's questline — he gives it on completion. Alternatively dropped by killing him, but that locks out his questline achievement
+    Dark Moon Greatsword | Reward for completing Ranni's questline, given automatically at the Cathedral of Manus Celes on the Moonlight Altar
+    Eclipse Shotel | Chest inside the church building in the northeast section of Castle Sol, Mountaintops of the Giants
+    Bolt of Gransax | On the giant spear leaning against a building in Leyndell, Royal Capital; from the Erdtree Sanctuary grace, look down toward the dragon corpse — the bolt is on a ledge below. **Missable: disappears permanently once Leyndell becomes the Ashen Capital after defeating Maliketh**
+
+LEGENDARY TALISMANS
+    Erdtree's Favor +2 | On a root near the Putrid Avatar enemy in the outer area of Leyndell, Ashen Capital — only accessible after defeating Maliketh
+    Radagon's Soreseal | Chest behind an imp fog gate in Fort Faroth, Caelid — requires two Stonesword Keys
+    Moon of Nokstella | Chest in Nokstella, Eternal City; in a building patrolled by a giant ant and two Silver Tears
+    Dragoncrest Greatshield Talisman | Chest in Elphael, Brace of the Haligtree; from the Drainage Channel grace, head down into the rot pool area and look for a room guarded by a Cleanrot Knight
+    Marika's Soreseal | Chest at the top of the Divine Tower of Elphael, accessed from within Elphael
+    Graven-Mass Talisman | Chest in Albinauric Rise, Consecrated Snowfield; solve the imp puzzle by summoning two Fanged Imp Ashes near the imp statues at the base of the tower to unlock the door
+    Old Lord's Talisman | Chest in Crumbling Farum Azula, in the building near the Farum Azula Dragon in the open area by the Dragon Temple grace
+    Shard of Alexander | Defeat Iron Fist Alexander in his final duel on a cliff in Crumbling Farum Azula — requires completing his questline up to that point
+
+LEGENDARY SORCERIES AND INCANTATIONS
+    Comet Azur | Given by Master Azur in a hidden alcove on the cliffs of Mt. Gelmir, northeast of Volcano Manor; exhaust his dialogue
+    Stars of Ruin | Given by Master Lusat in Sellia Hideaway, Caelid — a cave hidden behind an illusory wall on the cliffs north of Sellia; requires the Sellian Sealbreaker from Sellen's questline to pass the fog walls inside
+    Elden Stars | In a small cave at the far end of the Deeproot Depths; follow the roots to the edge of the map and drop in
+    Flame of the Fell God | Dropped by Adan, Thief of Fire, the boss of Malefactor's Evergaol in southern Liurnia, southeast of the Gate Town Bridge
+    Greyoll's Roar | Purchased from the Cathedral of Dragon Communion in southern Caelid for 3 Dragon Hearts
+    Black Blade | Purchased from Enia at the Roundtable Hold after defeating Maliketh and obtaining his Remembrance
+    Founding Rain of Stars | Chest at the top of Heretical Rise, Mountaintops of the Giants. **The bridge to the tower is invisible** — from the nearest grace, walk east along the cliff edge to find the invisible walkway leading up to the entrance
+
+LEGENDARY ASHEN REMAINS
+    Lhutel the Headless | Dropped by the Cemetery Shade boss in Tombsward Catacombs, Weeping Peninsula — requires one Stonesword Key inside
+    Cleanrot Knight Finlay | Chest in Elphael, Brace of the Haligtree; from the Prayer Room grace, take the ladder down and cross the scarlet rot pool to the room on the far side
+    Mimic Tear | Chest behind a fog gate in Night's Sacred Ground, Nokron, Eternal City — requires one Stonesword Key
+    Black Knife Tiche | Dropped by Alecto, Black Knife Ringleader, boss of the Ringleader's Evergaol on the Moonlight Altar plateau — only accessible after completing Ranni's questline
+    Redmane Knight Ogha | Chest in War-Dead Catacombs, Caelid; the entrance is in the Radahn battlefield and only accessible after defeating Radahn — requires two Stonesword Keys inside
+    Ancient Dragon Knight Kristoff | Chest in Sainted Hero's Grave, Altus Plateau, southeast of the Outer Wall Phantom Tree grace — requires two Stonesword Keys inside

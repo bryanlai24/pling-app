@@ -5,6 +5,7 @@ from app.models.achievement import Achievement, Objective, TrophyType, UserAchie
 from app.models.progress import UserGame, GameStatus
 from app.models.psn_token import PSNToken
 from app.models.xbox_token import XboxToken
+from app.models.email_token import EmailToken, EmailTokenType
 
 __all__ = [
     "User",
@@ -19,4 +20,6 @@ __all__ = [
     "GameStatus",
     "PSNToken",
     "XboxToken",
+    "EmailToken",
+    "EmailTokenType",
 ]

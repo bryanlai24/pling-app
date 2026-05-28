@@ -24,6 +24,23 @@ class Settings(BaseSettings):
     xbox_client_secret: str = ""
     xbox_redirect_uri: str = "http://localhost:5173/auth/xbox/callback"
 
+    # Email (Resend)
+    resend_api_key: str = ""
+    email_from: str = "Pling <noreply@pling.app>"
+    app_base_url: str = "http://localhost:5173"
+
+    # Social OAuth
+    google_client_id: str = ""
+    apple_team_id: str = ""
+    apple_client_id: str = ""
+    apple_key_id: str = ""
+    apple_private_key: str = ""  # PEM contents
+
+    # Discord OAuth
+    discord_client_id: str = ""
+    discord_client_secret: str = ""
+    discord_redirect_uri: str = "http://localhost:5173/auth/discord/callback"
+
     @property
     def is_production(self) -> bool:
         return self.app_env == "production"

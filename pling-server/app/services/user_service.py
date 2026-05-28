@@ -1,9 +1,12 @@
 import uuid
+import secrets
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from fastapi import HTTPException, status
 
 from app.models.user import User
+from app.models.email_token import EmailToken, EmailTokenType
 from app.models.achievement import Achievement, UserAchievement, TrophyType
 from app.models.progress import UserGame, GameStatus
 from app.models.game import Game, Platform
@@ -29,6 +32,46 @@ async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
     return result.scalar_one_or_none()
 
 
+async def create_verification_token(db: AsyncSession, user: User) -> str:
+    """Create a fresh email verification token, deleting any existing ones."""
+    await db.execute(
+        delete(EmailToken).where(
+            EmailToken.user_id == user.id,
+            EmailToken.token_type == EmailTokenType.verification,
+        )
+    )
+    token = secrets.token_urlsafe(32)
+    db.add(EmailToken(
+        user_id=user.id,
+        token=token,
+        token_type=EmailTokenType.verification,
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+    ))
+    await db.flush()
+    return token
+
+
+async def create_merge_token(db: AsyncSession, user: User, provider: str, provider_id: str) -> str:
+    """Create a short-lived merge confirmation token."""
+    await db.execute(
+        delete(EmailToken).where(
+            EmailToken.user_id == user.id,
+            EmailToken.token_type == EmailTokenType.merge,
+        )
+    )
+    token = secrets.token_urlsafe(32)
+    db.add(EmailToken(
+        user_id=user.id,
+        token=token,
+        token_type=EmailTokenType.merge,
+        provider=provider,
+        provider_id=provider_id,
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+    ))
+    await db.flush()
+    return token
+
+
 async def register_user(db: AsyncSession, data: UserRegister) -> User:
     if await get_user_by_email(db, data.email):
         raise HTTPException(
@@ -44,9 +87,10 @@ async def register_user(db: AsyncSession, data: UserRegister) -> User:
         username=data.username,
         email=data.email,
         password_hash=hash_password(data.password),
+        email_verified=False,
     )
     db.add(user)
-    await db.flush()  # get the ID without committing
+    await db.flush()
     await db.refresh(user)
     return user
 

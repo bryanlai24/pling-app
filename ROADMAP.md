@@ -30,35 +30,32 @@
 - [x] Guest Mode + Landing Page — browse full catalogue, track one game via localStorage, contextual CTA modal on second game; landing page with rotating featured game hero (real-time activity), catalogue grid, no-auth public routes for /games/:id and /achievements/:id
 - [x] Xbox cover art on import, gamerscore (xG / yG) display on game page
 - [x] Xbox unique constraint fix — scoped AchievementPlatformId uniqueness to per-game (achievement_id, platform)
+- [x] Shareable public profiles (`/u/:username`) — Legacy score, Trophy Room (completed games with platform symbols), recently played, platform badges
+- [x] Xbox sync fix — gate earned achievements on `progress_state == "Achieved"` (not `time_unlocked` which Xbox populates for all achievements with .NET zero date)
+- [x] Xbox import deduplication fix — strict title matching prevents cross-franchise title_id collisions (e.g. Gears 2 vs Gears 4)
+- [x] Per-game progress reset — clears UserAchievement rows + zeroes UserGame, user re-syncs to repopulate
+- [x] Privacy Policy draft — 11-section Word doc ready for legal review
+- [x] Public profile polish — hide raw steamID64, clean PSN trophies label
 
 ---
 
-## v3
+## v3 ✅ Shipped
 
-### Shareable Profile / Social
-Public profile URL (`pling.app/u/username`) showing completion stats, pinned achievements, recently played. Foundation for social graph — follow friends, see their activity.
-
----
+### Social Sign-In
+Google OAuth, Discord OAuth, and Apple ID (credentials-ready). Zero-friction onboarding alongside guest mode. Username picker for new accounts, email-based account merge for existing accounts, full popup flow for Discord.
 
 ### QOL — Objective Interactions
-- Drag-to-reorder objectives within a group
-- Auto-tick group when all children are completed
-- Auto-collapse completed groups
-- Search/filter within an achievement's objective list
+Drag-to-reorder objectives, auto-collapse completed groups, search/filter within achievement objective lists.
 
 ---
+
+## v4
 
 ### Notifications
 In-app or push notifications for: game added to catalogue (matching a request), friend completes a game, new objective added to a tracked game.
 
----
+### Physical-Era Xbox Games
+Games with disc-only launches (Halo 3, Gears 1, etc.) don't appear in the Xbox played titles API. Add a manual title ID entry path in the Admin import form so contributors can import them by numeric title_id directly.
 
-### Social Sign-In (Apple ID + Google)
-Allow users to register and sign in with Apple ID and Google OAuth — zero friction onboarding, no password to forget. Works naturally alongside the guest mode CTA flow: guest hits a gate, taps "Sign up with Apple/Google", and they're in with one tap.
-
-Backend: OAuth callback endpoints for each provider, create-or-link user on first login, JWT issued the same way as email/password auth. Frontend: Apple and Google sign-in buttons on LoginPage and RegisterPage, plus the contextual CTA modal in guest mode.
-
----
-
-### Privacy Policy
-Draft covering: data collected (account info, platform tokens, achievement progress), how it's used, third-party services (PSN/Xbox/Steam APIs, Google Cloud Run, Cloud SQL), user rights (deletion, export), cookie usage. Draft ready for legal review before publishing.
+### Platinum Trophy SVG Refresh
+Push the custom platinum trophy closer to the real silhouette — wider shallow bowl, short stem, flat base, cool metallic lavender sheen with horizontal body ridges. Stay clear of Sony's exact assets while landing unmistakably "PlayStation platinum".

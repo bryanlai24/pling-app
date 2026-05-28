@@ -14,6 +14,9 @@ import AdminPage from './pages/AdminPage'
 import RequestsPage from './pages/RequestsPage'
 import XboxCallbackPage from './pages/XboxCallbackPage'
 import PublicProfilePage from './pages/PublicProfilePage'
+import VerifyEmailPage from './pages/VerifyEmailPage'
+import ConfirmMergePage from './pages/ConfirmMergePage'
+import DiscordCallbackPage from './pages/DiscordCallbackPage'
 
 function ProtectedRoute({ children }) {
   const { token, isGuest } = useAuthStore()
@@ -44,6 +47,9 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/auth/xbox/callback" element={<XboxCallbackPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/confirm-merge" element={<ConfirmMergePage />} />
+      <Route path="/auth/discord/callback" element={<DiscordCallbackPage />} />
 
       {/* Public game + achievement browsing — no auth required */}
       <Route path="/games/:gameId" element={<Layout />}>
