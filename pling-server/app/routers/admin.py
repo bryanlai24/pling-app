@@ -1,7 +1,7 @@
 import uuid, asyncio, re
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete as sql_delete
 from pydantic import BaseModel
 from datetime import datetime, timezone
 
@@ -391,16 +391,18 @@ async def import_xbox_game(
             detail="Xbox account not connected — authenticate first",
         )
 
-    # Check if already imported
+    # Check if already imported for this platform specifically
+    # (same title_id can exist as a manual/seeded entry — that's fine)
     existing_set = await db.execute(
         select(TrophySet).where(
-            TrophySet.platform_communication_id == data.title_id
+            TrophySet.platform_communication_id == data.title_id,
+            TrophySet.platform == "xbox",
         )
     )
     if existing_set.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="This title has already been imported",
+            detail="This title has already been imported for Xbox",
         )
 
     # Fetch achievements from Xbox
@@ -523,16 +525,18 @@ async def import_steam_game(
             detail="Steam ID not set — add your Steam ID in your profile first",
         )
 
-    # Check if already imported
+    # Check if already imported for this platform specifically
+    # (same app_id can exist as a manual/seeded entry — that's fine)
     existing_set = await db.execute(
         select(TrophySet).where(
-            TrophySet.platform_communication_id == data.app_id
+            TrophySet.platform_communication_id == data.app_id,
+            TrophySet.platform == "steam",
         )
     )
     if existing_set.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="This game has already been imported",
+            detail="This game has already been imported for Steam",
         )
 
     # Fetch achievements from Steam
@@ -646,6 +650,93 @@ async def get_seed_catalogue(
 class SeedRequest(BaseModel):
     slug: str
 
+
+# ── Delete game ────────────────────────────────────────────────────────────────
+
+@router.get("/games/{game_id}/trophy-sets", status_code=status.HTTP_200_OK)
+async def list_game_trophy_sets(
+    game_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    """Return all trophy sets for a game with achievement counts."""
+    result = await db.execute(select(Game).where(Game.id == game_id))
+    game = result.scalar_one_or_none()
+    if not game:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+
+    sets_result = await db.execute(
+        select(TrophySet).where(TrophySet.game_id == game_id).order_by(TrophySet.sort_order)
+    )
+    trophy_sets = sets_result.scalars().all()
+
+    output = []
+    for ts in trophy_sets:
+        ach_result = await db.execute(
+            select(Achievement).where(Achievement.trophy_set_id == ts.id)
+        )
+        ach_count = len(ach_result.scalars().all())
+        output.append({
+            "id": str(ts.id),
+            "name": ts.name,
+            "platform": ts.platform,
+            "platform_communication_id": ts.platform_communication_id,
+            "achievement_count": ach_count,
+            "sort_order": ts.sort_order,
+        })
+
+    return output
+
+
+@router.delete("/games/{game_id}", status_code=status.HTTP_200_OK)
+async def delete_game_admin(
+    game_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    """Delete a game and all associated data. Relies on DB-level CASCADE on FKs."""
+    result = await db.execute(select(Game).where(Game.id == game_id))
+    game = result.scalar_one_or_none()
+    if not game:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+    title = game.title
+    await db.execute(sql_delete(Game).where(Game.id == game_id))
+    await db.commit()
+    return {"message": f"Deleted game '{title}' and all associated data"}
+
+
+@router.delete("/trophy-sets/{trophy_set_id}", status_code=status.HTTP_200_OK)
+async def delete_trophy_set_admin(
+    trophy_set_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    """Delete a single trophy set and its achievements, leaving the parent game intact."""
+    result = await db.execute(select(TrophySet).where(TrophySet.id == trophy_set_id))
+    trophy_set = result.scalar_one_or_none()
+    if not trophy_set:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trophy set not found")
+
+    # Refuse if it's the only set on the game — delete the game instead
+    sets_result = await db.execute(
+        select(TrophySet).where(TrophySet.game_id == trophy_set.game_id)
+    )
+    all_sets = sets_result.scalars().all()
+    if len(all_sets) <= 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete the only trophy set on a game — delete the game instead",
+        )
+
+    name = trophy_set.name
+    # Delete achievements belonging to this set first (FK is SET NULL, not CASCADE)
+    await db.execute(sql_delete(Achievement).where(Achievement.trophy_set_id == trophy_set_id))
+    await db.execute(sql_delete(TrophySet).where(TrophySet.id == trophy_set_id))
+    await db.commit()
+    return {"message": f"Deleted trophy set '{name}'"}
+
+
+# ── Seed catalogue ─────────────────────────────────────────────────────────────
 
 @router.post("/seed/game", status_code=status.HTTP_200_OK)
 async def seed_game_endpoint(

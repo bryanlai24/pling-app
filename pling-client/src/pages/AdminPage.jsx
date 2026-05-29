@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMe } from '../api/auth'
 import { useNavigate } from 'react-router-dom'
-import { Shield, Download, Loader2, CheckCircle2, AlertCircle, Search, Trophy, ChevronRight, Sparkles } from 'lucide-react'
+import { Shield, Download, Loader2, CheckCircle2, AlertCircle, Search, Trophy, ChevronRight, Sparkles, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import client from '../api/client'
 import { usePageTitle } from '../hooks/usePageTitle'
 
@@ -17,6 +17,9 @@ const searchSteam = (query) => client.get(`/admin/steam/search?query=${encodeURI
 const importSteamGame = (data) => client.post('/admin/import/steam', data)
 const getSeedCatalogue = () => client.get('/admin/seed/catalogue')
 const seedGame = (slug) => client.post('/admin/seed/game', { slug })
+const getGameTrophySets = (gameId) => client.get(`/admin/games/${gameId}/trophy-sets`)
+const deleteGame = (gameId) => client.delete(`/admin/games/${gameId}`)
+const deleteTrophySet = (trophySetId) => client.delete(`/admin/trophy-sets/${trophySetId}`)
 
 // ── Shared sub-components ──────────────────────────────────────────────────
 
@@ -354,6 +357,197 @@ function SeedSection({ queryClient }) {
   )
 }
 
+// ── Catalogue section with management controls ───────────────────────────────
+
+function GameManagementPanel({ game, queryClient, navigate, onClose }) {
+  const [confirm, setConfirm] = useState(null) // { type: 'game' | 'set', id, name }
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+
+  const { data: trophySets, isLoading } = useQuery({
+    queryKey: ['admin-trophy-sets', game.id],
+    queryFn: () => getGameTrophySets(game.id).then(r => r.data),
+  })
+
+  const platformLabel = (p) => p ?? 'manual'
+  const platformColor = (p) => {
+    if (p === 'steam') return '#4a90d9'
+    if (p === 'psn') return '#003791'
+    if (p === 'xbox') return '#107c10'
+    return 'var(--text-muted)'
+  }
+
+  const handleDeleteSet = async (setId) => {
+    setBusy(true)
+    setError(null)
+    try {
+      await deleteTrophySet(setId)
+      queryClient.invalidateQueries({ queryKey: ['admin-trophy-sets', game.id] })
+      queryClient.invalidateQueries({ queryKey: ['all-games'] })
+      setConfirm(null)
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Delete failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleDeleteGame = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await deleteGame(game.id)
+      queryClient.invalidateQueries({ queryKey: ['all-games'] })
+      queryClient.invalidateQueries({ queryKey: ['games'] })
+      onClose()
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Delete failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div
+      className="rounded-lg mt-1 mb-2"
+      style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border-default)', padding: '12px 14px' }}
+    >
+      {/* View game link */}
+      <button
+        onClick={() => navigate(`/games/${game.id}`)}
+        className="text-xs mb-3 flex items-center gap-1"
+        style={{ color: 'var(--accent)' }}
+      >
+        View game page <ChevronRight size={12} />
+      </button>
+
+      {/* Trophy sets */}
+      <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Trophy Sets</p>
+      {isLoading && <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Loading…</p>}
+      {trophySets?.map(ts => (
+        <div
+          key={ts.id}
+          className="flex items-center justify-between gap-2 py-1.5"
+          style={{ borderBottom: '0.5px solid var(--border-deep)' }}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className="text-xs font-medium px-1.5 py-0.5 rounded flex-shrink-0"
+              style={{ background: platformColor(ts.platform) + '22', color: platformColor(ts.platform) }}
+            >
+              {platformLabel(ts.platform)}
+            </span>
+            <span className="text-xs truncate" style={{ color: 'var(--text-primary)' }}>{ts.name}</span>
+            <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-muted)' }}>{ts.achievement_count} achievements</span>
+          </div>
+          {confirm?.type === 'set' && confirm.id === ts.id ? (
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Delete?</span>
+              <button
+                onClick={() => handleDeleteSet(ts.id)}
+                disabled={busy}
+                className="text-xs px-2 py-1 rounded"
+                style={{ background: '#e53e3e', color: '#fff' }}
+              >
+                {busy ? <Loader2 size={11} className="animate-spin" /> : 'Confirm'}
+              </button>
+              <button onClick={() => setConfirm(null)} className="text-xs" style={{ color: 'var(--text-muted)' }}>Cancel</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirm({ type: 'set', id: ts.id, name: ts.name })}
+              className="flex-shrink-0 p-1 rounded transition"
+              style={{ color: 'var(--text-muted)' }}
+              title="Delete this trophy set"
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
+        </div>
+      ))}
+
+      {/* Error */}
+      {error && <p className="text-xs mt-2" style={{ color: '#e53e3e' }}>{error}</p>}
+
+      {/* Delete whole game */}
+      <div className="mt-3 pt-2" style={{ borderTop: '0.5px solid var(--border-default)' }}>
+        {confirm?.type === 'game' ? (
+          <div className="flex items-center gap-3">
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              Delete <strong>{game.title}</strong> and all data?
+            </span>
+            <button
+              onClick={handleDeleteGame}
+              disabled={busy}
+              className="text-xs px-2.5 py-1 rounded flex items-center gap-1"
+              style={{ background: '#e53e3e', color: '#fff' }}
+            >
+              {busy ? <Loader2 size={11} className="animate-spin" /> : <><Trash2 size={11} /> Delete game</>}
+            </button>
+            <button onClick={() => setConfirm(null)} className="text-xs" style={{ color: 'var(--text-muted)' }}>Cancel</button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirm({ type: 'game' })}
+            className="text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded transition"
+            style={{ color: '#e53e3e', border: '0.5px solid #e53e3e33' }}
+          >
+            <Trash2 size={12} /> Delete entire game
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function CatalogueSection({ gamesData, queryClient, navigate }) {
+  const [expandedId, setExpandedId] = useState(null)
+
+  return (
+    <SectionCard>
+      <div className="flex items-baseline gap-2 mb-4">
+        <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Catalogue</h2>
+        <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{gamesData?.length ?? 0} games</span>
+      </div>
+
+      {gamesData?.map((g) => (
+        <div key={g.id} style={{ borderBottom: '0.5px solid var(--border-deep)' }}>
+          <button
+            onClick={() => setExpandedId(expandedId === g.id ? null : g.id)}
+            className="w-full flex items-center gap-3 transition text-left"
+            style={{ padding: '10px 0' }}
+          >
+            <GameCover url={g.cover_image_url} alt={g.title} size="sm" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{g.title}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                {g.platform ?? 'manual'}{g.genre ? ` · ${g.genre}` : ''}
+              </p>
+            </div>
+            {expandedId === g.id
+              ? <ChevronUp size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+              : <ChevronDown size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+            }
+          </button>
+
+          {expandedId === g.id && (
+            <GameManagementPanel
+              game={g}
+              queryClient={queryClient}
+              navigate={navigate}
+              onClose={() => setExpandedId(null)}
+            />
+          )}
+        </div>
+      ))}
+
+      {!gamesData?.length && (
+        <p className="text-sm py-6 text-center" style={{ color: 'var(--text-muted)' }}>No games imported yet</p>
+      )}
+    </SectionCard>
+  )
+}
+
 // ── Main page ───────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
@@ -383,6 +577,14 @@ export default function AdminPage() {
     refetchInterval: 60000,
   })
 
+  // ── Helpers ──
+  const findMatchingGame = (title, games) => {
+    if (!title || !games?.length) return null
+    const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '')
+    const normalized = normalize(title)
+    return games.find((g) => normalize(g.title) === normalized) || null
+  }
+
   // ── PSN state ──
   const [search, setSearch] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -391,6 +593,12 @@ export default function AdminPage() {
   const [importForm, setImportForm] = useState({ genre: '', trophy_set_name: 'Base Game', existing_game_id: '' })
   const [importResult, setImportResult] = useState(null)
   const [importError, setImportError] = useState(null)
+
+  useEffect(() => {
+    if (!selectedGame || !gamesData) return
+    const match = findMatchingGame(selectedGame.title, gamesData)
+    setImportForm((f) => ({ ...f, existing_game_id: match ? match.id : '' }))
+  }, [selectedGame, gamesData])
 
   // ── Xbox state ──
   const [xboxAuthUrl, setXboxAuthUrl] = useState(null)
@@ -408,6 +616,12 @@ export default function AdminPage() {
   const [xboxImportError, setXboxImportError] = useState(null)
   const [xboxImporting, setXboxImporting] = useState(false)
 
+  useEffect(() => {
+    if (!selectedXboxGame || !gamesData) return
+    const match = findMatchingGame(selectedXboxGame.title, gamesData)
+    setXboxImportForm((f) => ({ ...f, existing_game_id: match ? match.id : '' }))
+  }, [selectedXboxGame, gamesData])
+
   // ── Steam state ──
   const [steamSearch, setSteamSearch] = useState('')
   const [steamResults, setSteamResults] = useState([])
@@ -417,6 +631,12 @@ export default function AdminPage() {
   const [steamImportResult, setSteamImportResult] = useState(null)
   const [steamImportError, setSteamImportError] = useState(null)
   const [steamImporting, setSteamImporting] = useState(false)
+
+  useEffect(() => {
+    if (!selectedSteamGame || !gamesData) return
+    const match = findMatchingGame(selectedSteamGame.title, gamesData)
+    setSteamImportForm((f) => ({ ...f, existing_game_id: match ? match.id : '' }))
+  }, [selectedSteamGame, gamesData])
 
   // ── PSN handlers ──
 
@@ -632,13 +852,13 @@ export default function AdminPage() {
                 />
               </div>
               <FormSelect
-                label="Add to existing game" sub="(for DLC)"
+                label="Attach to existing game" sub="(for DLC or platform sync)"
                 value={importForm.existing_game_id}
                 onChange={(e) => setImportForm({ ...importForm, existing_game_id: e.target.value })}
               >
                 <option value="">Create new game entry</option>
                 {gamesData?.map((g) => (
-                  <option key={g.id} value={g.id}>{g.title} ({g.platform})</option>
+                  <option key={g.id} value={g.id}>{g.title}{g.platform ? ` (${g.platform})` : ' (manual)'}</option>
                 ))}
               </FormSelect>
             </div>
@@ -825,13 +1045,13 @@ export default function AdminPage() {
                     placeholder="https://…"
                   />
                   <FormSelect
-                    label="Add to existing game" sub="(for DLC)"
+                    label="Attach to existing game" sub="(for DLC or platform sync)"
                     value={xboxImportForm.existing_game_id}
                     onChange={(e) => setXboxImportForm({ ...xboxImportForm, existing_game_id: e.target.value })}
                   >
                     <option value="">Create new game entry</option>
                     {gamesData?.map((g) => (
-                      <option key={g.id} value={g.id}>{g.title} ({g.platform})</option>
+                      <option key={g.id} value={g.id}>{g.title}{g.platform ? ` (${g.platform})` : ' (manual)'}</option>
                     ))}
                   </FormSelect>
                 </div>
@@ -996,13 +1216,13 @@ export default function AdminPage() {
                     />
                   </div>
                   <FormSelect
-                    label="Add to existing game" sub="(for DLC)"
+                    label="Attach to existing game" sub="(for DLC or platform sync)"
                     value={steamImportForm.existing_game_id}
                     onChange={(e) => setSteamImportForm({ ...steamImportForm, existing_game_id: e.target.value })}
                   >
                     <option value="">Create new game entry</option>
                     {gamesData?.map((g) => (
-                      <option key={g.id} value={g.id}>{g.title} ({g.platform})</option>
+                      <option key={g.id} value={g.id}>{g.title}{g.platform ? ` (${g.platform})` : ' (manual)'}</option>
                     ))}
                   </FormSelect>
                 </div>
@@ -1063,34 +1283,7 @@ export default function AdminPage() {
       <SeedSection queryClient={queryClient} />
 
       {/* ── Catalogue ── */}
-      <SectionCard>
-        <div className="flex items-baseline gap-2 mb-4">
-          <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Catalogue</h2>
-          <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{gamesData?.length ?? 0} games</span>
-        </div>
-
-        {gamesData?.map((g) => (
-          <button
-            key={g.id}
-            onClick={() => navigate(`/games/${g.id}`)}
-            className="w-full flex items-center gap-3 transition text-left"
-            style={{ padding: '10px 0', borderBottom: '0.5px solid var(--border-deep)' }}
-          >
-            <GameCover url={g.cover_image_url} alt={g.title} size="sm" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{g.title}</p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                {g.platform}{g.genre ? ` · ${g.genre}` : ''}
-              </p>
-            </div>
-            <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-          </button>
-        ))}
-
-        {!gamesData?.length && (
-          <p className="text-sm py-6 text-center" style={{ color: 'var(--text-muted)' }}>No games imported yet</p>
-        )}
-      </SectionCard>
+      <CatalogueSection gamesData={gamesData} queryClient={queryClient} navigate={navigate} />
     </div>
   )
 }

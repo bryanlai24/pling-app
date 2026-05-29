@@ -1,0 +1,190 @@
+MISSABLES
+
+Lending a Hand
+    Complete all Ch. 2 Honor missions | In Chapter 2 at Horseshoe Overlook, complete the following optional Honor missions as they become available: **Money Lending and Other Sins I, II, III** (accept all three loansharking jobs from Strauss), **Good, Honest, Snake Oil** (stranger east of Flatneck Station), and **We Loved Once and True I, II, III** (help Beau Gray and Penelope Braithwaite elope — start by speaking to Beau at his family's property in Scarlett Meadows).
+    Complete all Ch. 3 Honor missions | In Chapter 3 at Clemens Point, complete **The Course of True Love I, II, III** (continue Beau and Penelope's story — speak to Beau again to start Part I) and **Money Lending and Other Sins IV** (another debt job from Strauss).
+    Complete all Ch. 4 Honor missions | In Chapter 4 at Shady Belle, complete: **Help a Brother Out** (Brother Dorkins at Saint Denis Cathedral after *The Joys of Civilization*), **Brothers and Sisters, One and All** (continuation), **Fatherhood and Other Dreams I, II** (a letter arrives at camp — read it in your satchel to trigger), and **Money Lending and Other Sins V** (Strauss debt job).
+    Complete all Ch. 6 Honor missions | In Chapter 6 at Beaver Hollow, complete: **The Course of True Love IV, V** (read Penelope's letter at camp to trigger), **Archaeology for Beginners** (Rains Fall at Wapiti Indian Reservation), **Honor, Amongst Thieves** (Captain Monroe at Wapiti, requires positive honor), **Money Lending and Other Sins VI, VII** (accept and complete both Strauss jobs before the chapter ends), **Do Not Seek Absolution I, II** (Edith Downes in Annesburg — requires at least Honor Level 4, very easy to miss), and **Mrs. Sadie Adler, Widow I, II** (triggered through Ch. 6 story progression).
+
+Friends With Benefits
+    Do a companion activity at Horseshoe Overlook | During Chapter 2, complete at least one companion activity at Horseshoe Overlook camp. Play poker at the table in the evening with gang members, or accept a hunting trip from Charles. Activities appear as speech bubble icons on the camp minimap.
+    Do a companion activity at Clemens Point | During Chapter 3, complete at least one companion activity at Clemens Point camp. Fish with Javier (he's usually near the water) or go hunting with Charles again.
+    Do a companion activity at Shady Belle / Beaver Hollow | During Chapters 4–6, complete at least one companion activity at the Shady Belle or Beaver Hollow camp. Hunt with Charles or ride out with another willing gang member.
+
+Errand Boy
+    Fulfill 5 camp companion item requests | Gang members at camp occasionally ask Arthur to fetch specific items — whiskey, tobacco, medicine, etc. These appear as small icons at camp. Check in with gang members regularly during Chapters 2–4. If you donate to the tithing box and keep camp morale up, requests appear more frequently. Fulfill any 5 requests across any camps.
+
+Give to the Poor
+    Donate $250 to the camp tithing box | The tithing box sits near Dutch's tent in the center of every camp. Loot every enemy, rob travelers, and drop money into the box regularly from Chapter 2 onward. $250 is cumulative across the whole game — you'll hit it comfortably before Chapter 6 if you're consistent.
+
+STORY MILESTONES
+
+Just a Scratch
+    Complete the Prologue | Finish all story missions in the snowy opening chapter at Colter.
+
+Back in the Mud
+    Complete Chapter 1 | Finish all story missions in Chapter 1 at Colter.
+
+Trusty Steed
+    Reach Bond Level 4 with a horse | Ride your horse consistently, feed it, brush it, and pat it regularly. Avoid letting it die — switching to a new horse resets your bond. Stick with one horse from Chapter 2 onward and you'll hit Bond Level 4 naturally by mid-game.
+
+To Greener Pastures
+    Complete Chapter 2 | Finish all main story missions in Chapter 2.
+
+Settling Feuds
+    Complete Chapter 3 | Finish all main story missions in Chapter 3.
+
+Washed Ashore
+    Complete Chapter 4 | Finish all main story missions in Chapter 4.
+
+No Traitors
+    Complete Chapter 5 | Finish all main story missions in Chapter 5.
+
+Third Time Lucky
+    Complete Chapter 6 | Finish all main story missions in Chapter 6.
+
+Redemption
+    Complete Epilogue Part 1 | Finish all story missions in Epilogue Part 1.
+
+Cowboy Builder
+    Complete Epilogue Part 2 | Finish all story missions in Epilogue Part 2.
+
+Endless Summer
+    Complete the full story | Finish all chapters and both epilogues.
+
+OPEN WORLD AND COLLECTIBLES
+
+Zoologist
+    Study all 162 animal species | Aim at animals and press the study button before killing — or observe them at close range with binoculars. Key tips: Guarma animals (Chapter 5) are **not required**. Fish count — study them by getting close with your rod equipped. Legendary animals count — study before killing. Use Eagle Eye to spot animals in tall grass. Use a full checklist (PowerPyx has a 162-animal list with locations) and tick off each species. Commonly missed: animals in Tall Trees, Roanoke Ridge, and Bayou Nwa.
+    Skin all 160 required animal species | Kill and skin animals after studying them — don't collect carcasses intact. Pairs naturally with Zoologist: study first, then skin. **Important:** some animals like the Legendary Panther (Giaguaro) only spawn after completing specific Master Hunter challenges — don't finish the game before unlocking all challenge-gated animals.
+
+Paying Respects
+    Visit Jenny Kirk's grave | After completing both epilogues, travel to the northwest of the map, east of Spider Gorge riverbank near Colter. Interact with the grave to pay respects.
+    Visit Davey Callander's grave | After completing both epilogues, travel to the church graveyard in Colter (same area as the Prologue). Interact with the grave.
+    Visit Sean MacGuire's grave | After completing both epilogues, travel to the Flat Iron Lake shoreline, on the cliffs above the lake west of Rhodes. Interact with the grave.
+    Visit Kieran Duffy's grave | After completing both epilogues, travel west of Shady Belle, south of Bolger Glade in the open meadows. Interact with the grave.
+    Visit Hosea Matthews's grave | After completing both epilogues, travel to southeast Bluewater Marsh, under a cluster of trees in the swamp. Interact with the grave.
+    Visit Lenny Summers's grave | After completing both epilogues, travel to southeast Bluewater Marsh near Hosea's grave, under the same cluster of trees. Interact with the grave.
+    Visit Susan Grimshaw's grave | After completing both epilogues, travel to the hill overlooking the railroad, southwest of Elysian Pool. Interact with the grave.
+    Visit Eagle Flies's grave | After completing both epilogues, travel west of Donner Falls in Ambarino, on a cliff face overlooking the waterfall. Interact with the grave.
+    Visit Arthur Morgan's grave | After completing both epilogues, travel east of Donner Falls in Ambarino near the Mysterious Hill Home. Climb the hill to the first overlook. Interact with the grave. Note: the epitaph inscription changes based on your honor level.
+
+Artificial Intelligence
+    Start A Bright Bouncing Boy — Part 1 | In Chapter 4, after completing *The Joys of Civilization*, find Marko Dragic standing at the pond in the western Saint Denis park during **daytime**. Help him demonstrate his remote-controlled boat to investors.
+    Complete A Bright Bouncing Boy — Part 2 | Wait at least 2 in-game days after Part 1, then visit Marko's lab northeast of Doverhill in the Roanoke Valley area during **nighttime**. Discover the fate of his experiment to unlock the achievement.
+
+It's Art
+    Get the squirrel statue from Hamish Sinclair | Find the Hamish Sinclair stranger near Flatneck Station (available from Chapter 2). He will give you a carved squirrel statue.
+    Donate the squirrel statue to the Saint Denis art gallery | Bring the squirrel statue to the art gallery in Saint Denis and donate it. The achievement unlocks when the donation is accepted.
+
+Collector's Item
+    Find and mail all 10 Rock Carvings | The *Geology for Beginners* stranger quest starts by speaking to Francis Sinclair outside his cabin northwest of Strawberry (available from Chapter 2). He asks you to find 10 rock carvings across the map and mail him the coordinates of each one. Mail each set of coordinates at any post office after finding each carving. Use a map guide to locate all 10 — they are spread across cliffs and rock faces throughout the world.
+    Return to Francis Sinclair's cabin | After mailing all 10 sets of coordinates, read Sinclair's invitation letter and visit his cabin again. Collect your reward to unlock the achievement.
+
+Western Stranger
+    Complete 10 Stranger mission strands | Stranger missions appear as white question marks on the map. Complete 10 full strands (multi-part missions count once fully finished, not per part). The Marko Dragic (*A Bright Bouncing Boy*) and Francis Sinclair (*Geology for Beginners*) strands count. Most are available from Chapters 2–4 onward and remain accessible through the Epilogue.
+
+GAMEPLAY AND CHALLENGES
+
+Best in the West
+    Complete all story missions | Finish every main story mission across all chapters and both epilogues.
+    Complete required Stranger mission strands | Complete the number of stranger strands tracked under Pause Menu > Progress > Total Completion (not every stranger in the game — just the ones in the tracker).
+    Complete required chance encounters | Respond to random world events — robberies, ambushes, people in distress. Many are chapter-specific. Say yes to strangers asking for help and investigate unusual scenes during exploration.
+    Clear all gang hideouts | Clear each gang hideout location on the map. These respawn so revisit any you missed.
+    Complete all bounty hunting missions | Complete bounty missions in each region. Pick up bounty posters from sheriff's offices.
+    Complete all Hunting and Fishing challenges | Finish the Master Hunter challenge set and catch the required fish species. Check the challenge tracker under Pause Menu > Progress > Challenges.
+    Find required collectibles | Locate enough dinosaur bones, rock carvings, and dreamcatchers to satisfy the completion tracker. You do not need 100% of each — just the number shown in the tracker.
+    Play all mini games | Play Poker, Blackjack, Dominoes, Five Finger Fillet, and Arm Wrestling at least once each.
+    Complete all challenge sets | Finish all challenge categories: Bandit, Explorer, Gambler, Herbalist, Horseman, Master Hunter, Sharpshooter, Survivalist, Weapons Expert.
+
+Gold Rush
+    Earn 70 Gold Medals in Story missions | There are 104 gold-medal-eligible missions — you only need 70, so pick the easiest. Gold medals require completing all optional objectives in a single run (time limits, no health items, headshot counts, etc.). Replay missions via Pause Menu > Progress > Story. Early Chapter 2 missions are the easiest golds — replay them first. Before replaying, eat a cooked Thyme Big Game meal for a stamina boost (you cannot eat during replays). Skip the final Chapter 6 mission — it's very hard to gold.
+
+Extreme Personality
+    Reach maximum or minimum Honor | Play the story with consistent good behavior — spare enemies, greet strangers, help people in need — to trend toward maximum Honor naturally. High Honor is recommended: it unlocks the Chapter 6 *Do Not Seek Absolution* missions required for Lending a Hand, and Arthur's story is richer at high Honor. Check your Honor level in the Player menu.
+
+Grin and Bear It
+    Find a consistent grizzly bear spawn | Travel to the area halfway between Wallace Station and Watson's Cabin, north of Little Creek River in West Elizabeth. Grizzly bears spawn here reliably. Black bears do not count — only grizzlies.
+    Survive 18 grizzly bear attacks and kill each bear | Let the bear knock Arthur to the ground and trigger the ground struggle prompt. Fight it off using the button prompt, then shoot the bear while still lying on the ground — this registers as a valid kill. Killing the bear any other way does not count. After each kill, ride away for a minute, set up camp, sleep 1–2 days, and ride back to respawn a new bear. Repeat 18 times.
+
+Bountiful
+    Accumulate $250 bounties across all five states | Go on a rampage in New Hanover, Lemoyne, West Elizabeth, Ambarino, and New Austin to build up bounties of $250 in each simultaneously. Wear your bandana to slow bounty accumulation. All five states must be at $250 at the same time.
+    Survive 3 in-game days without being arrested or killed | Once all bounties are at $250, retreat to a remote camp or secluded area and sleep through 3 in-game days. Avoid lawmen and roads entirely. After 3 days, pay off bounties at any post office. Easiest to do in the Epilogue when you have more money and full map access.
+
+It Was THIS Big!
+    Catch a fish weighing at least 16 lbs | Travel to Lake Owanjila west of Strawberry. Purchase a Special Lake Lure from the bait shop in Lagras or Emerald Ranch. Use the lure to target the large muskie at this location — it weighs well over 16 lbs. Alternatively, use Special Lures to catch any legendary fish, which are always massive enough to qualify.
+
+Breaking and Entering
+    Recover stashes from 4 homesteads | Rob 4 homesteads by finding and looting their hidden stashes. Known locations: **Chez Porter** (northeast of Emerald Ranch), **Lonnie's Shack** (southeast of Flatneck Station, best done at night), **Ridgewood Farm** (south of Flatneck Station), **Catfish Jacksons** (southwest of Braithwaite Manor, Chapter 3 onward), **Hanging Dog Ranch** (northwest of Wallace Station).
+
+Self Sufficient
+    Craft 30 unique items in Story Mode | Open your satchel and craft items from the crafting menu using herbs, animal fat, and other materials. Tonics, provisions, and ammunition all count. Craft different item types rather than multiples of the same thing — the requirement is 30 *unique* items. Gather plants during exploration to build up enough materials.
+
+Hobby Horse
+    Play Poker | Play a round of Poker at Flatneck Station (available from Chapter 2) or the Tumbleweed saloon in the Epilogue. You do not need to win.
+    Play Blackjack | Play a round of Blackjack at the Van Horn Trading Post saloon or the Rhodes saloon. You do not need to win.
+    Play Dominoes | Play a round of Dominoes at the Saint Denis park bench or Emerald Ranch. You do not need to win.
+    Play Five Finger Fillet | Play a round of Five Finger Fillet at Flatneck Station, Van Horn, or Strawberry. You do not need to win.
+    Play Arm Wrestling | Play a round of Arm Wrestling at Flatneck Station or Van Horn. You do not need to win.
+
+Locked and Loaded
+    Fully upgrade one weapon | Visit any gunsmith (Rhodes, Saint Denis, Valentine, Strawberry, Van Horn, or Blackwater) and purchase every available upgrade component for a single sidearm or longarm. The Cattleman Revolver is widely available from the start and cheap to fully upgrade. Components include barrel, stock, grip, sights, and finishes.
+
+Take From the Rich
+    Rob or loot $250 total | Loot every enemy you kill, rob travelers on the road, and break into homesteads. $250 is cumulative across the whole game — you'll hit this naturally by Chapter 3 without trying.
+
+Pony Up
+    Spend $5000 across all shops | Spend $5000 total across any shops — gunsmiths, clothing stores, general stores, stables. Buy ammunition, food, weapon upgrades, and clothes as you play. Keep spending throughout the story and you'll reach $5000 by the Epilogue. If short, stock up on expensive ammo types or buy stable upgrades.
+
+ONLINE
+
+Breakout
+    Complete the Red Dead Online intro | Launch Red Dead Online and finish the short tutorial mission. Unmissable.
+
+Getting Started
+    Reach Rank 10 in Red Dead Online | Play Online mode — complete story missions, hunt, and do free roam activities. Rank 10 comes quickly with a few hours of casual play.
+
+Notorious
+    Reach Rank 50 in Red Dead Online | A significant grind — plan on 15–20+ hours of Online play. Focus on story missions, free roam missions, and Showdown Series events for XP. Daily challenges give solid XP bonuses on top.
+
+Strength in Numbers
+    Complete a Free Roam mission in a Posse of 2+ | Form or join a Posse via the Player menu (temporary Posses are free), then call any Free Roam mission from an NPC on the Online map. Complete it with at least one other Posse member. Two players total is the minimum.
+
+Posse Up
+    Form a Persistent Posse | Open the Player menu, go to Posse, and select Create Persistent Posse. Persistent Posses cost $200 in-game dollars. You do not need any members in the Posse — just pay the fee to form it.
+
+Buckle Up
+    Earn 5 gold belt buckles from awards | Awards are challenges tracked in the Player menu under Awards. Completing award tiers earns belt buckles. Focus on awards tied to things you're already doing — kills, hunting, fishing, mission completions. Five buckles require completing 5 award tiers across any categories.
+
+Butchered
+    Sell 20 items to the Butcher | Find a Butcher NPC in any Online town (Thieves' Landing, Blackwater, Rhodes, etc.). Hunt animals and sell pelts and carcasses to the Butcher. 20 individual item sales — a couple of hunting sessions will cover this.
+
+Picked to Perfection
+    Pick 25 herbs in Red Dead Online | Ride through fields and forest areas and press the interact button near glowing plants. 25 herbs takes under 30 minutes of casual exploration.
+
+Gun For Hire
+    Accept 10 Free Roam missions from world characters | Free Roam missions are offered by NPCs with mission icons on the Online map (Cripps, Horley, Marshall Davies, etc.). Ride to 10 different mission givers and accept their jobs. You do not need exceptional results — just accept and finish 10 missions.
+
+Master Craftsman
+    Craft 20 non-ammo items in Red Dead Online | Open the crafting menu via campfire or crafting table and craft 20 items excluding ammunition — provisions, tonics, and equipment all count. Gather herbs and animal materials during normal play to build up crafting resources.
+
+Series Major
+    Take part in a Series event | Open the Online menu and look for an active Series (Showdown Series playlists, etc.). These rotate on Rockstar's schedule. Join and complete one event in a Series.
+
+Eventful
+    Play 5 Free Roam Events | Free Roam Events trigger automatically on a timer in the Online world — a notification appears on screen when one starts nearby. Join and complete any 5 events. Events include target shooting, animal hunts, and race-style activities.
+
+All's Fair
+    Counter a rival Posse's Free Roam mission | When a rival Posse is running a Free Roam mission nearby, accept the prompt to counter it and complete the objective. Best done in a populated lobby or coordinated with friends. Use the RDR2 community Discord if you're struggling to find organic opponents.
+
+Home Comforts
+    Purchase 5 camp improvements in Red Dead Online | Open the Online camp menu via Cripps and buy 5 improvements — a dog, a flag, a stove, ammunition wagon upgrades, etc. Some cost in-game dollars, some cost Gold Bars. Stock up on in-game currency through missions and hunting before shopping.
+
+Non-Regulation
+    Craft 25 ammo items in Red Dead Online | Craft 25 pieces of ammunition via the crafting menu. Basic ammo types are cheap — craft batches of arrows or express cartridges using materials gathered during hunting. Pairs naturally with Master Craftsman.
+
+Horses for Courses
+    Concurrently own 5 horses in Red Dead Online | Buy 5 horses from the Online stable or capture and stable wild horses. You must own all 5 at the same time. Cheaper breeds (Morgan, Tennessee Walker, Mustang) keep costs down.
+
+The Real Deal
+    Achieve MVP 3 times in Online matches | Earn MVP (top performer) at the end of 3 separate Showdown Series matches, each with at least 4 players. Focus on team deathmatch-style modes and play aggressively to rack up kills. This is the toughest Online achievement — it requires genuine skill or a coordinated friendly lobby.
