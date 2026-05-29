@@ -1,4 +1,5 @@
 """Public (unauthenticated) endpoints — used by the landing page and public profiles."""
+import uuid
 import random
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +10,7 @@ from datetime import datetime, timezone, timedelta
 from app.database import get_db
 from app.models.game import Game
 from app.models.achievement import Achievement, UserAchievement
+from app.models.trophy_set import TrophySet
 from app.models.progress import UserGame
 from app.models.user import User
 from app.schemas.game import GameResponse
@@ -98,6 +100,32 @@ async def get_featured_game(db: AsyncSession = Depends(get_db)):
             for a in achievements
         ],
     }
+
+
+@router.get("/games/{game_id}/trophy-sets")
+async def get_game_trophy_sets_public(game_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Return available trophy sets for a game — used by the Add Game modal platform picker."""
+    sets_result = await db.execute(
+        select(TrophySet)
+        .where(TrophySet.game_id == game_id)
+        .order_by(TrophySet.sort_order)
+    )
+    trophy_sets = sets_result.scalars().all()
+
+    output = []
+    for ts in trophy_sets:
+        ach_result = await db.execute(
+            select(func.count()).where(Achievement.trophy_set_id == ts.id)
+        )
+        ach_count = ach_result.scalar() or 0
+        output.append({
+            "id": str(ts.id),
+            "name": ts.name,
+            "platform": ts.platform,
+            "achievement_count": ach_count,
+        })
+
+    return output
 
 
 @router.get("/users/{username}", response_model=PublicProfileResponse)

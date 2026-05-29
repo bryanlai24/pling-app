@@ -1,6 +1,7 @@
 import client from './client'
 
 export const getFeaturedGame = () => client.get('/public/featured-game')
+export const getGameTrophySets = (gameId) => client.get(`/public/games/${gameId}/trophy-sets`)
 
 export const listGames = (platform) =>
   client.get('/games', { params: { platform } })
