@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getLibrary, updateLibraryEntry, removeFromLibrary, syncPsnGame, syncSteamGame, syncXboxGame, resetGameProgress } from '../api/games'
+import { getLibrary, updateLibraryEntry, removeFromLibrary, syncPsnGame, syncSteamGame, syncXboxGame, resetGameProgress, getGameTrophySets } from '../api/games'
 import { listAchievements, updateAchievementProgress } from '../api/achievements'
 import { listGenres, updateGameGenres } from '../api/genres'
+import { getMe } from '../api/auth'
 import { Trophy, Plus, ChevronRight, ChevronLeft, CheckCircle2, Circle, Loader2, Trash2, Pencil, X, Check, RefreshCw, Pin, PinOff } from 'lucide-react'
 import AddAchievementModal from '../components/achievements/AddAchievementModal'
 import { useAuthStore } from '../store/authStore'
@@ -180,6 +181,51 @@ export default function GamePage() {
     enabled: isContributor,
   })
 
+  const { data: trophySets = [], isSuccess: trophySetsLoaded } = useQuery({
+    queryKey: ['trophySets', gameId],
+    queryFn: () => getGameTrophySets(gameId).then((r) => r.data),
+    enabled: !!gameId,
+  })
+
+  const { data: meData } = useQuery({
+    queryKey: ['me'],
+    queryFn: () => getMe().then((r) => r.data),
+    enabled: !isPublicView,
+  })
+
+  // Platforms for which this game has a trophy set
+  const availablePlatforms = trophySets.map((ts) => ts.platform).filter(Boolean)
+  // Platforms the user is connected to and for which the game has a trophy set
+  const syncablePlatforms = {
+    psn: availablePlatforms.includes('psn') && !!meData?.psn_account_id,
+    steam: availablePlatforms.includes('steam') && !!meData?.steam_id,
+    xbox: availablePlatforms.includes('xbox') && !!meData?.xbox_gamertag,
+  }
+  const hasSyncablePlatform = syncablePlatforms.psn || syncablePlatforms.steam || syncablePlatforms.xbox
+  // For platform-derived game.platform (legacy single-platform games), also allow sync
+  const showSyncSection = game && (hasSyncablePlatform || ['psn', 'steam', 'xbox'].includes(game.platform))
+
+  // Determine which trophy set IDs to show achievements for.
+  // For a logged-in user: prefer platform-matched sets (Steam/PSN/Xbox the user is connected to).
+  // Fall back to the seeded/manual set (platform=null) if no platform match.
+  // For public/guest view: show all (no filtering).
+  const activeTrophySetIds = (() => {
+    if (isPublicView || !trophySetsLoaded || trophySets.length === 0) return null // null = show all
+    // Which platforms does the user have connected AND the game has a set for?
+    const userPlatforms = ['psn', 'steam', 'xbox'].filter((p) => syncablePlatforms[p])
+    // Also include the game's own platform (for legacy single-platform games)
+    if (game?.platform && ['psn', 'steam', 'xbox'].includes(game.platform)) {
+      if (!userPlatforms.includes(game.platform)) userPlatforms.push(game.platform)
+    }
+    if (userPlatforms.length > 0) {
+      const matched = trophySets.filter((ts) => userPlatforms.includes(ts.platform)).map((ts) => ts.id)
+      if (matched.length > 0) return new Set(matched)
+    }
+    // No platform match — fall back to the set(s) with no platform (seeded/manual)
+    const fallback = trophySets.filter((ts) => !ts.platform).map((ts) => ts.id)
+    return fallback.length > 0 ? new Set(fallback) : null
+  })()
+
   const genresMutation = useMutation({
     mutationFn: (genreIds) => updateGameGenres(gameId, genreIds),
     onSuccess: () => {
@@ -296,13 +342,18 @@ export default function GamePage() {
 
   const guestProgress = isPublicView ? getProgress(gameId) : {}
 
+  // Filter to active trophy set(s) when applicable
+  const filteredAchievements = activeTrophySetIds
+    ? achievements.filter((a) => activeTrophySetIds.has(a.trophy_set_id))
+    : achievements
+
   // For public view, overlay localStorage completion state onto the server list
   const displayAchievements = isPublicView
-    ? achievements.map((a) => ({
+    ? filteredAchievements.map((a) => ({
         ...a,
         is_completed: guestProgress[a.id]?.is_completed ?? false,
       }))
-    : achievements
+    : filteredAchievements
 
   const pinned = displayAchievements.filter((a) => a.is_pinned)
 
@@ -332,16 +383,14 @@ export default function GamePage() {
   const filtered = sorted // keep alias for length checks below
   const completed = isPublicView
     ? Object.values(guestProgress).filter((p) => p.is_completed).length
-    : achievements.filter((a) => a.is_completed).length
-  const total = achievements.length
+    : filteredAchievements.filter((a) => a.is_completed).length
+  const total = filteredAchievements.length
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0
   const hasMultipleSets = Object.keys(groupedAchievements).length > 1
 
-  const trophyLabel = game?.platform === 'steam' 
-  ? 'Achievements' 
-  : game?.platform === 'xbox' 
-  ? 'Achievements' 
-  : 'Trophies'
+  const trophyLabel = (game?.platform === 'steam' || game?.platform === 'xbox' || availablePlatforms.includes('steam') || availablePlatforms.includes('xbox'))
+    ? 'Achievements'
+    : 'Trophies'
 
   if (!game && !isLoading) {
     return (
@@ -503,16 +552,16 @@ export default function GamePage() {
               </div>
 
               {/* Progress bar + sync */}
-              {(game.platform === 'psn' || game.platform === 'steam' || game.platform === 'xbox') && (
+              {showSyncSection && (
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-1.5">
                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{completed} / {total} {trophyLabel}</span>
                     <div className="flex items-center gap-2">
-                      {game.platform === 'xbox' && game.gamerscore_total > 0
+                      {(game.platform === 'xbox' || syncablePlatforms.xbox) && game.gamerscore_total > 0
                         ? <span style={{ fontSize: '0.65rem', fontWeight: 500, color: 'var(--text-primary)' }}>{game.gamerscore_earned ?? 0}G / {game.gamerscore_total}G</span>
                         : <span style={{ fontSize: '0.65rem', fontWeight: 500, color: 'var(--text-primary)' }}>{percent}%</span>
                       }
-                      {!isPublicView && game.platform === 'psn' && (
+                      {!isPublicView && (game.platform === 'psn' || syncablePlatforms.psn) && (
                         <button
                           onClick={() => { setSyncResult(null); syncMutation.mutate() }}
                           disabled={syncMutation.isPending}
@@ -524,7 +573,7 @@ export default function GamePage() {
                           {syncMutation.isPending ? 'Syncing...' : 'Sync PSN'}
                         </button>
                       )}
-                      {!isPublicView && game.platform === 'steam' && (
+                      {!isPublicView && (game.platform === 'steam' || syncablePlatforms.steam) && (
                         <button
                           onClick={() => { setSyncResult(null); steamSyncMutation.mutate() }}
                           disabled={steamSyncMutation.isPending}
@@ -536,7 +585,7 @@ export default function GamePage() {
                           {steamSyncMutation.isPending ? 'Syncing...' : 'Sync Steam'}
                         </button>
                       )}
-                      {!isPublicView && game.platform === 'xbox' && (
+                      {!isPublicView && (game.platform === 'xbox' || syncablePlatforms.xbox) && (
                         <button
                           onClick={() => { setSyncResult(null); xboxSyncMutation.mutate() }}
                           disabled={xboxSyncMutation.isPending}

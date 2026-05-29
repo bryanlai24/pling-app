@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { createGame, addToLibrary, listGames, getGameTrophySets, syncPsnGame, syncSteamGame, syncXboxGame } from '../../api/games'
+import { createGame, addToLibrary, listGames, getLibrary, getGameTrophySets, syncPsnGame, syncSteamGame, syncXboxGame } from '../../api/games'
 import { getMe } from '../../api/auth'
-import { X, Search, Trophy, ChevronRight, Loader2, Monitor } from 'lucide-react'
+import { X, Search, Trophy, ChevronRight, Loader2, CheckCircle2 } from 'lucide-react'
 
 // Platform display config
 const PLATFORM_CONFIG = {
@@ -204,6 +204,13 @@ export default function AddGameModal({ onClose, onSuccess }) {
     queryFn: () => getMe().then(r => r.data),
   })
 
+  const { data: library = [] } = useQuery({
+    queryKey: ['library'],
+    queryFn: () => getLibrary().then(r => r.data),
+  })
+
+  const libraryGameIds = new Set(library.map(ug => ug.game.id))
+
   const results = search.length > 1
     ? catalogue.filter((g) => g.title.toLowerCase().includes(search.toLowerCase()))
     : catalogue
@@ -214,15 +221,12 @@ export default function AddGameModal({ onClose, onSuccess }) {
     setError(null)
     try {
       await addToLibrary(selectedGame.id)
-      // Kick off sync if a real platform was chosen and user has it connected
-      if (platform && platform !== 'manual' && SYNC_FN[platform]) {
-        try {
-          await SYNC_FN[platform](selectedGame.id)
-        } catch {
-          // Sync failure is non-fatal — game is already added
-        }
-      }
+      // Close immediately so the user isn't waiting on sync
       onSuccess?.()
+      // Fire sync in the background (non-blocking, non-fatal)
+      if (platform && platform !== 'manual' && SYNC_FN[platform]) {
+        SYNC_FN[platform](selectedGame.id).catch(() => {})
+      }
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to add game')
       setAdding(false)
@@ -330,35 +334,49 @@ export default function AddGameModal({ onClose, onSuccess }) {
                         : 'No games in catalogue yet'}
                     </div>
                   )}
-                  {results.map((game) => (
-                    <button
-                      key={game.id}
-                      onClick={() => { setError(null); setSelectedGame(game) }}
-                      className="w-full flex items-center gap-3 transition text-left"
-                      style={{ padding: '10px 0', borderBottom: '0.5px solid var(--border-deep)' }}
-                    >
-                      {game.cover_image_url ? (
-                        <img src={game.cover_image_url} alt={game.title}
-                          className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center"
-                          style={{ background: 'var(--bg-elevated)' }}>
-                          <Trophy size={14} style={{ color: 'var(--text-muted)' }} />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                          {game.title}
-                        </p>
-                        {(game.genres || []).length > 0 && (
-                          <p className="text-xs mt-0.5 capitalize" style={{ color: 'var(--text-muted)' }}>
-                            {game.genres.map((g) => g.genre).join(', ')}
-                          </p>
+                  {results.map((game) => {
+                    const alreadyAdded = libraryGameIds.has(game.id)
+                    return (
+                      <button
+                        key={game.id}
+                        onClick={() => { if (alreadyAdded) return; setError(null); setSelectedGame(game) }}
+                        disabled={alreadyAdded}
+                        className="w-full flex items-center gap-3 transition text-left"
+                        style={{
+                          padding: '10px 0',
+                          borderBottom: '0.5px solid var(--border-deep)',
+                          opacity: alreadyAdded ? 0.5 : 1,
+                          cursor: alreadyAdded ? 'default' : 'pointer',
+                        }}
+                      >
+                        {game.cover_image_url ? (
+                          <img src={game.cover_image_url} alt={game.title}
+                            className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center"
+                            style={{ background: 'var(--bg-elevated)' }}>
+                            <Trophy size={14} style={{ color: 'var(--text-muted)' }} />
+                          </div>
                         )}
-                      </div>
-                      <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                    </button>
-                  ))}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                            {game.title}
+                          </p>
+                          {alreadyAdded ? (
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>In your library</p>
+                          ) : (game.genres || []).length > 0 && (
+                            <p className="text-xs mt-0.5 capitalize" style={{ color: 'var(--text-muted)' }}>
+                              {game.genres.map((g) => g.genre).join(', ')}
+                            </p>
+                          )}
+                        </div>
+                        {alreadyAdded
+                          ? <CheckCircle2 size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                          : <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                        }
+                      </button>
+                    )
+                  })}
                 </div>
 
                 {results.length > 0 && (
